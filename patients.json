@@ -1,0 +1,19 @@
+[ "[Lentity.Patient;", [ [ "entity.Patient", {
+  "id" : "P0001",
+  "name" : "Allahmdulillah",
+  "gender" : "male",
+  "phoneNumber" : "012-123-1234",
+  "address" : "123",
+  "email" : "p0001@gmail.com",
+  "dateOfBirth" : "1234-12-12",
+  "nationality" : "Malaysian"
+} ], [ "entity.Patient", {
+  "id" : "P0002",
+  "name" : "a",
+  "gender" : "a",
+  "phoneNumber" : "a",
+  "address" : "a",
+  "email" : "b",
+  "dateOfBirth" : "b",
+  "nationality" : "b"
+} ] ] ]
