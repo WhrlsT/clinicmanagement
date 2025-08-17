@@ -14,7 +14,6 @@ public class ClinicMaintenance {
     private ClinicMaintenanceUI mainUI = new ClinicMaintenanceUI();
     private PatientMaintenance patientMaintenance = new PatientMaintenance();
     private DoctorMaintenance doctorMaintenance = new DoctorMaintenance();
-    private ConsultationMaintenance consultationMaintenance = new ConsultationMaintenance();
 
     public void runClinicMaintenance() {
         mainUI.printHeader("Welcome to the Clinic Maintenance System");
@@ -29,7 +28,7 @@ public class ClinicMaintenance {
                     doctorMaintenance.runDoctorMaintenance();
                     break;
                 case 3:
-                    consultationMaintenance.run();
+                    new ConsultationMaintenance().run();
                     break;
                 case 4:
                     new QueueMaintenance().run();

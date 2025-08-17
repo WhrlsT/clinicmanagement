@@ -56,6 +56,8 @@ public class ConsultationMaintenance {
     }
 
     private void book() {
+    // Always refresh in case doctors/patients changed since this instance was created
+    refreshDoctorsAndPatients();
         // 1. Show doctor options
         printDoctorSummary();
         String doctorId = InputUtil.getInput(scanner, "Doctor ID: ");
@@ -79,7 +81,6 @@ public class ConsultationMaintenance {
         int hour = InputUtil.getIntInput(scanner, "Hour (choose from list): ");
         if (!freeHours.contains(hour)) { System.out.println("Hour not in free list"); return; }
 
-    int dayIdx = date.getDayOfWeek().getValue()-1;
 
         // 5. Reason & booking
         String reason = InputUtil.getInput(scanner, "Reason: ");
@@ -200,6 +201,7 @@ public class ConsultationMaintenance {
             Doctor d = doctors.get(i);
             System.out.printf("%-8s %-18s %-15s%n", d.getId(), d.getName(), d.getSpecialization());
         }
+    if (doctors.size()==0) System.out.println("(No doctors found)");
     }
 
     private void printPatientSummary() {
@@ -209,6 +211,7 @@ public class ConsultationMaintenance {
             Patient p = patients.get(i);
             System.out.printf("%-8s %-20s%n", p.getId(), p.getName());
         }
+    if (patients.size()==0) System.out.println("(No patients found)");
     }
 
     private List<Integer> getFreeHoursForDoctorDate(Doctor doctor, LocalDate date) {
@@ -236,5 +239,15 @@ public class ConsultationMaintenance {
             date = date.plusDays(1);
         }
         if (printed==0) System.out.println("(No availability in next "+scanDays+" days)");
+    }
+
+    // Reload latest doctor & patient lists from file into existing ADT instances
+    private void refreshDoctorsAndPatients() {
+        ADTInterface<Doctor> latestDoctors = doctorDAO.retrieveFromFile();
+        doctors.clear();
+        for (int i=0;i<latestDoctors.size();i++) doctors.add(latestDoctors.get(i));
+        ADTInterface<Patient> latestPatients = patientDAO.retrieveFromFile();
+        patients.clear();
+        for (int i=0;i<latestPatients.size();i++) patients.add(latestPatients.get(i));
     }
 }
