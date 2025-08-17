@@ -15,7 +15,9 @@ public class DoctorMaintenanceUI {
         System.out.println("3. Delete Doctor");
         System.out.println("4. View Doctor");
         System.out.println("5. Search Doctor");
-        System.out.println("6. Exit");
+    System.out.println("6. View Doctor Schedule");
+    System.out.println("7. Set Doctor Availability Range");
+    System.out.println("8. Exit");
         System.out.print("Select an option: ");
         return InputUtil.getIntInput(scanner, "Enter your choice: ");
     }
@@ -24,7 +26,7 @@ public class DoctorMaintenanceUI {
         System.out.println("\n-----------------------------------------------");
         System.out.println("Doctor List");
         System.out.println("-----------------------------------------------");
-        System.out.printf("%-10s|%-20s|%-15s|%-20s|%-20s|%-25s\n", "ID", "Name", "Specialty", "Phone", "Email", "Address");
+    System.out.printf("%-10s|%-20s|%-15s|%-20s|%-20s\n", "ID", "Name", "Specialty", "Phone", "Email");
         if (outputStr == null || outputStr.trim().isEmpty()) {
             System.out.println("No records found.\n");
         } else {
@@ -36,7 +38,7 @@ public class DoctorMaintenanceUI {
         String name = InputUtil.getInput(scanner, "Enter doctor name: ");
         String specialty = InputUtil.getInput(scanner, "Enter doctor specialty: ");
         String phoneNumber = InputUtil.getInput(scanner, "Enter doctor phone number: ");
-        String address = InputUtil.getInput(scanner, "Enter doctor address: ");
+    // Address field removed from Doctor entity and listing; omit address input.
         String email = InputUtil.getInput(scanner, "Enter doctor email: ");
         // Add other fields as needed
 

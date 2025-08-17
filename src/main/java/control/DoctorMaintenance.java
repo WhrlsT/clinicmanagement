@@ -39,19 +39,25 @@ public class DoctorMaintenance {
                     searchDoctor();
                     break;
                 case 6:
+                    viewDoctorSchedule();
+                    break;
+                case 7:
+                    setDoctorAvailabilityRange();
+                    break;
+                case 8:
                     System.out.println("Returning to Main Menu...");
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
             }
-        } while (choice != 6);
+        } while (choice != 8);
     }
 
     public String getAllDoctors() {
         StringBuilder outputStr = new StringBuilder();
         for (int i = 0; i < doctorList.size(); i++) {
             Doctor d = doctorList.get(i);
-            outputStr.append(String.format("%-10s|%-20s|%-15s|%-20s|%-20s|%-25s\n",
+                outputStr.append(String.format("%-10s|%-20s|%-15s|%-20s|%-20s\n",
                 d.getId(),
                 d.getName(),
                 d.getSpecialization(),
@@ -118,6 +124,54 @@ public class DoctorMaintenance {
             }
         }
         return null;
+    }
+
+    private void viewDoctorSchedule() {
+        String doctorId = InputUtil.getInput(scanner, "Enter doctor ID to view schedule: ");
+        Doctor doctor = findDoctorById(doctorId);
+        if (doctor == null) {
+            doctorUI.displayNotFoundMessage(doctorId);
+            return;
+        }
+        System.out.println("Schedule for Dr. " + doctor.getName());
+        System.out.println("1. Full 24h table\n2. Compact (hours as columns)\n3. Compact cropped to active hours");
+        int mode = InputUtil.getIntInput(scanner, "Choose display mode: ");
+        switch (mode) {
+            case 1: doctor.getSchedule().printScheduleTable(); break;
+            case 2: doctor.getSchedule().printCompactScheduleTable(false); break;
+            case 3: doctor.getSchedule().printCompactScheduleTable(true); break;
+            default: doctor.getSchedule().printScheduleTable();
+        }
+    }
+
+    private void setDoctorAvailabilityRange() {
+        String doctorId = InputUtil.getInput(scanner, "Enter doctor ID: ");
+        Doctor doctor = findDoctorById(doctorId);
+        if (doctor == null) {
+            doctorUI.displayNotFoundMessage(doctorId);
+            return;
+        }
+        System.out.println("Select day (0=Mon .. 6=Sun)");
+        int day = InputUtil.getIntInput(scanner, "Day index: ");
+        int startHour = InputUtil.getIntInput(scanner, "Start hour (0-23): ");
+        int endHour = InputUtil.getIntInput(scanner, "End hour (1-24): ");
+        System.out.println("Status: 1=AVAILABLE, 2=NOT_AVAILABLE, 3=CLEAR BOOKINGS TO AVAILABLE");
+        int statusChoice = InputUtil.getIntInput(scanner, "Choose status: ");
+        entity.SlotStatus status = entity.SlotStatus.AVAILABLE;
+        switch (statusChoice) {
+            case 1: status = entity.SlotStatus.AVAILABLE; break;
+            case 2: status = entity.SlotStatus.NOT_AVAILABLE; break;
+            case 3: status = entity.SlotStatus.AVAILABLE; break;
+            default: System.out.println("Invalid status, defaulting to AVAILABLE");
+        }
+        if (startHour < 0) startHour = 0;
+        if (endHour > 24) endHour = 24;
+        if (endHour <= startHour) { System.out.println("End hour must be > start hour"); return; }
+        // If marking NOT_AVAILABLE, ensure no booked slots would be overridden
+    // BOOKED state removed; no need to guard against overriding bookings in template
+        doctor.getSchedule().setAvailabilityRange(day, startHour, endHour, status);
+        doctorDAO.saveToFile(doctorList);
+        System.out.println("Availability updated.");
     }
 
     public ADTInterface<Doctor> findDoctorByIdOrName(String query) {

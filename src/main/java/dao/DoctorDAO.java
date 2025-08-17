@@ -5,6 +5,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import adt.ADTInterface;
 import adt.CustomADT;
 import entity.Doctor;
+import entity.DoctorSchedule;
 import java.io.*;
 
 public class DoctorDAO {
@@ -14,7 +15,6 @@ public class DoctorDAO {
     public DoctorDAO() {
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
     }
 
     public ADTInterface<Doctor> retrieveFromFile() {
@@ -29,6 +29,10 @@ public class DoctorDAO {
                 );
 
                 for (Doctor doctor : doctors) {
+                    // Ensure schedule not null after deserialization
+                    if (doctor.getSchedule() == null) {
+                        doctor.setSchedule(new DoctorSchedule());
+                    }
                     doctorList.add(doctor);
                 }
             }

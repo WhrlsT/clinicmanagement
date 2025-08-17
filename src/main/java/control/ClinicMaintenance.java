@@ -5,7 +5,7 @@
 package control;
 
 import boundary.ClinicMaintenanceUI;
-import control.*;
+import utility.MigrationRunner;
 /**
  *
  * @author Whrl
@@ -14,6 +14,7 @@ public class ClinicMaintenance {
     private ClinicMaintenanceUI mainUI = new ClinicMaintenanceUI();
     private PatientMaintenance patientMaintenance = new PatientMaintenance();
     private DoctorMaintenance doctorMaintenance = new DoctorMaintenance();
+    private ConsultationMaintenance consultationMaintenance = new ConsultationMaintenance();
 
     public void runClinicMaintenance() {
         mainUI.printHeader("Welcome to the Clinic Maintenance System");
@@ -28,26 +29,30 @@ public class ClinicMaintenance {
                     doctorMaintenance.runDoctorMaintenance();
                     break;
                 case 3:
-                    //consultationMaintenance.runPatientMaintenance();
+                    consultationMaintenance.run();
                     break;
                 case 4:
-                    //medicalTreatmentMaintenance.runPatientMaintenance();
+                    new QueueMaintenance().run();
                     break;
-                case 5:
-                    //pharmacyMaintenance.runPatientMaintenance();
+                case 5: // future
                     break;
-                case 6:
+                case 6: // future
+                    break;
+                case 7:
                     System.out.println("Exiting the Clinic Maintenance System...");
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
             }
-        } while (choice != 6);
+    } while (choice != 7);
 
     }
 
     public static void main(String[] args) {
         ClinicMaintenance clinicMaintenance = new ClinicMaintenance();
+        // Run schedule migration using runner
+    boolean didMig = MigrationRunner.run(clinicMaintenance.doctorMaintenance, null);
+        if (didMig) System.out.println("[Migration] Legacy schedule entries normalized.");
         clinicMaintenance.runClinicMaintenance();
     }
 }
