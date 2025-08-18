@@ -1,28 +1,49 @@
 [ "[Lentity.Patient;", [ [ "entity.Patient", {
   "id" : "P0001",
-  "name" : "Allahmdulillah",
+  "name" : "Allah",
   "gender" : "male",
-  "phoneNumber" : "012-123-1234",
-  "address" : "123",
-  "email" : "p0001@gmail.com",
+  "phoneNumber" : "0127383232",
+  "email" : "1@gmail.com",
   "dateOfBirth" : "1234-12-12",
   "nationality" : "Malaysian"
 } ], [ "entity.Patient", {
   "id" : "P0002",
-  "name" : "a",
+  "name" : "Him.her",
   "gender" : "a",
-  "phoneNumber" : "a",
-  "address" : "a",
-  "email" : "b",
-  "dateOfBirth" : "b",
-  "nationality" : "b"
+  "phoneNumber" : "1",
+  "email" : "2",
+  "dateOfBirth" : "3",
+  "nationality" : "4"
 } ], [ "entity.Patient", {
   "id" : "P0003",
   "name" : "Allah",
   "gender" : "her",
   "phoneNumber" : "1",
-  "address" : "1",
   "email" : "1",
   "dateOfBirth" : "1111-11-11",
   "nationality" : "1"
+} ], [ "entity.Patient", {
+  "id" : "P0004",
+  "name" : "",
+  "gender" : "",
+  "phoneNumber" : "",
+  "email" : "",
+  "dateOfBirth" : "",
+  "nationality" : ""
+} ], [ "entity.Patient", {
+  "id" : "P0005",
+  "name" : "11",
+  "gender" : "1",
+  "phoneNumber" : "123412341234",
+  "email" : "1234@gmail.com",
+  "dateOfBirth" : "1234-12-12",
+  "nationality" : "Malaysian"
+} ], [ "entity.Patient", {
+  "id" : "P0006",
+  "name" : "Justin",
+  "gender" : "Male",
+  "phoneNumber" : "0121231234",
+  "email" : "hey@ijsutmet.you",
+  "dateOfBirth" : "2005-10-10",
+  "nationality" : "Malaysian"
 } ] ] ]

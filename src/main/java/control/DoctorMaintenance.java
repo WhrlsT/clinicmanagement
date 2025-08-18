@@ -88,7 +88,11 @@ public class DoctorMaintenance {
     }
 
     public void addNewDoctor() {
-        Doctor newDoctor = doctorUI.inputDoctorDetails();
+    String name = InputUtil.getInput(scanner, "Enter doctor name: ");
+    String specialization = InputUtil.getInput(scanner, "Enter doctor specialty: ");
+    String phone = InputUtil.getValidatedPhone(scanner, "Enter doctor phone number (digits 7-15): ");
+    String email = InputUtil.getValidatedEmail(scanner, "Enter doctor email: ");
+    Doctor newDoctor = new Doctor(null, name, specialization, phone, email);
         newDoctor.setId(generateNextDoctorId());
         doctorList.add(newDoctor);
         doctorDAO.saveToFile(doctorList);
@@ -102,17 +106,42 @@ public class DoctorMaintenance {
         if (doctor != null) {
             doctorUI.displayDoctorDetails(doctor);
 
-            // Update fields
-            doctor.setId(InputUtil.getInput(scanner, "Enter new doctor ID: "));
-            doctor.setName(InputUtil.getInput(scanner, "Enter new doctor Name: "));
-            doctor.setSpecialization(InputUtil.getInput(scanner, "Enter new doctor Specialty: "));
-            doctor.setPhoneNumber(InputUtil.getInput(scanner, "Enter new doctor Phone Number: "));
-            doctor.setEmail(InputUtil.getInput(scanner, "Enter new doctor Email: "));
+            // Update fields with optional blank to keep & validation
+            doctor.setName(promptOptional("Name", doctor.getName()));
+            doctor.setSpecialization(promptOptional("Specialty", doctor.getSpecialization()));
+            doctor.setPhoneNumber(promptOptionalValidatedPhone("Phone Number", doctor.getPhoneNumber()));
+            doctor.setEmail(promptOptionalValidatedEmail("Email", doctor.getEmail()));
 
             doctorDAO.saveToFile(doctorList);
             doctorUI.displayDoctorUpdatedMessage(doctor);
         } else {
             doctorUI.displayNotFoundMessage(doctorId);
+        }
+    }
+
+    private String promptOptional(String label, String current) {
+        System.out.println("Current " + label + ": " + (current==null?"":current));
+        String inp = InputUtil.getInput(scanner, "Enter new " + label + " (blank keep): ");
+        return inp.isEmpty()? current : inp;
+    }
+
+    private String promptOptionalValidatedPhone(String label, String current) {
+        System.out.println("Current " + label + ": " + (current==null?"":current));
+        while (true) {
+            String inp = InputUtil.getInput(scanner, "Enter new " + label + " (blank keep): ");
+            if (inp.isEmpty()) return current;
+            if (inp.matches("^[0-9]{7,15}$")) return inp;
+            System.out.println("Invalid phone (digits 7-15). Try again.");
+        }
+    }
+
+    private String promptOptionalValidatedEmail(String label, String current) {
+        System.out.println("Current " + label + ": " + (current==null?"":current));
+        while (true) {
+            String inp = InputUtil.getInput(scanner, "Enter new " + label + " (blank keep): ");
+            if (inp.isEmpty()) return current;
+            if (inp.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) return inp;
+            System.out.println("Invalid email format. Try again.");
         }
     }
 

@@ -22,7 +22,7 @@ public class ClinicMaintenance {
             choice = mainUI.getMenuChoice();
             switch (choice) {
                 case 1:
-                    patientMaintenance.runPatientMaintenance();
+                    patientMaintenance.runPatientManagementHub();
                     break;
                 case 2:
                     doctorMaintenance.runDoctorMaintenance();

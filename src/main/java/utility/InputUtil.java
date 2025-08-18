@@ -9,6 +9,9 @@ package utility;
  * @author Whrl
  */
 import java.util.Scanner;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public class InputUtil {
     public static int getIntInput(Scanner scanner, String prompt) {
@@ -30,5 +33,50 @@ public class InputUtil {
     public static String getInput(Scanner scanner, String prompt) {
         System.out.print(prompt);
         return scanner.nextLine().trim();
+    }
+
+    public static String getNonEmptyInput(Scanner scanner, String prompt) {
+        while (true) {
+            String v = getInput(scanner, prompt);
+            if (!v.isEmpty()) return v;
+            System.out.println("Value cannot be empty. Try again.");
+        }
+    }
+
+    // Generic M/F choice returning mapped full word
+    public static String getMFChoice(Scanner scanner, String prompt, String mMeaning, String fMeaning) {
+        while (true) {
+            String v = getInput(scanner, prompt + " (M/F): ").toUpperCase();
+            if (v.equals("M")) return mMeaning;
+            if (v.equals("F")) return fMeaning;
+            System.out.println("Please enter only M or F.");
+        }
+    }
+
+    // Email validation (simple RFC-lite pattern)
+    public static String getValidatedEmail(Scanner scanner, String prompt) {
+        while (true) {
+            String v = getInput(scanner, prompt);
+            if (v.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) return v;
+            System.out.println("Invalid email format. Try again.");
+        }
+    }
+
+    // Phone: digits only 7-15 length
+    public static String getValidatedPhone(Scanner scanner, String prompt) {
+        while (true) {
+            String v = getInput(scanner, prompt);
+            if (v.matches("^[0-9]{7,15}$")) return v;
+            System.out.println("Invalid phone (digits 7-15). Try again.");
+        }
+    }
+
+    // Date: yyyy-MM-dd
+    public static String getValidatedDate(Scanner scanner, String prompt) {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        while (true) {
+            String v = getInput(scanner, prompt);
+            try { LocalDate.parse(v, fmt); return v; } catch (DateTimeParseException e) { System.out.println("Invalid date (use yyyy-MM-dd). Try again."); }
+        }
     }
 } 

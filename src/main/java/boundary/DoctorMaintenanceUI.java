@@ -23,10 +23,11 @@ public class DoctorMaintenanceUI {
     }
 
     public void displayDoctorsTable(String outputStr) {
-        System.out.println("\n-----------------------------------------------");
+        System.out.println("\n----------------------------------------------------------------------------------------------------------------------------------------");
         System.out.println("Doctor List");
-        System.out.println("-----------------------------------------------");
+        System.out.println("----------------------------------------------------------------------------------------------------------------------------------------");
     System.out.printf("%-10s|%-20s|%-15s|%-20s|%-20s\n", "ID", "Name", "Specialty", "Phone", "Email");
+    System.out.println("----------------------------------------------------------------------------------------------------------------------------------------");
         if (outputStr == null || outputStr.trim().isEmpty()) {
             System.out.println("No records found.\n");
         } else {

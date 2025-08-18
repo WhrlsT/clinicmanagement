@@ -6,7 +6,6 @@ package boundary;
 
 import java.util.Scanner;
 import utility.InputUtil;
-import boundary.ClinicMaintenanceUI;
 import entity.Patient;
 /**
  *
@@ -29,10 +28,11 @@ public class PatientMaintenanceUI {
     }
 
     public void displayPatientsTable(String outputStr) {
-        System.out.println("\n-----------------------------------------------");
+    System.out.println("\n----------------------------------------------------------------------------------------------------------------------");
         System.out.println("Patient List");
-        System.out.println("-----------------------------------------------");
-        System.out.printf("%-10s|%-20s|%-10s|%-15s|%-15s|%-25s|%-15s|%-15s\n", "ID", "Name", "Age", "Gender", "Phone", "Email", "Address", "Nationality");
+    System.out.println("----------------------------------------------------------------------------------------------------------------------");
+    System.out.printf("%-10s|%-20s|%-10s|%-15s|%-15s|%-25s|%-15s\n", "ID", "Name", "Age", "Gender", "Phone", "Email", "Nationality");
+    System.out.println("----------------------------------------------------------------------------------------------------------------------");
         if (outputStr == null || outputStr.trim().isEmpty()) {
             System.out.println("No records found.\n");
         } else {
@@ -44,12 +44,11 @@ public class PatientMaintenanceUI {
         String name = InputUtil.getInput(scanner, "Enter patient name: ");
         String gender = InputUtil.getInput(scanner, "Enter patient gender: ");
         String phoneNumber = InputUtil.getInput(scanner, "Enter patient phone number: ");
-        String address = InputUtil.getInput(scanner, "Enter patient address: ");
         String email = InputUtil.getInput(scanner, "Enter patient email: ");
         String dateOfBirth = InputUtil.getInput(scanner, "Enter patient date of birth (yyyy-MM-dd): ");
         String nationality = InputUtil.getInput(scanner, "Enter patient nationality: ");
 
-        return new Patient(null, name, gender, address, phoneNumber, email, dateOfBirth, nationality);
+    return new Patient(null, name, gender, phoneNumber, email, dateOfBirth, nationality);
     }
 
     public void displayPatientDetails(Patient patient) {
@@ -60,7 +59,6 @@ public class PatientMaintenanceUI {
         System.out.printf("Gender: %s\n", patient.getGender());
         System.out.printf("Phone: %s\n", patient.getPhoneNumber());
         System.out.printf("Email: %s\n", patient.getEmail());
-        System.out.printf("Address: %s\n", patient.getAddress());
         System.out.printf("Nationality: %s\n", patient.getNationality());
         System.out.printf("Date of Birth: %s\n", patient.getDateOfBirth());
         System.out.printf("Age: %s\n", patient.calculateAge(patient.getDateOfBirth()));

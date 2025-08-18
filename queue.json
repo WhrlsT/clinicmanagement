@@ -3,8 +3,8 @@
   "patientId" : "P0001",
   "preferredDoctorId" : null,
   "reason" : "Sick",
-  "status" : "WAITING",
+  "status" : "COMPLETED",
   "enqueuedAt" : [ 2025, 8, 17, 15, 8, 44, 399504100 ],
   "priority" : 0,
-  "callAttempts" : 0
+  "callAttempts" : 1
 } ]

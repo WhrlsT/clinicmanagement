@@ -59,18 +59,60 @@ public class PatientMaintenance {
         } while (choice != 6);
     }
 
+    // New hub flow as requested
+    public void runPatientManagementHub() {
+        int choice;
+        do {
+            clinicUI.printHeader("Patient Management Hub");
+            patientUI.displayPatientsTable(getAllPatients());
+            displayQueueSummary();
+            System.out.println("1. Manage Patient Details");
+            System.out.println("2. Manage Patient Queue");
+            System.out.println("3. Back to Main Menu");
+            choice = InputUtil.getIntInput(scanner, "Select option: ");
+            switch (choice) {
+                case 1 -> runPatientMaintenance();
+                case 2 -> new QueueMaintenance().run();
+                case 3 -> System.out.println("Returning to main menu...");
+                default -> System.out.println("Invalid selection.");
+            }
+        } while (choice != 3);
+    }
+
+    private void displayQueueSummary() {
+        // Basic summary: counts by status
+        try {
+            // Access queue through a fresh QueueMaintenance for up-to-date view
+            dao.QueueDAO qdao = new dao.QueueDAO();
+            adt.ADTInterface<entity.PatientQueueEntry> q = qdao.load();
+            int waiting=0, called=0, inprog=0, skipped=0, completed=0;
+            for (int i=0;i<q.size();i++) {
+                entity.QueueStatus st = q.get(i).getStatus();
+                switch(st){
+                    case WAITING -> waiting++;
+                    case CALLED -> called++;
+                    case IN_PROGRESS -> inprog++;
+                    case SKIPPED -> skipped++;
+                    case COMPLETED -> completed++;
+                }
+            }
+            System.out.println("Queue Summary: WAITING="+waiting+" CALLED="+called+" IN_PROGRESS="+inprog+" SKIPPED="+skipped+" COMPLETED="+completed);
+        } catch(Exception e) {
+            System.out.println("Queue Summary: (error loading queue)");
+        }
+    }
+
     public String getAllPatients() {
         StringBuilder outputStr = new StringBuilder();
         for (int i = 0; i < patientList.size(); i++) {
             Patient p = patientList.get(i);
-            outputStr.append(String.format("%-10s|%-20s|%-10s|%-15s|%-15s|%-25s|%-15s|%-15s\n",
+            outputStr.append(String.format("%-10s|%-20s|%-10s|%-15s|%-15s|%-25s|%-15s\n",
                 p.getId(),
                 p.getName(),
                 p.calculateAge(p.getDateOfBirth()),
                 p.getGender(),
                 p.getPhoneNumber(),
                 p.getEmail(),
-                p.getAddress(),
                 p.getNationality()
             ));
         }
@@ -102,7 +144,13 @@ public class PatientMaintenance {
     }
 
     public void addNewPatient() {
-        Patient newPatient = patientUI.inputPatientDetails();
+    String name = InputUtil.getNonEmptyInput(scanner, "Enter patient name: ");
+    String gender = InputUtil.getMFChoice(scanner, "Enter patient gender", "Male", "Female");
+    String phone = InputUtil.getValidatedPhone(scanner, "Enter patient phone number (digits 7-15): ");
+    String email = InputUtil.getValidatedEmail(scanner, "Enter patient email: ");
+    String dob = InputUtil.getValidatedDate(scanner, "Enter patient date of birth (yyyy-MM-dd): ");
+    String nationality = InputUtil.getMFChoice(scanner, "Enter patient nationality (M=Malaysian, F=Foreigner)", "Malaysian", "Foreigner");
+    Patient newPatient = new Patient(null, name, gender, phone, email, dob, nationality);
         newPatient.setId(generateNextPatientId());
         patientList.add(newPatient);
         patientDAO.saveToFile(patientList);
@@ -115,20 +163,67 @@ public class PatientMaintenance {
         
         if (patient != null) {
             patientUI.displayPatientDetails(patient);
-            
-            // Update fields
-            patient.setId(InputUtil.getInput(scanner, "Enter new patient ID: "));
-            patient.setName(InputUtil.getInput(scanner, "Enter new patient Name: "));
-            patient.setAddress(InputUtil.getInput(scanner, "Enter new patient Address: "));
-            patient.setPhoneNumber(InputUtil.getInput(scanner, "Enter new patient Phone Number: "));
-            patient.setEmail(InputUtil.getInput(scanner, "Enter new patient Email: "));
-            patient.setDateOfBirth(InputUtil.getInput(scanner, "Enter new patient Date of Birth (yyyy-MM-dd): "));
-            patient.setNationality(InputUtil.getInput(scanner, "Enter new patient Nationality: "));
+            // For each field: show current, allow blank to keep
+            patient.setName(promptOptionalNonEmpty("Name", patient.getName()));
+            patient.setGender(promptOptionalMF("Gender", patient.getGender(), "Male", "Female"));
+            patient.setPhoneNumber(promptOptionalValidatedPhone("Phone Number", patient.getPhoneNumber()));
+            patient.setEmail(promptOptionalValidatedEmail("Email", patient.getEmail()));
+            patient.setDateOfBirth(promptOptionalDate("Date of Birth (yyyy-MM-dd)", patient.getDateOfBirth()));
+            patient.setNationality(promptOptionalMF("Nationality (M=Malaysian,F=Foreigner)", patient.getNationality(), "Malaysian", "Foreigner"));
 
             patientDAO.saveToFile(patientList);
             patientUI.displayPatientUpdatedMessage(patient);
         } else {
             patientUI.displayNotFoundMessage(patientId);
+        }
+    }
+
+    private String promptOptionalNonEmpty(String label, String current) {
+        System.out.println("Current " + label + ": " + (current==null?"":current));
+        while (true) {
+            String inp = InputUtil.getInput(scanner, "Enter new " + label + " value (leave blank to keep): ");
+            if (inp.isEmpty()) return current;
+            if (!inp.isEmpty()) return inp;
+        }
+    }
+
+    private String promptOptionalMF(String label, String current, String mMeaning, String fMeaning) {
+        System.out.println("Current " + label + ": " + (current==null?"":current));
+        while (true) {
+            String inp = InputUtil.getInput(scanner, "Enter new " + label + " (M/F, blank keep): ").trim();
+            if (inp.isEmpty()) return current;
+            if (inp.equalsIgnoreCase("M")) return mMeaning;
+            if (inp.equalsIgnoreCase("F")) return fMeaning;
+            System.out.println("Please enter only M or F.");
+        }
+    }
+
+    private String promptOptionalValidatedPhone(String label, String current) {
+        System.out.println("Current " + label + ": " + (current==null?"":current));
+        while (true) {
+            String inp = InputUtil.getInput(scanner, "Enter new " + label + " value (leave blank to keep): ");
+            if (inp.isEmpty()) return current;
+            if (inp.matches("^[0-9]{7,15}$")) return inp;
+            System.out.println("Invalid phone (digits 7-15). Try again.");
+        }
+    }
+
+    private String promptOptionalValidatedEmail(String label, String current) {
+        System.out.println("Current " + label + ": " + (current==null?"":current));
+        while (true) {
+            String inp = InputUtil.getInput(scanner, "Enter new " + label + " value (leave blank to keep): ");
+            if (inp.isEmpty()) return current;
+            if (inp.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) return inp;
+            System.out.println("Invalid email format. Try again.");
+        }
+    }
+
+    private String promptOptionalDate(String label, String current) {
+        System.out.println("Current " + label + ": " + (current==null?"":current));
+        while (true) {
+            String inp = InputUtil.getInput(scanner, "Enter new " + label + " value (leave blank to keep): ");
+            if (inp.isEmpty()) return current;
+            try { java.time.LocalDate.parse(inp); return inp; } catch(Exception e){ System.out.println("Invalid date (yyyy-MM-dd). Try again."); }
         }
     }
 
@@ -159,9 +254,21 @@ public class PatientMaintenance {
         String query = InputUtil.getInput(scanner, "Enter patient ID or name to search: ");
         ADTInterface<Patient> foundPatients = findPatientByIdOrName(query);
         if (foundPatients.size() > 0) {
+            // Build table string similar to getAllPatients()
+            StringBuilder sb = new StringBuilder();
             for (int i = 0; i < foundPatients.size(); i++) {
-                patientUI.displayPatientDetails(foundPatients.get(i));
+                Patient p = foundPatients.get(i);
+                sb.append(String.format("%-10s|%-20s|%-10s|%-15s|%-15s|%-25s|%-15s\n",
+                        p.getId(),
+                        p.getName(),
+                        p.calculateAge(p.getDateOfBirth()),
+                        p.getGender(),
+                        p.getPhoneNumber(),
+                        p.getEmail(),
+                        p.getNationality()
+                ));
             }
+            patientUI.displayPatientsTable(sb.toString());
         } else {
             patientUI.displayNotFoundMessage(query);
         }

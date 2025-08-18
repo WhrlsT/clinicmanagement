@@ -18,17 +18,15 @@ public class Patient {
     private String name;
     private String gender;
     private String phoneNumber;
-    private String address;
     private String email;
     private String dateOfBirth;
     private String nationality;
 
     //Constructor
-    public Patient(String id, String name, String gender, String address, String phoneNumber, String email, String dateOfBirth, String nationality) {
+    public Patient(String id, String name, String gender, String phoneNumber, String email, String dateOfBirth, String nationality) {
         this.id = id;
         this.name = name;
         this.gender = gender;
-        this.address = address;
         this.phoneNumber = phoneNumber;
         this.email = email;
         this.dateOfBirth = dateOfBirth;
@@ -50,10 +48,6 @@ public class Patient {
 
     public String getGender() {
         return gender;
-    }
-
-    public String getAddress() {
-        return address;
     }
 
     public String getPhoneNumber() {
@@ -83,10 +77,6 @@ public class Patient {
 
     public void setGender(String gender) {
         this.gender = gender;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
     }
 
     public void setPhoneNumber(String phoneNumber) {
