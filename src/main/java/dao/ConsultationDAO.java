@@ -13,7 +13,10 @@ public class ConsultationDAO {
 
     public ConsultationDAO() {
         mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
+    // Register JavaTimeModule for standard ISO handling and a lenient deserializer for LocalDateTime
+    com.fasterxml.jackson.datatype.jsr310.JavaTimeModule jtm = new JavaTimeModule();
+    jtm.addDeserializer(java.time.LocalDateTime.class, new utility.LocalDateTimeDeserializer());
+    mapper.registerModule(jtm);
     }
 
     public ADTInterface<Consultation> load() {

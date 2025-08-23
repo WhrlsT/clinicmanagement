@@ -1,57 +1,25 @@
 [ "[Lentity.Patient;", [ [ "entity.Patient", {
   "id" : "P0001",
-  "name" : "Allah",
-  "gender" : "male",
-  "phoneNumber" : "0127383232",
-  "email" : "1@gmail.com",
-  "dateOfBirth" : "1234-12-12",
-  "nationality" : "Malaysian"
+  "name" : "Shawn",
+  "gender" : "Male",
+  "phoneNumber" : "0121231234",
+  "email" : "shawn@gmail.com",
+  "dateOfBirth" : "2005-06-09",
+  "nationality" : "Foreigner"
 } ], [ "entity.Patient", {
   "id" : "P0002",
-  "name" : "Him.her",
-  "gender" : "a",
-  "phoneNumber" : "1",
-  "email" : "2",
-  "dateOfBirth" : "3",
-  "nationality" : "4"
-} ], [ "entity.Patient", {
-  "id" : "P0003",
-  "name" : "Allah",
-  "gender" : "her",
-  "phoneNumber" : "1",
-  "email" : "1",
-  "dateOfBirth" : "1111-11-11",
-  "nationality" : "1"
-} ], [ "entity.Patient", {
-  "id" : "P0004",
-  "name" : "",
-  "gender" : "",
-  "phoneNumber" : "",
-  "email" : "",
-  "dateOfBirth" : "",
-  "nationality" : ""
-} ], [ "entity.Patient", {
-  "id" : "P0005",
-  "name" : "11",
-  "gender" : "1",
-  "phoneNumber" : "123412341234",
-  "email" : "1234@gmail.com",
-  "dateOfBirth" : "1234-12-12",
-  "nationality" : "Malaysian"
-} ], [ "entity.Patient", {
-  "id" : "P0006",
-  "name" : "Justin",
-  "gender" : "Male",
-  "phoneNumber" : "0121231234",
-  "email" : "hey@ijsutmet.you",
-  "dateOfBirth" : "2005-10-10",
-  "nationality" : "Malaysian"
-} ], [ "entity.Patient", {
-  "id" : "P0007",
   "name" : "Kelvin",
   "gender" : "Male",
-  "phoneNumber" : "0121231234",
-  "email" : "1234@gmail.com",
-  "dateOfBirth" : "2005-10-12",
+  "phoneNumber" : "0121234123",
+  "email" : "kelvin@gmail.com",
+  "dateOfBirth" : "2005-10-16",
   "nationality" : "Malaysian"
+} ], [ "entity.Patient", {
+  "id" : "P0003",
+  "name" : "Justin",
+  "gender" : "Female",
+  "phoneNumber" : "0123213212",
+  "email" : "justin@gmail.com",
+  "dateOfBirth" : "2005-01-01",
+  "nationality" : "Foreigner"
 } ] ] ]

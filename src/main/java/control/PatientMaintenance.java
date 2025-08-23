@@ -32,44 +32,42 @@ public class PatientMaintenance {
     }
 
     public void runPatientMaintenance() {
-        InputUtil.clearScreen();
-        clinicUI.printHeader("Clinic Patient Maintenance");
-        patientUI.displayPatientsTable(getAllPatients());
+    InputUtil.clearScreen();
+    clinicUI.printHeader("Clinic Patient Maintenance");
+    patientUI.displayPatientsTable(getAllPatients());
         int choice;
         do {
             choice = patientUI.getMenuChoice();
             switch (choice) {
                 case 1:
-                    InputUtil.clearScreen();
-                    addNewPatient();
+            InputUtil.clearScreen();
+            addNewPatient();
                     break;
                 case 2:
-                    InputUtil.clearScreen();
-                    updatePatient();
+            InputUtil.clearScreen();
+            updatePatient();
                     break;
                 case 3:
-                    InputUtil.clearScreen();
-                    deletePatient();
+            InputUtil.clearScreen();
+            deletePatient();
                     break;
                 case 4:
-                    InputUtil.clearScreen();
-                    clinicUI.printHeader("Clinic Patient Maintenance");
-                    patientUI.displayPatientsTable(getAllPatients());
+            InputUtil.clearScreen();
+            viewPatientDetails();
                     break;
                 case 5:
-                    InputUtil.clearScreen();
-                    searchPatient();
+            InputUtil.clearScreen();
+            searchPatient();
                     break;
                 case 6:
-                    InputUtil.clearScreen();
-                    viewPatientVisitRecords();
+            InputUtil.clearScreen();
+            viewPatientVisitRecords();
                     break;
                 case 7:
-                    System.out.println("Returning to Main Menu...");
+            patientUI.printReturningToMainMenu();
                     break;
                 default:
-                    System.out.println("Invalid choice. Please try again.");
-                    InputUtil.pauseScreen();
+            patientUI.printInvalidChoiceMessage();
             }
             if (choice != 7 && choice != 4) {
                 InputUtil.pauseScreen();
@@ -98,10 +96,9 @@ public class PatientMaintenance {
                     InputUtil.clearScreen();
                     new QueueMaintenance().run();
                 }
-                case 3 -> System.out.println("Returning to main menu...");
+                case 3 -> patientUI.printReturningToMainMenu();
                 default -> {
-                    System.out.println("Invalid selection.");
-                    InputUtil.pauseScreen();
+                    patientUI.printInvalidChoiceMessage();
                 }
             }
         } while (choice != 3);
@@ -124,9 +121,9 @@ public class PatientMaintenance {
                     case COMPLETED -> completed++;
                 }
             }
-            System.out.println("Queue Summary: WAITING="+waiting+" CALLED="+called+" IN_PROGRESS="+inprog+" SKIPPED="+skipped+" COMPLETED="+completed);
+            patientUI.displayQueueSummary(waiting, called, inprog, skipped, completed);
         } catch(Exception e) {
-            System.out.println("Queue Summary: (error loading queue)");
+            patientUI.displayQueueSummary(0,0,0,0,0);
         }
     }
 
@@ -172,9 +169,8 @@ public class PatientMaintenance {
     }
 
     public void addNewPatient() {
-        clinicUI.printHeader("Clinic Patient Maintenance");
-        System.out.println("Adding a New Patient (Enter '0' to go back)");
-        System.out.println("─".repeat(50));
+    clinicUI.printHeader("Clinic Patient Maintenance");
+    patientUI.showAddPatientIntro();
         
         String name = getInputWithBackOption("Enter patient name: ");
         if (name == null) return; // User chose to go back
@@ -202,9 +198,9 @@ public class PatientMaintenance {
     }   
 
     public void updatePatient() {
-        clinicUI.printHeader("Clinic Patient Maintenance");
-        System.out.println("Updating Patient Details (Enter '0' to go back)");
-        System.out.println("─".repeat(50));
+    clinicUI.printHeader("Clinic Patient Maintenance");
+    System.out.println("Updating Patient Details (Enter '0' to go back)");
+    System.out.println("─".repeat(50));
         
         String patientId = InputUtil.getInput(scanner, "Enter patient ID to update: ");
         if (patientId.equals("0")) {
@@ -216,11 +212,7 @@ public class PatientMaintenance {
         if (patient != null) {
             InputUtil.clearScreen();
             clinicUI.printHeader("Clinic Patient Maintenance");
-            System.out.println("Updating Patient: " + patient.getName() + " (" + patient.getId() + ")");
-            System.out.println("─".repeat(50));
-            patientUI.displayPatientDetails(patient);
-            System.out.println("Enter new values (leave blank to keep current, '0' to cancel):");
-            System.out.println("─".repeat(50));
+            patientUI.showUpdateIntro(patient);
             
             // For each field: show current, allow blank to keep
             patient.setName(promptOptionalNonEmpty("Name", patient.getName()));
@@ -253,7 +245,7 @@ public class PatientMaintenance {
             if (inp.isEmpty()) return current;
             if (inp.equalsIgnoreCase("M")) return mMeaning;
             if (inp.equalsIgnoreCase("F")) return fMeaning;
-            System.out.println("Please enter only M or F.");
+            patientUI.displayInvalidGenderMessage();
         }
     }
 
@@ -263,7 +255,7 @@ public class PatientMaintenance {
             String inp = InputUtil.getInput(scanner, "Enter new " + label + " value (leave blank to keep): ");
             if (inp.isEmpty()) return current;
             if (inp.matches("^[0-9]{7,15}$")) return inp;
-            System.out.println("Invalid phone (digits 7-15). Try again.");
+            patientUI.displayInvalidPhoneMessage();
         }
     }
 
@@ -273,7 +265,7 @@ public class PatientMaintenance {
             String inp = InputUtil.getInput(scanner, "Enter new " + label + " value (leave blank to keep): ");
             if (inp.isEmpty()) return current;
             if (inp.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) return inp;
-            System.out.println("Invalid email format. Try again.");
+            patientUI.displayInvalidEmailMessage();
         }
     }
 
@@ -282,7 +274,7 @@ public class PatientMaintenance {
         while (true) {
             String inp = InputUtil.getInput(scanner, "Enter new " + label + " value (leave blank to keep): ");
             if (inp.isEmpty()) return current;
-            try { java.time.LocalDate.parse(inp); return inp; } catch(Exception e){ System.out.println("Invalid date (yyyy-MM-dd). Try again."); }
+            try { java.time.LocalDate.parse(inp); return inp; } catch(Exception e){ patientUI.displayInvalidDateMessage(); }
         }
     }
 
@@ -311,8 +303,7 @@ public class PatientMaintenance {
 
     public void searchPatient() {
         clinicUI.printHeader("Clinic Patient Maintenance");
-        System.out.println("Search for a Patient (Enter '0' to go back)");
-        System.out.println("─".repeat(50));
+        patientUI.showSearchIntro();
         
         String query = InputUtil.getInput(scanner, "Enter patient ID or name to search: ");
         if (query.equals("0")) {
@@ -323,8 +314,7 @@ public class PatientMaintenance {
         if (foundPatients.size() > 0) {
             InputUtil.clearScreen();
             clinicUI.printHeader("Clinic Patient Maintenance");
-            System.out.println("Search Results for: \"" + query + "\"");
-            System.out.println("─".repeat(50));
+            patientUI.showSearchResultsHeader(query);
             
             // Build table string similar to getAllPatients()
             StringBuilder sb = new StringBuilder();
@@ -347,9 +337,8 @@ public class PatientMaintenance {
     }
 
     public void deletePatient() {
-        clinicUI.printHeader("Clinic Patient Maintenance");
-        System.out.println("Deleting a Patient (Enter '0' to go back)");
-        System.out.println("─".repeat(50));
+    clinicUI.printHeader("Clinic Patient Maintenance");
+    patientUI.showDeleteIntro();
         
         String patientId = InputUtil.getInput(scanner, "Enter patient ID to delete: ");
         if (patientId.equals("0")) {
@@ -359,7 +348,7 @@ public class PatientMaintenance {
         Patient patient = findPatientById(patientId);
 
         if (patient != null) {
-            System.out.println("\nPatient found:");
+            patientUI.showPatientFound();
             patientUI.displayPatientDetails(patient);
             System.out.println("─".repeat(50));
             
@@ -370,7 +359,7 @@ public class PatientMaintenance {
                 patientDAO.saveToFile(patientList);
                 patientUI.displayDeletedMessage(patientId);
             } else {
-                System.out.println("Delete operation cancelled.");
+                patientUI.showDeleteCancelled();
             }
         } else {
             patientUI.displayNotFoundMessage(patientId);
@@ -412,9 +401,8 @@ public class PatientMaintenance {
     }
     
     private void viewPatientVisitRecords() {
-        clinicUI.printHeader("Clinic Patient Maintenance");
-        System.out.println("View Patient Visit Records (Enter '0' to go back)");
-        System.out.println("─".repeat(50));
+    clinicUI.printHeader("Clinic Patient Maintenance");
+    patientUI.displayVisitRecordsIntro();
         
         // Show available patients
         patientUI.displayPatientsTable(getAllPatients());
@@ -427,7 +415,7 @@ public class PatientMaintenance {
         // Find patient
         Patient patient = findPatientById(patientId);
         if (patient == null) {
-            System.out.println("Patient not found.");
+            patientUI.displayNotFoundMessage(patientId);
             return;
         }
         
@@ -439,9 +427,8 @@ public class PatientMaintenance {
         ADTInterface<Medication> medications = medicationDAO.load();
         ADTInterface<Doctor> doctors = doctorDAO.retrieveFromFile();
         
-        // Display patient info
-        System.out.println("\nPatient: " + patient.getName() + " (" + patient.getId() + ")");
-        System.out.println("═".repeat(80));
+    // Display patient info
+    patientUI.displayPatientVisitOverview(patient);
         
         // Find consultations for this patient
         ADTInterface<Consultation> patientConsultations = new CustomADT<>();
@@ -453,30 +440,15 @@ public class PatientMaintenance {
         }
         
         if (patientConsultations.size() == 0) {
-            System.out.println("No visit records found for this patient.");
+            patientUI.displayNoVisitRecords();
             return;
         }
         
         // Display visit records table
-        System.out.println("\nVisit Records:");
-        System.out.printf("%-12s | %-12s | %-20s | %-12s | %-10s%n", 
-                         "ConsultationID", "Date", "Reason", "Doctor", "Status");
-        System.out.println("─".repeat(80));
-        
-        for (int i = 0; i < patientConsultations.size(); i++) {
-            Consultation c = patientConsultations.get(i);
-            String doctorName = getDoctorName(doctors, c.getDoctorId());
-            System.out.printf("%-12s | %-12s | %-20s | %-12s | %-10s%n",
-                             c.getId(), 
-                             c.getDate().toString(), 
-                             c.getReason(), 
-                             doctorName, 
-                             c.getStatus());
-        }
+        patientUI.displayVisitRecordsTable(patientConsultations, doctors);
         
         // Prompt for detailed view
-        System.out.println("\nEnter consultation ID to view details (or press Enter to return): ");
-        String consultationId = InputUtil.getInput(scanner, "").trim();
+        String consultationId = patientUI.promptConsultationIdForDetails();
         
         if (!consultationId.isEmpty()) {
             InputUtil.clearScreen();
@@ -498,23 +470,9 @@ public class PatientMaintenance {
         }
         
         if (consultation == null) {
-            System.out.println("Consultation not found.");
+            patientUI.displayNotFoundMessage(consultationId);
             return;
         }
-        
-        // Display consultation details
-        System.out.println("\n" + "═".repeat(60));
-        System.out.println("CONSULTATION DETAILS");
-        System.out.println("═".repeat(60));
-        System.out.println("Consultation ID: " + consultation.getId());
-        System.out.println("Date: " + consultation.getDate());
-        System.out.println("Patient ID: " + consultation.getPatientId());
-        System.out.println("Doctor: " + getDoctorName(doctors, consultation.getDoctorId()));
-        System.out.println("Reason: " + consultation.getReason());
-        if (consultation.getNotes() != null && !consultation.getNotes().isEmpty()) {
-            System.out.println("Notes: " + consultation.getNotes());
-        }
-        System.out.println("Status: " + consultation.getStatus());
         
         // Find and display treatments for this consultation
         ADTInterface<Treatment> consultationTreatments = new CustomADT<>();
@@ -524,84 +482,12 @@ public class PatientMaintenance {
                 consultationTreatments.add(t);
             }
         }
-        
-        if (consultationTreatments.size() > 0) {
-            System.out.println("\n" + "─".repeat(60));
-            System.out.println("TREATMENTS:");
-            System.out.println("─".repeat(60));
-            
-            for (int i = 0; i < consultationTreatments.size(); i++) {
-                Treatment t = consultationTreatments.get(i);
-                System.out.println("\nTreatment ID: " + t.getId());
-                System.out.println("Type: " + t.getType());
-                if (t.getName() != null && !t.getName().isEmpty()) {
-                    System.out.println("Name: " + t.getName());
-                }
-                if (t.getInstructions() != null && !t.getInstructions().isEmpty()) {
-                    System.out.println("Instructions: " + t.getInstructions());
-                }
-                if (t.getNotes() != null && !t.getNotes().isEmpty()) {
-                    System.out.println("Notes: " + t.getNotes());
-                }
-                System.out.println("Status: " + t.getStatus());
-                if (t.getOrderedDate() != null) {
-                    System.out.println("Ordered Date: " + t.getOrderedDate());
-                }
-                if (t.getCost() != null) {
-                    System.out.println("Cost: $" + String.format("%.2f", t.getCost()));
-                }
-                
-                // Display linked medications
-                if (t.getMedicationIds() != null && t.getMedicationIds().length > 0) {
-                    System.out.println("Medications:");
-                    for (String medId : t.getMedicationIds()) {
-                        Medication med = findMedicationById(medications, medId);
-                        if (med != null) {
-                            System.out.println("  - " + med.getName() + " (" + medId + ")");
-                            if (med.getDosage() != null) {
-                                System.out.println("    Dosage: " + med.getDosage());
-                            }
-                            if (med.getFrequency() != null) {
-                                System.out.println("    Frequency: " + med.getFrequency());
-                            }
-                            if (med.getInstructions() != null) {
-                                System.out.println("    Instructions: " + med.getInstructions());
-                            }
-                        }
-                    }
-                }
-                System.out.println("─".repeat(40));
-            }
-        } else {
-            System.out.println("\nNo treatments recorded for this consultation.");
-        }
-        
-        InputUtil.pauseScreen();
+
+        // delegate details display to UI
+        patientUI.displayConsultationDetails(consultation, consultationTreatments, medications, doctors);
     }
     
-    private String getDoctorName(ADTInterface<Doctor> doctors, String doctorId) {
-        if (doctorId == null || doctorId.equals("UNASSIGNED")) {
-            return "UNASSIGNED";
-        }
-        
-        for (int i = 0; i < doctors.size(); i++) {
-            Doctor d = doctors.get(i);
-            if (d.getId().equals(doctorId)) {
-                return d.getName();
-            }
-        }
-        return doctorId; // Return ID if name not found
-    }
-    
-    private Medication findMedicationById(ADTInterface<Medication> medications, String medicationId) {
-        for (int i = 0; i < medications.size(); i++) {
-            Medication m = medications.get(i);
-            if (m.getId().equals(medicationId)) {
-                return m;
-            }
-        }
-        return null;
-    }
+    // moved display helpers into UI
     
     // Helper methods for input with back option
     private String getInputWithBackOption(String prompt) {
@@ -613,7 +499,7 @@ public class PatientMaintenance {
             if (!input.trim().isEmpty()) {
                 return input.trim();
             }
-            System.out.println("Input cannot be empty. Please try again or enter '0' to go back.");
+            patientUI.displayEmptyInputOrBackMessage();
         }
     }
     
@@ -629,7 +515,7 @@ public class PatientMaintenance {
             if (input.equalsIgnoreCase("F")) {
                 return fMeaning;
             }
-            System.out.println("Please enter M, F, or 0 to go back.");
+            patientUI.displayInvalidGenderOrBackMessage();
         }
     }
     
@@ -642,7 +528,7 @@ public class PatientMaintenance {
             if (input.matches("^[0-9]{7,15}$")) {
                 return input;
             }
-            System.out.println("Invalid phone number (7-15 digits only). Please try again or enter '0' to go back.");
+            patientUI.displayInvalidPhoneWithBackMessage();
         }
     }
     
@@ -655,7 +541,7 @@ public class PatientMaintenance {
             if (input.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
                 return input;
             }
-            System.out.println("Invalid email format. Please try again or enter '0' to go back.");
+            patientUI.displayInvalidEmailWithBackMessage();
         }
     }
     
@@ -669,9 +555,88 @@ public class PatientMaintenance {
                 java.time.LocalDate.parse(input);
                 return input;
             } catch (Exception e) {
-                System.out.println("Invalid date format (use yyyy-MM-dd). Please try again or enter '0' to go back.");
+                patientUI.displayInvalidDateWithBackMessage();
             }
         }
+    }
+
+    private void viewPatientDetails() {
+        clinicUI.printHeader("Clinic Patient Maintenance");
+        System.out.println("View Patient Details (Enter '0' to go back)");
+        System.out.println("─".repeat(50));
+        
+        // Show all patients first
+        patientUI.displayPatientsTable(getAllPatients());
+        
+        String patientId = InputUtil.getInput(scanner, "Enter patient ID to view details: ");
+        if (patientId.equals("0")) {
+            return; // Go back
+        }
+        
+        Patient patient = findPatientById(patientId);
+        if (patient != null) {
+            InputUtil.clearScreen();
+            clinicUI.printHeader("Clinic Patient Maintenance");
+            System.out.println("═".repeat(60));
+            System.out.println("PATIENT DETAILED INFORMATION");
+            System.out.println("═".repeat(60));
+            patientUI.displayPatientDetails(patient);
+            
+            // Show additional statistics
+            System.out.println("\nAdditional Information:");
+            System.out.println("─".repeat(40));
+            
+            try {
+                // Count consultations for this patient
+                ADTInterface<Consultation> allConsultations = consultationDAO.load();
+                int consultationCount = 0;
+                for (int i = 0; i < allConsultations.size(); i++) {
+                    Consultation consultation = allConsultations.get(i);
+                    if (consultation != null && 
+                        consultation.getPatientId() != null && 
+                        consultation.getPatientId().equals(patientId)) {
+                        consultationCount++;
+                    }
+                }
+                System.out.println("Total Consultations: " + consultationCount);
+                
+                // Count treatments for this patient
+                ADTInterface<Treatment> allTreatments = treatmentDAO.load();
+                int treatmentCount = 0;
+                for (int i = 0; i < allTreatments.size(); i++) {
+                    Treatment treatment = allTreatments.get(i);
+                    // Check if treatment has a valid consultation ID
+                    if (treatment != null && treatment.getConsultationId() != null) {
+                        // Treatments are linked to consultations, so we need to find consultations for this patient first
+                        for (int j = 0; j < allConsultations.size(); j++) {
+                            Consultation consultation = allConsultations.get(j);
+                            if (consultation != null && 
+                                consultation.getPatientId() != null && 
+                                consultation.getId() != null &&
+                                consultation.getPatientId().equals(patientId) && 
+                                treatment.getConsultationId().equals(consultation.getId())) {
+                                treatmentCount++;
+                                break;
+                            }
+                        }
+                    }
+                }
+                System.out.println("Total Treatments: " + treatmentCount);
+            } catch (Exception e) {
+                System.out.println("Error loading patient statistics: " + e.getMessage());
+                System.out.println("Total Consultations: Unable to calculate");
+                System.out.println("Total Treatments: Unable to calculate");
+            }
+            System.out.println("═".repeat(60));
+        } else {
+            patientUI.displayNotFoundMessage(patientId);
+        }
+        utility.InputUtil.pauseScreen();
+        
+        // Show the patient list again after viewing details
+        InputUtil.clearScreen();
+        clinicUI.printHeader("Clinic Patient Maintenance");
+        patientUI.displayPatientsTable(getAllPatients());
     }
 
 }

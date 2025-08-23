@@ -9,4 +9,92 @@
   "quantity" : 50,
   "instructions" : "HEHE",
   "notes" : "12"
+}, {
+  "id" : "M0002",
+  "name" : "Paracetamol",
+  "code" : "PCM",
+  "dosage" : "500 mg",
+  "frequency" : "Every 6 hours",
+  "route" : "oral",
+  "durationDays" : 5,
+  "quantity" : 20,
+  "instructions" : "Take after food",
+  "notes" : ""
+}, {
+  "id" : "M0003",
+  "name" : "Ibuprofen",
+  "code" : "IBU",
+  "dosage" : "200 mg",
+  "frequency" : "Every 8 hours",
+  "route" : "oral",
+  "durationDays" : 7,
+  "quantity" : 21,
+  "instructions" : "Do not take on empty stomach",
+  "notes" : "Avoid if ulcer"
+}, {
+  "id" : "M0004",
+  "name" : "Amoxicillin",
+  "code" : "AMX",
+  "dosage" : "500 mg",
+  "frequency" : "3 times daily",
+  "route" : "oral",
+  "durationDays" : 7,
+  "quantity" : 21,
+  "instructions" : "Complete full course",
+  "notes" : ""
+}, {
+  "id" : "M0005",
+  "name" : "Metformin",
+  "code" : "MET",
+  "dosage" : "500 mg",
+  "frequency" : "Twice daily",
+  "route" : "oral",
+  "durationDays" : 30,
+  "quantity" : 60,
+  "instructions" : "With meals",
+  "notes" : "Type 2 DM"
+}, {
+  "id" : "M0006",
+  "name" : "Lisinopril",
+  "code" : "LIS",
+  "dosage" : "10 mg",
+  "frequency" : "Once daily",
+  "route" : "oral",
+  "durationDays" : 30,
+  "quantity" : 30,
+  "instructions" : "Take at the same time each day",
+  "notes" : "Monitor BP"
+}, {
+  "id" : "M0007",
+  "name" : "Amlodipine",
+  "code" : "AML",
+  "dosage" : "5 mg",
+  "frequency" : "Once daily",
+  "route" : "oral",
+  "durationDays" : 30,
+  "quantity" : 30,
+  "instructions" : "",
+  "notes" : "May cause edema"
+}, {
+  "id" : "M0008",
+  "name" : "Omeprazole",
+  "code" : "OMP",
+  "dosage" : "20 mg",
+  "frequency" : "Once daily",
+  "route" : "oral",
+  "durationDays" : 14,
+  "quantity" : 14,
+  "instructions" : "Before breakfast",
+  "notes" : ""
+}, {
+  "id" : "M0009",
+  "name" : "Albuterol Inhaler",
+  "code" : "ALB",
+  "dosage" : "2 puffs",
+  "frequency" : "Every 4-6 hours PRN",
+  "route" : "inhalation",
+  "durationDays" : 30,
+  "quantity" : 1,
+  "instructions" : "Shake well before use",
+  "notes" : "Rescue inhaler"
 } ]

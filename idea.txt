@@ -2,3 +2,25 @@ consultation
 field : type : Booked, WalkIn
 When queue add -> create a default walkin type consultation
 Queue add got two option, booked -> show all booked consultation and not completed consultation . 
+
+
+
+
+(Idea for Doctor Maintenance reporting feature)
+Clinic Duty Schedule Dashboard
+═══════════════════════════════════════════════════════════════
+Total Doctors: 5    |    Active Today: 3    |    Coverage: 85%
+
+Current On Duty (10:30 AM):
+✓ Dr. Smith (General)     - Until 12:00
+✓ Dr. Johnson (Cardiology) - Until 14:00
+
+Next Shift Changes:
+• 12:00 - Dr. Smith ends, Dr. Doe starts
+• 14:00 - Dr. Johnson ends, Dr. Lee starts
+
+Weekly Coverage Summary:
+Mon: ████████░░ 80%    Fri: ██████████ 100%
+Tue: ██████████ 100%   Sat: ████░░░░░░ 40%
+Wed: ████████░░ 80%    Sun: ░░░░░░░░░░ 0%
+Thu: ██████████ 100%

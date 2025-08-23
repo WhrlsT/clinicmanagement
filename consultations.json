@@ -2,24 +2,40 @@
   "id" : "C0001",
   "patientId" : "P0001",
   "doctorId" : "D0001",
-  "date" : [ 2025, 8, 25 ],
-  "reason" : "i think i am him",
+  "date" : [ 2025, 8, 25, 0, 0 ],
+  "reason" : "hi",
   "notes" : "",
-  "status" : "ONGOING"
+  "status" : "ONGOING",
+  "calendarEventId" : null,
+  "followUpOfId" : null
 }, {
   "id" : "C0002",
-  "patientId" : "P0003",
-  "doctorId" : "D0005",
-  "date" : [ 2025, 8, 23 ],
-  "reason" : "I am ayg",
-  "notes" : "Queue",
-  "status" : "TREATED"
+  "patientId" : "P0001",
+  "doctorId" : "D0001",
+  "date" : [ 2025, 8, 25, 0, 0 ],
+  "reason" : "Sick",
+  "notes" : "",
+  "status" : "ONGOING",
+  "calendarEventId" : null,
+  "followUpOfId" : null
 }, {
   "id" : "C0003",
-  "patientId" : "P0007",
+  "patientId" : "P0002",
   "doctorId" : "D0001",
-  "date" : [ 2025, 8, 24 ],
-  "reason" : "hi",
-  "notes" : "Queue",
-  "status" : "ONGOING"
+  "date" : [ 2025, 8, 25, 0, 0 ],
+  "reason" : "I am sick",
+  "notes" : "",
+  "status" : "BOOKED",
+  "calendarEventId" : null,
+  "followUpOfId" : null
+}, {
+  "id" : "C0004",
+  "patientId" : "P0001",
+  "doctorId" : "D0001",
+  "date" : [ 2025, 9, 1, 0, 0 ],
+  "reason" : "Follow-up for C0001",
+  "notes" : "",
+  "status" : "BOOKED",
+  "calendarEventId" : null,
+  "followUpOfId" : "C0001"
 } ]

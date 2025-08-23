@@ -189,10 +189,10 @@ public class QueueMaintenance {
         if (e==null){System.out.println("Not found.");return;}
         if (e.getStatus()!=QueueStatus.IN_PROGRESS){System.out.println("Patient not in progress (must be called first).");return;}
         
-        // Get current time and date for consultation
-        int hour = LocalTime.now().getHour();
-        LocalDate date = LocalDate.now();
-        String doctorId = pickDoctorForEntry(e, date, hour);
+    // Get current time and date for consultation
+    int hour = java.time.LocalTime.now().getHour();
+    java.time.LocalDate date = java.time.LocalDate.now();
+    String doctorId = pickDoctorForEntry(e, date, hour);
         
         // Always create a consultation record
         if (doctorId==null) {
@@ -200,8 +200,19 @@ public class QueueMaintenance {
             doctorId = "UNASSIGNED"; // Use placeholder for unassigned consultations
         }
         
-        // Create and save consultation record
-        Consultation c = new Consultation(nextConsultationId(), e.getPatientId(), doctorId, date, e.getReason(), "Queue", Consultation.Status.ONGOING);
+    // Create and save consultation record (with date+hour)
+    java.time.LocalDateTime dt = date.atTime(hour,0);
+        Consultation c = new Consultation(nextConsultationId(), e.getPatientId(), doctorId, dt, e.getReason(), "Queue", Consultation.Status.ONGOING);
+        // Create a calendar event when a specific doctor is assigned
+        if (!"UNASSIGNED".equals(doctorId)) {
+            try {
+                Doctor d = findDoctor(doctorId);
+                if (d != null && d.getCalendarId()!=null && !d.getCalendarId().isEmpty()) {
+                    String evId = utility.GoogleCalendarService.getInstance().addConsultationEvent(d, dt, 60, "Consultation - " + e.getPatientId(), e.getReason());
+                    c.setCalendarEventId(evId);
+                }
+            } catch (Exception ignored) {}
+        }
         consultations.add(c);
         consultationDAO.save(consultations);
         System.out.println("(/) Consultation logged: "+c.getId());
@@ -266,8 +277,8 @@ public class QueueMaintenance {
     }
 
     private void viewRecentConsultations() {
-        LocalDate today = LocalDate.now();
-        System.out.println("\n-- Recent Consultations (Today: " + today + ") --");
+    java.time.LocalDate today = java.time.LocalDate.now();
+    System.out.println("\n-- Recent Consultations (Today: " + today + ") --");
         
         if (consultations.size() == 0) {
             System.out.println("No consultations found.");
@@ -281,12 +292,12 @@ public class QueueMaintenance {
         
         for (int i = 0; i < consultations.size(); i++) {
             Consultation c = consultations.get(i);
-            if (c.getDate().equals(today)) {
+            if (c.getDate().toLocalDate().equals(today)) {
                 hasToday = true;
                 String doctorDisplay = c.getDoctorId().equals("UNASSIGNED") ? "(!!) UNASSIGNED" : c.getDoctorId();
                 System.out.printf("%-8s %-10s %-10s %-12s %-20s %-10s%n",
-                                 c.getId(), c.getPatientId(), doctorDisplay, 
-                                 c.getDate(), c.getReason(), c.getStatus());
+                                 c.getId(), c.getPatientId(), doctorDisplay,
+                                 c.getDate().toString(), c.getReason(), c.getStatus());
             }
         }
         
@@ -298,20 +309,20 @@ public class QueueMaintenance {
     private Doctor findDoctor(String id){ for (int i=0;i<doctors.size();i++) if (doctors.get(i).getId().equals(id)) return doctors.get(i); return null; }
     private Patient findPatient(String id){ for (int i=0;i<patients.size();i++) if (patients.get(i).getId().equals(id)) return patients.get(i); return null; }
 
-    private boolean doctorFree(String doctorId, LocalDate date, int hour) {
+    private boolean doctorFree(String doctorId, java.time.LocalDate date, int hour) {
         Doctor d = findDoctor(doctorId);
         if (d==null) return false;
         int dayIdx = date.getDayOfWeek().getValue()-1;
         if (!d.getSchedule().isAvailable(dayIdx,hour)) return false;
         for (int i=0;i<consultations.size();i++) {
             Consultation c = consultations.get(i);
-            // date-only model: consider at most one consultation per doctor per date from queue auto-complete
-            if (c.getDoctorId().equals(doctorId) && c.getDate().equals(date)) return false;
+        // consider a consultation booked at the same date+hour
+        if (c.getDoctorId().equals(doctorId) && c.getDate().equals(date.atTime(hour,0))) return false;
         }
         return true;
     }
 
-    private String pickDoctorForEntry(PatientQueueEntry e, LocalDate date, int hour) {
+    private String pickDoctorForEntry(PatientQueueEntry e, java.time.LocalDate date, int hour) {
         if (e.getPreferredDoctorId()!=null && doctorFree(e.getPreferredDoctorId(), date, hour)) return e.getPreferredDoctorId();
         // fallback first free
         for (int i=0;i<doctors.size();i++) if (doctorFree(doctors.get(i).getId(), date, hour)) return doctors.get(i).getId();

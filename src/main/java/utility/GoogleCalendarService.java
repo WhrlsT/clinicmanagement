@@ -156,4 +156,45 @@ public class GoogleCalendarService {
         for (Event ev : events.getItems()) if ("Duty".equalsIgnoreCase(ev.getSummary())) return ev;
         return null;
     }
+
+    // === Consultation Events ===
+    public String addConsultationEvent(Doctor doctor, LocalDateTime startLocal, int durationMinutes, String summary, String description) throws IOException {
+        ensureCalendar(doctor);
+        ZoneId zone = ZoneId.systemDefault();
+        ZonedDateTime start = startLocal.atZone(zone);
+        ZonedDateTime end = start.plusMinutes(Math.max(15, durationMinutes));
+        Event event = new Event()
+                .setSummary(summary == null ? "Consultation" : summary)
+                .setDescription(description)
+                .setStart(new EventDateTime().setDateTime(new com.google.api.client.util.DateTime(start.toInstant().toEpochMilli())).setTimeZone(zone.toString()))
+                .setEnd(new EventDateTime().setDateTime(new com.google.api.client.util.DateTime(end.toInstant().toEpochMilli())).setTimeZone(zone.toString()));
+        Event created = service.events().insert(doctor.getCalendarId(), event).execute();
+        return created.getId();
+    }
+
+    public boolean updateConsultationEvent(Doctor doctor, String eventId, LocalDateTime newStart, int durationMinutes) throws IOException {
+        if (doctor.getCalendarId() == null || eventId == null || eventId.isBlank()) return false;
+        try {
+            Event event = service.events().get(doctor.getCalendarId(), eventId).execute();
+            ZoneId zone = ZoneId.systemDefault();
+            ZonedDateTime start = newStart.atZone(zone);
+            ZonedDateTime end = start.plusMinutes(Math.max(15, durationMinutes));
+            event.setStart(new EventDateTime().setDateTime(new com.google.api.client.util.DateTime(start.toInstant().toEpochMilli())).setTimeZone(zone.toString()));
+            event.setEnd(new EventDateTime().setDateTime(new com.google.api.client.util.DateTime(end.toInstant().toEpochMilli())).setTimeZone(zone.toString()));
+            service.events().update(doctor.getCalendarId(), eventId, event).execute();
+            return true;
+        } catch (com.google.api.client.googleapis.json.GoogleJsonResponseException e) {
+            return false;
+        }
+    }
+
+    public boolean removeConsultationEvent(Doctor doctor, String eventId) throws IOException {
+        if (doctor.getCalendarId() == null || eventId == null || eventId.isBlank()) return false;
+        try {
+            service.events().delete(doctor.getCalendarId(), eventId).execute();
+            return true;
+        } catch (com.google.api.client.googleapis.json.GoogleJsonResponseException e) {
+            return false;
+        }
+    }
 }

@@ -32,7 +32,7 @@ public class TreatmentUI {
         System.out.printf("%-8s|%-10s|%-10s|%-10s|%-10s%n","ID","Patient","Doctor","Date","Reason");
         for (int i=0;i<consultations.size();i++){
             entity.Consultation c = consultations.get(i);
-            System.out.printf("%-8s|%-10s|%-10s|%-10s|%-10s%n", c.getId(), nz(c.getPatientId()), nz(c.getDoctorId()), nz(c.getDate()), nz(c.getReason()));
+            System.out.printf("%-8s|%-10s|%-10s|%-10s|%-10s%n", c.getId(), nz(c.getPatientId()), nz(c.getDoctorId()), nz(c.getDate()==null?null:c.getDate().toString()), nz(c.getReason()));
         }
     }
 
