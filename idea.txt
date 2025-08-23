@@ -1,0 +1,4 @@
+consultation
+field : type : Booked, WalkIn
+When queue add -> create a default walkin type consultation
+Queue add got two option, booked -> show all booked consultation and not completed consultation . 

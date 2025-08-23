@@ -5,13 +5,10 @@ import dao.ConsultationDAO;
 import dao.DoctorDAO;
 import dao.PatientDAO;
 import entity.*;
-import utility.GoogleCalendarService;
 import utility.InputUtil;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
 
 public class ConsultationMaintenance {
@@ -40,19 +37,17 @@ public class ConsultationMaintenance {
             System.out.println("2. List Consultations");
             System.out.println("3. Cancel Consultation");
             System.out.println("4. Reschedule Consultation");
-            System.out.println("5. Doctor Next 5 Free Slots");
-            System.out.println("6. Back");
+            System.out.println("5. Back");
             choice = InputUtil.getIntInput(scanner, "Choose: ");
             switch (choice) {
                 case 1 -> book();
                 case 2 -> list();
                 case 3 -> cancel();
                 case 4 -> reschedule();
-                case 5 -> nextFreeSlots();
-                case 6 -> {}
+                case 5 -> {}
                 default -> System.out.println("Invalid");
             }
-    } while (choice != 6);
+    } while (choice != 5);
     }
 
     private void book() {
@@ -70,40 +65,25 @@ public class ConsultationMaintenance {
         Patient patient = findPatient(patientId);
         if (patient==null){System.out.println("Patient not found");return;}
 
-        // 3. Show upcoming availability for doctor (next 14 days)
-        printUpcomingAvailability(doctor, 14, 7);
-        LocalDate date = readDate(); if (date==null) return;
-
-        // 4. Show free hours for chosen date
-        List<Integer> freeHours = getFreeHoursForDoctorDate(doctor, date);
-        if (freeHours.isEmpty()) { System.out.println("No free hours that date."); return; }
-        System.out.print("Free hours: "); freeHours.forEach(h-> System.out.print(h+" ")); System.out.println();
-        int hour = InputUtil.getIntInput(scanner, "Hour (choose from list): ");
-        if (!freeHours.contains(hour)) { System.out.println("Hour not in free list"); return; }
+    // 3. Pick a date only
+    LocalDate date = readDate(); if (date==null) return;
 
 
-        // 5. Reason & booking
+    // 4. Reason & booking
         String reason = InputUtil.getInput(scanner, "Reason: ");
         String id = nextConsultationId();
-    Consultation c = new Consultation(id, patientId, doctorId, date, hour, reason, "");
+    Consultation c = new Consultation(id, patientId, doctorId, date, reason, "", Consultation.Status.ONGOING);
         consultations.add(c);
         persist();
-        try {
-            GoogleCalendarService gcal = GoogleCalendarService.getInstance();
-            gcal.ensureCalendar(doctor);
-            gcal.addDutyHour(doctor,date,hour);
-        } catch (Exception e) {
-            System.out.println("Calendar sync failed: "+e.getMessage());
-        }
     System.out.println("Booked consultation ID: "+id);
     }
 
     private void list() {
         if (consultations.size()==0){System.out.println("None.");return;}
-    System.out.printf("%-8s %-8s %-8s %-12s %-4s %-10s %-15s%n","ID","Doctor","Patient","Date","Hr","Reason","Notes");
+        System.out.printf("%-8s %-8s %-8s %-12s %-10s %-10s%n","ID","Doctor","Patient","Date","Status","Reason");
         for (int i=0;i<consultations.size();i++) {
             Consultation c = consultations.get(i);
-            System.out.printf("%-8s %-8s %-8s %-12s %-4d %-10s %-15s%n",c.getId(),c.getDoctorId(),c.getPatientId(),c.getDate(),c.getHour(),c.getReason(),c.getNotes());
+            System.out.printf("%-8s %-8s %-8s %-12s %-10s %-10s%n",c.getId(),c.getDoctorId(),c.getPatientId(),c.getDate(),c.getStatus(),c.getReason());
         }
     }
 
@@ -127,38 +107,13 @@ public class ConsultationMaintenance {
     Consultation c = null;
     for (int i=0;i<consultations.size();i++) if (consultations.get(i).getId().equals(id)){c=consultations.get(i);break;}
         if (c==null){System.out.println("Not found.");return;}
-        Doctor doctor = findDoctor(c.getDoctorId());
+    // Doctor retrieval no longer needed for hour-based checks
     // No room release needed
-        LocalDate newDate = readDate(); if (newDate==null) return; int newHour = InputUtil.getIntInput(scanner,"New hour (0-23): ");
-        int newDay = newDate.getDayOfWeek().getValue()-1;
-        if (!doctor.getSchedule().isAvailable(newDay,newHour) || !isDoctorHourFree(c.getDoctorId(),newDate,newHour)) {
-            System.out.println("Doctor not free.");
-            // re-book old
-            // No re-book doctor template needed
-            // no room rollback
-            return;
-        }
-        c.setDate(newDate); c.setHour(newHour);
+    LocalDate newDate = readDate(); if (newDate==null) return;
+    // With date-only consultations, just update date
+    c.setDate(newDate);
         persist();
         System.out.println("Rescheduled.");
-    }
-
-    private void nextFreeSlots() {
-        String doctorId = InputUtil.getInput(scanner, "Doctor ID: ");
-        Doctor doctor = findDoctor(doctorId); if (doctor==null){System.out.println("Not found");return;}
-        int count=0; LocalDate date = LocalDate.now();
-        while (count<5) {
-            int dayIdx = date.getDayOfWeek().getValue()-1;
-            for (int h=0; h<24 && count<5; h++) {
-                if (doctor.getSchedule().isAvailable(dayIdx,h) && isDoctorHourFree(doctorId,date,h)) {
-                    System.out.println(date+" " + h+":00");
-                    count++;
-                }
-            }
-            date = date.plusDays(1);
-            if (date.isAfter(LocalDate.now().plusDays(30))) break; // limit search horizon
-        }
-        if (count==0) System.out.println("No free slots in next 30 days.");
     }
 
 
@@ -166,13 +121,7 @@ public class ConsultationMaintenance {
     private Patient findPatient(String id){ for (int i=0;i<patients.size();i++) if (patients.get(i).getId().equals(id)) return patients.get(i); return null; }
     // Room model removed
 
-    private boolean isDoctorHourFree(String doctorId, LocalDate date, int hour) {
-        for (int i=0;i<consultations.size();i++) {
-            Consultation c = consultations.get(i);
-            if (c.getDoctorId().equals(doctorId) && c.getDate().equals(date) && c.getHour()==hour) return false;
-        }
-        return true;
-    }
+    // hour-based checks removed
 
     // No room selection now
 
@@ -214,32 +163,7 @@ public class ConsultationMaintenance {
     if (patients.size()==0) System.out.println("(No patients found)");
     }
 
-    private List<Integer> getFreeHoursForDoctorDate(Doctor doctor, LocalDate date) {
-        List<Integer> list = new ArrayList<>();
-        int dayIdx = date.getDayOfWeek().getValue() - 1;
-        for (int h=0; h<24; h++) {
-            if (doctor.getSchedule().isAvailable(dayIdx,h) && isDoctorHourFree(doctor.getId(), date, h)) {
-                list.add(h);
-            }
-        }
-        return list;
-    }
-
-    private void printUpcomingAvailability(Doctor doctor, int scanDays, int maxLines) {
-        System.out.println("Upcoming availability (A=free with room):");
-        int printed = 0; LocalDate date = LocalDate.now();
-        while (printed < maxLines && date.isBefore(LocalDate.now().plusDays(scanDays))) {
-            List<Integer> free = getFreeHoursForDoctorDate(doctor, date);
-            if (!free.isEmpty()) {
-                System.out.print(date+" ");
-                for (int h: free) System.out.print(h+" ");
-                System.out.println();
-                printed++;
-            }
-            date = date.plusDays(1);
-        }
-        if (printed==0) System.out.println("(No availability in next "+scanDays+" days)");
-    }
+    // availability helpers removed due to date-only consultations
 
     // Reload latest doctor & patient lists from file into existing ADT instances
     private void refreshDoctorsAndPatients() {

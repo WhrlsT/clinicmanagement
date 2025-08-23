@@ -1,26 +1,27 @@
 package entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.time.LocalDate;
-
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Consultation {
     private String id;
     private String patientId;
     private String doctorId;
-    private LocalDate date; // date only, hour separate
-    private int hour; // 0-23
+    private LocalDate date; // date only
     private String reason;
     private String notes;
+    private Status status; // ONGOING, TREATED
 
-    public Consultation() {}
+    public Consultation() { this.status = Status.ONGOING; }
 
-    public Consultation(String id, String patientId, String doctorId, LocalDate date, int hour, String reason, String notes) {
+    public Consultation(String id, String patientId, String doctorId, LocalDate date, String reason, String notes, Status status) {
         this.id = id;
         this.patientId = patientId;
         this.doctorId = doctorId;
         this.date = date;
-        this.hour = hour;
         this.reason = reason;
         this.notes = notes;
+        this.status = (status == null ? Status.ONGOING : status);
     }
 
     public String getId() { return id; }
@@ -32,10 +33,13 @@ public class Consultation {
     // Room removed from model
     public LocalDate getDate() { return date; }
     public void setDate(LocalDate date) { this.date = date; }
-    public int getHour() { return hour; }
-    public void setHour(int hour) { this.hour = hour; }
     public String getReason() { return reason; }
     public void setReason(String reason) { this.reason = reason; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+
+    public Status getStatus() { return status; }
+    public void setStatus(Status status) { this.status = status; }
+
+    public enum Status { ONGOING, TREATED }
 }

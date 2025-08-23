@@ -1,0 +1,12 @@
+[ {
+  "id" : "T0001",
+  "consultationId" : "C0001",
+  "type" : "MEDICATION",
+  "name" : "",
+  "medicationIds" : null,
+  "status" : "PLANNED",
+  "orderedDate" : [ 2025, 8, 22 ],
+  "instructions" : "",
+  "notes" : "",
+  "cost" : null
+} ]

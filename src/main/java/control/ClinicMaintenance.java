@@ -33,9 +33,11 @@ public class ClinicMaintenance {
                 case 4:
                     new QueueMaintenance().run();
                     break;
-                case 5: // future
+                case 5:
+                    new TreatmentMaintenance().run();
                     break;
-                case 6: // future
+                case 6:
+                    new MedicationMaintenance().run();
                     break;
                 case 7:
                     System.out.println("Exiting the Clinic Maintenance System...");

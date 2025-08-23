@@ -3,6 +3,7 @@ package control;
 import adt.ADTInterface;
 import dao.*;
 import entity.*;
+import boundary.QueueMaintenanceUI;
 import utility.InputUtil;
 
 import java.time.LocalDate;
@@ -33,18 +34,9 @@ public class QueueMaintenance {
     public void run() {
         int c;
         do {
-            System.out.println("\nPatient Queue (Hybrid)");
-            System.out.println("1. Enqueue");
-            System.out.println("2. View Queue");
-            System.out.println("3. Call Next (Any Doctor)");
-            System.out.println("4. Call Next For Doctor");
-            System.out.println("5. Start Entry");
-            System.out.println("6. Complete Entry");
-            System.out.println("7. Skip Entry");
-            System.out.println("8. Bump Priority");
-            System.out.println("9. Remove Entry");
-            System.out.println("10. Back");
-            c = InputUtil.getIntInput(sc, "Choose: ");
+            QueueMaintenanceUI ui = new QueueMaintenanceUI();
+            ui.showHeader(queue, doctors, patients);
+            c = ui.menu();
             switch (c) {
                 case 1 -> enqueue();
                 case 2 -> view();
@@ -61,6 +53,8 @@ public class QueueMaintenance {
         } while (c != 10);
         persist();
     }
+
+    // UI helpers moved to boundary/QueueMaintenanceUI
 
     private void enqueue() {
         String patientId = InputUtil.getInput(sc,"Patient ID: ");
@@ -150,7 +144,7 @@ public class QueueMaintenance {
         if (doctorId==null) {
             System.out.println("No doctor free this hour; marking completed without consultation record.");
         } else {
-            Consultation c = new Consultation(nextConsultationId(), e.getPatientId(), doctorId, date, hour, e.getReason(), "Queue");
+            Consultation c = new Consultation(nextConsultationId(), e.getPatientId(), doctorId, date, e.getReason(), "Queue", Consultation.Status.TREATED);
             consultations.add(c);
             consultationDAO.save(consultations);
             System.out.println("Consultation logged: "+c.getId());
@@ -213,7 +207,8 @@ public class QueueMaintenance {
         if (!d.getSchedule().isAvailable(dayIdx,hour)) return false;
         for (int i=0;i<consultations.size();i++) {
             Consultation c = consultations.get(i);
-            if (c.getDoctorId().equals(doctorId) && c.getDate().equals(date) && c.getHour()==hour) return false;
+            // date-only model: consider at most one consultation per doctor per date from queue auto-complete
+            if (c.getDoctorId().equals(doctorId) && c.getDate().equals(date)) return false;
         }
         return true;
     }

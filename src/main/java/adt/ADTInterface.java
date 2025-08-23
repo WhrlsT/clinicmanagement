@@ -23,5 +23,4 @@ public interface ADTInterface<T> {
     boolean isEmpty();                  // Is list empty?
     void clear();                       // Remove all elements
 
-    // TODO: Any other methods?
 }

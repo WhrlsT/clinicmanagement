@@ -1,0 +1,12 @@
+[ {
+  "id" : "M0001",
+  "name" : "Hehe",
+  "code" : "Ass",
+  "dosage" : "5x per day",
+  "frequency" : "5x per wek",
+  "route" : "mouth",
+  "durationDays" : 30,
+  "quantity" : 50,
+  "instructions" : "HEHE",
+  "notes" : "12"
+} ]
