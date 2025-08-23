@@ -200,17 +200,21 @@ public class DoctorMaintenance {
     }
 
     private Doctor findDoctorById(String doctorId) {
-        for (int i = 0; i < doctorList.size(); i++) {
-            Doctor doctor = doctorList.get(i);
-            if (doctor.getId().equals(doctorId)) {
-                return doctor;
-            }
+        if (doctorList instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Doctor> list = (CustomADT<Doctor>) cadt;
+            int idx = list.findIndex(new CustomADT.ADTPredicate<Doctor>(){
+                public boolean test(Doctor d){ return d.getId()!=null && d.getId().equals(doctorId); }
+            });
+            return idx>=0? list.get(idx) : null;
         }
+        for (int i = 0; i < doctorList.size(); i++) if (doctorList.get(i).getId().equals(doctorId)) return doctorList.get(i);
         return null;
     }
 
     private void setDoctorAvailabilityRange() {
+        doctorUI.displayDoctorsTable(doctorList);
         System.out.println("Doctor Maintenance");
+        
         System.out.println("─".repeat(50));
         System.out.println("Set Doctor Availability Range (Enter '0' to go back)");
         System.out.println("─".repeat(50));
@@ -339,27 +343,17 @@ public class DoctorMaintenance {
             tempList.add(doctorList.get(i));
         }
 
-        // Bubble sort by ID numeric part
-        for (int i = 0; i < tempList.size() - 1; i++) {
-            for (int j = 0; j < tempList.size() - i - 1; j++) {
-                Doctor d1 = tempList.get(j);
-                Doctor d2 = tempList.get(j + 1);
-                try {
-                    int n1 = Integer.parseInt(d1.getId().substring(1));
-                    int n2 = Integer.parseInt(d2.getId().substring(1));
-                    if (n1 > n2) {
-                        tempList.swap(j, j + 1);
-                    }
-                } catch (Exception e) {
-                    // ignore
+        // Sort by ID numeric part using CustomADT comparator
+        if (tempList instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Doctor> list = (CustomADT<Doctor>) cadt;
+            list.sort(new CustomADT.ADTComparator<Doctor>(){
+                public int compare(Doctor a, Doctor b){
+                    try { int n1=Integer.parseInt(a.getId().substring(1)); int n2=Integer.parseInt(b.getId().substring(1)); return Integer.compare(n1,n2);}catch(Exception e){return 0;}
                 }
-            }
+            });
         }
 
-        for (int i = 0; i < tempList.size(); i++) {
-            tempList.get(i).setId(String.format("D%04d", i + 1));
-            doctorList.set(i, tempList.get(i));
-        }
+    for (int i = 0; i < tempList.size(); i++) { tempList.get(i).setId(String.format("D%04d", i + 1)); doctorList.set(i, tempList.get(i)); }
     }
 
     private void viewDoctorConsultations() {

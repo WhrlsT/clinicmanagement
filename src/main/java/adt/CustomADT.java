@@ -4,14 +4,17 @@
  */
 package adt;
 
-import entity.PatientQueueEntry;
-
 /**
  *
  * @author Whrl
  */
 @SuppressWarnings("unchecked")
 public class CustomADT<T> implements ADTInterface<T> {
+    // ===== Inner minimal functional/iterable types =====
+    public interface ADTPredicate<U> { boolean test(U value); }
+    public interface ADTComparator<U> { int compare(U a, U b); }
+    public interface ADTIterator<U> { boolean hasNext(); U next(); }
+
     private T[] data;
     private int size;
     private static final int INITIAL_CAPACITY = 10;
@@ -121,149 +124,167 @@ public class CustomADT<T> implements ADTInterface<T> {
         size = 0;
     }
 
-    // ===== QUEUE-SPECIFIC OPERATIONS =====
-    // These operations work with any type that implements the appropriate interfaces:
-    // - Prioritizable: for priority-based operations (enqueue, bubbleUp)
-    // - Identifiable: for ID-based lookups (findEntry, indexOf) 
-    // - Statusable<S>: for status-based operations (findNextIndex, repositionAfterCalled, countByStatus)
-    //
-    // Examples: PatientQueueEntry, TaskEntry, or any custom entry type
+    // ===== QUEUE-STYLE HELPERS (generic) =====
+    // Minimal helpers that remain generic and don't depend on domain classes.
     
     /**
-     * Add an entry and automatically position it based on priority
-     * Works with any type that implements Prioritizable
+     * Add an entry and automatically position it based on a `priority` field if present
      */
     @Override
     public void enqueue(T entry) {
         add(entry);
-        if (entry instanceof Prioritizable) {
-            bubbleUp(size - 1);
-        }
+        bubbleUp(size - 1);
     }
     
-    /**
-     * Find the next available entry for a specific doctor or any doctor
-     * Works with types that have doctor preference and status
-     * @param doctorId specific doctor ID, or null for any doctor
-     * @return index of next available entry, or -1 if none found
-     */
-    @Override
-    public int findNextIndex(String doctorId) {
-        // Priority order already handled by array order (higher priority bubbled up)
-        for (int i = 0; i < size; i++) {
-            if (data[i] instanceof PatientQueueEntry) {
-                PatientQueueEntry e = (PatientQueueEntry) data[i];
-                if (e.getStatus().toString().equals("WAITING")) {
-                    if (doctorId == null) return i; // any
-                    // match doctor or ANY
-                    if (e.getPreferredDoctorId() == null || e.getPreferredDoctorId().equals(doctorId)) return i;
-                }
-            }
-        }
-        return -1;
-    }
+    // Type-specific helpers like findNextIndex/reposition should be implemented outside this ADT.
     
-    /**
-     * Find an entry by its ID
-     * Works with any type that implements Identifiable
-     * @param id the entry ID
-     * @return the entry, or null if not found
-     */
+    /** Find an entry by its ID (requires T to have getId()) */
     @Override
     public T findEntry(String id) {
         for (int i = 0; i < size; i++) {
-            if (data[i] instanceof Identifiable) {
-                Identifiable e = (Identifiable) data[i];
-                if (e.getId().equals(id)) return data[i];
-            }
+            String curId = getIdValue(data[i]);
+            if (curId != null && curId.equals(id)) return data[i];
         }
         return null;
     }
     
-    /**
-     * Find the index of an entry by its ID
-     * Works with any type that implements Identifiable
-     * @param id the entry ID
-     * @return the index, or -1 if not found
-     */
+    /** Find the index of an entry by its ID (requires T to have getId()) */
     @Override
     public int indexOf(String id) {
         for (int i = 0; i < size; i++) {
-            if (data[i] instanceof Identifiable) {
-                Identifiable e = (Identifiable) data[i];
-                if (e.getId().equals(id)) return i;
-            }
+            String curId = getIdValue(data[i]);
+            if (curId != null && curId.equals(id)) return i;
         }
         return -1;
     }
     
-    /**
-     * Reposition an entry after it has been started to maintain queue order
-     * Moves in-progress entries after other in-progress entries
-     * @param index the index of the entry to reposition
-     */
-    @Override
-    public void repositionAfterCalled(int index) {
-        if (index < 0 || index >= size) return;
-        
-        // Find target insert position - works for any status-based entry
-        int target = 0;
-        for (int i = 0; i < size; i++) {
-            if (data[i] instanceof PatientQueueEntry) {
-                PatientQueueEntry entry = (PatientQueueEntry) data[i];
-                String status = entry.getStatus().toString();
-                if (status.equals("IN_PROGRESS")) target = i + 1; 
-                else break;
-            }
-        }
-        if (index < target) return; // already in place
-        
-        // Extract and shift
-        T temp = data[index];
-        for (int i = index; i > target; i--) {
-            data[i] = data[i - 1];
-        }
-        data[target] = temp;
-    }
+    // No domain-specific repositioning in a generic ADT.
     
-    /**
-     * Bubble up an entry based on priority
-     * Works with any type that implements Prioritizable
-     * @param index the index to start bubbling from
-     */
+    /** Bubble up using `getPriority()` if T provides it; stable otherwise */
     @Override
     public void bubbleUp(int index) {
         if (index <= 0 || index >= size) return;
-        
         while (index > 0) {
             int prev = index - 1;
-            if (data[prev] instanceof Prioritizable && data[index] instanceof Prioritizable) {
-                Prioritizable prevEntry = (Prioritizable) data[prev];
-                Prioritizable currentEntry = (Prioritizable) data[index];
-                
-                if (prevEntry.getPriority() < currentEntry.getPriority()) {
-                    swap(prev, index);
-                    index = prev;
-                } else break;
-            } else break;
+            int prevPr = getPriorityValue(data[prev]);
+            int curPr = getPriorityValue(data[index]);
+            if (prevPr < curPr) { swap(prev, index); index = prev; } else break;
         }
+    }
+
+    // Try to extract a priority int via reflection (generic)
+    private int getPriorityValue(Object o) {
+        if (o == null) return Integer.MIN_VALUE;
+        // Use reflection to find getPriority()
+        try {
+            java.lang.reflect.Method m = o.getClass().getMethod("getPriority");
+            Object v = m.invoke(o);
+            if (v instanceof Integer i) return i;
+        } catch (Exception ignored) {}
+        return Integer.MIN_VALUE;
+    }
+
+    // Try to extract an id String via reflection (generic)
+    private String getIdValue(Object o) {
+        if (o == null) return null;
+        try {
+            java.lang.reflect.Method m = o.getClass().getMethod("getId");
+            Object v = m.invoke(o);
+            if (v instanceof String s) return s;
+        } catch (Exception ignored) {}
+        return null;
     }
     
-    /**
-     * Count entries by status
-     * Works with any type that implements Statusable
-     * @param status the status to count
-     * @return number of entries with that status
-     */
-    @Override
-    public <S> int countByStatus(S status) {
-        int count = 0;
+    // ===== Generic searching/sorting/iteration exposed by CustomADT =====
+    /** Find first index where predicate is true; -1 if none. */
+    public int findIndex(ADTPredicate<T> predicate) {
+        if (predicate == null) return -1;
         for (int i = 0; i < size; i++) {
-            if (data[i] instanceof Statusable) {
-                Statusable<?> e = (Statusable<?>) data[i];
-                if (e.getStatus().equals(status)) count++;
+            if (predicate.test(data[i])) return i;
+        }
+        return -1;
+    }
+
+    /** In-place stable insertion sort using provided comparator. */
+    public void sort(ADTComparator<T> comparator) {
+        if (comparator == null || size <= 1) return;
+        for (int i = 1; i < size; i++) {
+            T key = data[i];
+            int j = i - 1;
+            while (j >= 0 && comparator.compare(data[j], key) > 0) {
+                data[j + 1] = data[j];
+                j--;
+            }
+            data[j + 1] = key;
+        }
+    }
+
+    /** Simple bubble sort (stable), useful for teaching/demo. */
+    public void bubbleSort(ADTComparator<T> comparator) {
+        if (comparator == null || size <= 1) return;
+        boolean swapped;
+        for (int pass = 0; pass < size - 1; pass++) {
+            swapped = false;
+            for (int i = 0; i < size - 1 - pass; i++) {
+                if (comparator.compare(data[i], data[i + 1]) > 0) {
+                    T tmp = data[i]; data[i] = data[i + 1]; data[i + 1] = tmp;
+                    swapped = true;
+                }
+            }
+            if (!swapped) break;
+        }
+    }
+
+    /** Selection sort (not stable) with comparator. */
+    public void selectionSort(ADTComparator<T> comparator) {
+        if (comparator == null || size <= 1) return;
+        for (int i = 0; i < size - 1; i++) {
+            int minIdx = i;
+            for (int j = i + 1; j < size; j++) {
+                if (comparator.compare(data[j], data[minIdx]) < 0) minIdx = j;
+            }
+            if (minIdx != i) {
+                T tmp = data[i]; data[i] = data[minIdx]; data[minIdx] = tmp;
             }
         }
-        return count;
     }
+
+    /** Sort using natural ordering when elements implement Comparable. */
+    @SuppressWarnings({"rawtypes"})
+    public void sortComparable() {
+        if (size <= 1) return;
+        for (int i = 1; i < size; i++) {
+            T key = data[i];
+            int j = i - 1;
+            while (j >= 0 && ((Comparable) data[j]).compareTo(key) > 0) {
+                data[j + 1] = data[j];
+                j--;
+            }
+            data[j + 1] = key;
+        }
+    }
+
+    /** Binary search on a sorted array according to the same comparator. Returns index or -insertionPoint-1. */
+    public int binarySearch(T key, ADTComparator<T> comparator) {
+        if (comparator == null || size == 0) return -1;
+        int low = 0, high = size - 1;
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            int cmp = comparator.compare(data[mid], key);
+            if (cmp < 0) low = mid + 1;
+            else if (cmp > 0) high = mid - 1;
+            else return mid;
+        }
+        return -low - 1; // insertion point encoding
+    }
+
+    /** Lightweight iterator over the current elements (0..size-1). */
+    public ADTIterator<T> iterator() {
+        return new ADTIterator<T>() {
+            private int idx = 0;
+            public boolean hasNext() { return idx < size; }
+            public T next() { return data[idx++]; }
+        };
+    }
+    
 }

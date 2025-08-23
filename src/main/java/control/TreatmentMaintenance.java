@@ -131,7 +131,22 @@ public class TreatmentMaintenance {
         System.out.println("Not found.");
     }
 
-    private Treatment findTreatment(String id){ for (int i=0;i<treatments.size();i++) if (treatments.get(i).getId().equals(id)) return treatments.get(i); return null; }
-    private Medication findMedication(String id){ ADTInterface<Medication> l=medications; for (int i=0;i<l.size();i++) if (l.get(i).getId().equals(id)) return l.get(i); return null; }
+    private Treatment findTreatment(String id){
+        if (treatments instanceof CustomADT<?> cadt){
+            @SuppressWarnings("unchecked") CustomADT<Treatment> l=(CustomADT<Treatment>) cadt;
+            int idx = l.findIndex(new CustomADT.ADTPredicate<Treatment>(){ public boolean test(Treatment t){ return t.getId()!=null && t.getId().equals(id);} });
+            return idx>=0? l.get(idx): null;
+        }
+        for (int i=0;i<treatments.size();i++) if (treatments.get(i).getId().equals(id)) return treatments.get(i); return null;
+    }
+    private Medication findMedication(String id){
+        ADTInterface<Medication> l=medications;
+        if (l instanceof CustomADT<?> cadt){
+            @SuppressWarnings("unchecked") CustomADT<Medication> cl=(CustomADT<Medication>) cadt;
+            int idx = cl.findIndex(new CustomADT.ADTPredicate<Medication>(){ public boolean test(Medication m){ return m.getId()!=null && m.getId().equals(id);} });
+            return idx>=0? cl.get(idx): null;
+        }
+        for (int i=0;i<l.size();i++) if (l.get(i).getId().equals(id)) return l.get(i); return null;
+    }
     private String nz(Object o){ return o==null?"":o.toString(); }
 }

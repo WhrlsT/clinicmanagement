@@ -24,17 +24,12 @@ public interface ADTInterface<T> {
     void clear();                       // Remove all elements
 
     // ===== QUEUE-SPECIFIC OPERATIONS =====
-    // Priority-based operations
-    void enqueue(T entry);                       // Add entry with priority handling  
+    // Priority-based operations (remain generic)
+    void enqueue(T entry);                       // Add entry with priority handling
     void bubbleUp(int index);                    // Bubble up by priority
     
-    // ID-based operations  
+    // ID-based operations (remain generic)
     T findEntry(String id);                      // Find entry by ID
     int indexOf(String id);                      // Find index by ID
-    
-    // Status-based operations
-    int findNextIndex(String doctorId);          // Find next available entry index
-    void repositionAfterCalled(int index);      // Reposition called entry
-    <S> int countByStatus(S status);             // Count entries by status
 
 }

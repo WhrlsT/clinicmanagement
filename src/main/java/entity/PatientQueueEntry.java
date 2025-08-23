@@ -1,11 +1,7 @@
 package entity;
-
-import adt.Identifiable;
-import adt.Prioritizable;
-import adt.Statusable;
 import java.time.LocalDateTime;
 
-public class PatientQueueEntry implements Identifiable, Prioritizable, Statusable<QueueStatus> {
+public class PatientQueueEntry {
     private String id;
     private String patientId;
     private String preferredDoctorId; // null means any

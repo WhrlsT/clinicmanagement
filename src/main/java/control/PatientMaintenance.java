@@ -279,12 +279,14 @@ public class PatientMaintenance {
     }
 
     private Patient findPatientById(String patientId) {
-        for (int i = 0; i < patientList.size(); i++) {
-            Patient patient = patientList.get(i);
-            if (patient.getId().equals(patientId)) {
-                return patient;
-            }
+        if (patientList instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Patient> list = (CustomADT<Patient>) cadt;
+            int idx = list.findIndex(new CustomADT.ADTPredicate<Patient>(){
+                public boolean test(Patient p){ return p.getId()!=null && p.getId().equals(patientId); }
+            });
+            return idx>=0? list.get(idx) : null;
         }
+        for (int i = 0; i < patientList.size(); i++) if (patientList.get(i).getId().equals(patientId)) return patientList.get(i);
         return null;
     }    
 
@@ -370,34 +372,19 @@ public class PatientMaintenance {
     private void reassignPatientIds() {
         // Copy to a new CustomADT for sorting
         ADTInterface<Patient> tempList = new CustomADT<>();
-        for (int i = 0; i < patientList.size(); i++) {
-            tempList.add(patientList.get(i));
-        }
-
-        // Simple bubble sort by ID numeric part (since CustomADT has no sort)
-        for (int i = 0; i < tempList.size() - 1; i++) {
-            for (int j = 0; j < tempList.size() - i - 1; j++) {
-                Patient p1 = tempList.get(j);
-                Patient p2 = tempList.get(j + 1);
-                try {
-                    int n1 = Integer.parseInt(p1.getId().substring(1));
-                    int n2 = Integer.parseInt(p2.getId().substring(1));
-                    if (n1 > n2) {
-                        // Swap
-                        tempList.set(j, p2);
-                        tempList.set(j + 1, p1);
-                    }
-                } catch (Exception e) {
-                    // ignore
+        for (int i = 0; i < patientList.size(); i++) tempList.add(patientList.get(i));
+        // Use CustomADT's insertion sort with an ID numeric comparator
+        if (tempList instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Patient> list = (CustomADT<Patient>) cadt;
+            list.sort(new CustomADT.ADTComparator<Patient>(){
+                public int compare(Patient a, Patient b){
+                    try { int n1=Integer.parseInt(a.getId().substring(1)); int n2=Integer.parseInt(b.getId().substring(1)); return Integer.compare(n1,n2);}catch(Exception e){return 0;}
                 }
-            }
+            });
         }
 
         // Reassign IDs and update patientList
-        for (int i = 0; i < tempList.size(); i++) {
-            tempList.get(i).setId(String.format("P%04d", i + 1));
-            patientList.set(i, tempList.get(i));
-        }
+    for (int i = 0; i < tempList.size(); i++) { tempList.get(i).setId(String.format("P%04d", i + 1)); patientList.set(i, tempList.get(i)); }
     }
     
     private void viewPatientVisitRecords() {

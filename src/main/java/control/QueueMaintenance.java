@@ -160,15 +160,43 @@ public class QueueMaintenance {
     }
 
     private void callNext(String doctorId) {
-        int idx = queue.findNextIndex(doctorId);
+        int idx = findNextWaitingIndex(doctorId);
         if (idx<0){System.out.println("No waiting entry.");return;}
         PatientQueueEntry e = queue.get(idx);
         e.setStatus(QueueStatus.IN_PROGRESS); // Automatically start when called
         e.incrementCallAttempts();
         // Move entry just after last IN_PROGRESS to keep order stable
-        queue.repositionAfterCalled(idx);
+        repositionAfterCalled(idx);
         persist();
         System.out.println("✅ Called and started: "+e.getId()+ (doctorId!=null?" for doctor "+doctorId: ""));
+    }
+
+    // Domain-specific queue helpers (kept out of the generic ADT)
+    private int findNextWaitingIndex(String doctorId) {
+        // Prefer a waiting patient who prefers this doctor (if provided)
+        for (int i = 0; i < queue.size(); i++) {
+            PatientQueueEntry e = queue.get(i);
+            if (e.getStatus() != QueueStatus.WAITING) continue;
+            if (doctorId == null) return i;
+            if (doctorId.equals(e.getPreferredDoctorId())) return i;
+        }
+        // Fallback: any waiting patient
+        for (int i = 0; i < queue.size(); i++) {
+            if (queue.get(i).getStatus() == QueueStatus.WAITING) return i;
+        }
+        return -1;
+    }
+
+    private void repositionAfterCalled(int index) {
+        if (index < 0 || index >= queue.size()) return;
+        int target = 0;
+        // Find last IN_PROGRESS index + 1
+        for (int i = 0; i < queue.size(); i++) {
+            if (queue.get(i).getStatus() == QueueStatus.IN_PROGRESS) target = i + 1; else break;
+        }
+        if (index < target) return; // already within in-progress block
+        PatientQueueEntry temp = queue.remove(index);
+        queue.add(target, temp);
     }
 
     private void complete() {

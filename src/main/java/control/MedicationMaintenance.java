@@ -83,6 +83,14 @@ public class MedicationMaintenance {
         System.out.println("Not found.");
     }
 
-    private Medication find(String id){ for (int i=0;i<list.size();i++) if (list.get(i).getId().equals(id)) return list.get(i); return null; }
+    private Medication find(String id){
+        if (list instanceof CustomADT<?> cadt){
+            @SuppressWarnings("unchecked") CustomADT<Medication> l=(CustomADT<Medication>) cadt;
+            int idx = l.findIndex(new CustomADT.ADTPredicate<Medication>(){ public boolean test(Medication m){ return m.getId()!=null && m.getId().equals(id);} });
+            return idx>=0? l.get(idx): null;
+        }
+        for (int i=0;i<list.size();i++) if (list.get(i).getId().equals(id)) return list.get(i);
+        return null;
+    }
     private String nz(Object o){ return o==null?"":o.toString(); }
 }

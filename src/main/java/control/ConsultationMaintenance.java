@@ -1,6 +1,7 @@
 package control;
 
 import adt.ADTInterface;
+import adt.CustomADT;
 import dao.ConsultationDAO;
 import dao.DoctorDAO;
 import dao.PatientDAO;
@@ -394,8 +395,22 @@ public class ConsultationMaintenance {
     }
 
 
-    private Doctor findDoctor(String id){ for (int i=0;i<doctors.size();i++) if (doctors.get(i).getId().equals(id)) return doctors.get(i); return null; }
-    private Patient findPatient(String id){ for (int i=0;i<patients.size();i++) if (patients.get(i).getId().equals(id)) return patients.get(i); return null; }
+    private Doctor findDoctor(String id){
+        if (doctors instanceof CustomADT<?> cadt){
+            @SuppressWarnings("unchecked") CustomADT<Doctor> l=(CustomADT<Doctor>) cadt;
+            int idx = l.findIndex(new CustomADT.ADTPredicate<Doctor>(){ public boolean test(Doctor d){ return d.getId()!=null && d.getId().equals(id);} });
+            return idx>=0? l.get(idx): null;
+        }
+        for (int i=0;i<doctors.size();i++) if (doctors.get(i).getId().equals(id)) return doctors.get(i); return null;
+    }
+    private Patient findPatient(String id){
+        if (patients instanceof CustomADT<?> cadt){
+            @SuppressWarnings("unchecked") CustomADT<Patient> l=(CustomADT<Patient>) cadt;
+            int idx = l.findIndex(new CustomADT.ADTPredicate<Patient>(){ public boolean test(Patient p){ return p.getId()!=null && p.getId().equals(id);} });
+            return idx>=0? l.get(idx): null;
+        }
+        for (int i=0;i<patients.size();i++) if (patients.get(i).getId().equals(id)) return patients.get(i); return null;
+    }
     // Room model removed
 
     // hour-based checks removed

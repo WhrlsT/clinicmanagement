@@ -22,4 +22,84 @@
   "email" : "justin@gmail.com",
   "dateOfBirth" : "2005-01-01",
   "nationality" : "Foreigner"
+} ], [ "entity.Patient", {
+  "id" : "P0004",
+  "name" : "Aisha",
+  "gender" : "Female",
+  "phoneNumber" : "0123456780",
+  "email" : "aisha@example.com",
+  "dateOfBirth" : "1998-03-12",
+  "nationality" : "Malaysian"
+} ], [ "entity.Patient", {
+  "id" : "P0005",
+  "name" : "Rahman",
+  "gender" : "Male",
+  "phoneNumber" : "0122233445",
+  "email" : "rahman@example.com",
+  "dateOfBirth" : "1995-11-02",
+  "nationality" : "Malaysian"
+} ], [ "entity.Patient", {
+  "id" : "P0006",
+  "name" : "Siti",
+  "gender" : "Female",
+  "phoneNumber" : "0123344556",
+  "email" : "siti@example.com",
+  "dateOfBirth" : "2000-07-21",
+  "nationality" : "Malaysian"
+} ], [ "entity.Patient", {
+  "id" : "P0007",
+  "name" : "Chen",
+  "gender" : "Male",
+  "phoneNumber" : "0124455667",
+  "email" : "chen@example.com",
+  "dateOfBirth" : "1992-05-15",
+  "nationality" : "Foreigner"
+} ], [ "entity.Patient", {
+  "id" : "P0008",
+  "name" : "Priya",
+  "gender" : "Female",
+  "phoneNumber" : "0125566778",
+  "email" : "priya@example.com",
+  "dateOfBirth" : "1989-12-30",
+  "nationality" : "Foreigner"
+} ], [ "entity.Patient", {
+  "id" : "P0009",
+  "name" : "Hafiz",
+  "gender" : "Male",
+  "phoneNumber" : "0126677889",
+  "email" : "hafiz@example.com",
+  "dateOfBirth" : "1997-04-09",
+  "nationality" : "Malaysian"
+} ], [ "entity.Patient", {
+  "id" : "P0010",
+  "name" : "Mei",
+  "gender" : "Female",
+  "phoneNumber" : "0127788990",
+  "email" : "mei@example.com",
+  "dateOfBirth" : "2001-01-19",
+  "nationality" : "Malaysian"
+} ], [ "entity.Patient", {
+  "id" : "P0011",
+  "name" : "Arun",
+  "gender" : "Male",
+  "phoneNumber" : "0128899001",
+  "email" : "arun@example.com",
+  "dateOfBirth" : "1993-08-24",
+  "nationality" : "Foreigner"
+} ], [ "entity.Patient", {
+  "id" : "P0012",
+  "name" : "Lina",
+  "gender" : "Female",
+  "phoneNumber" : "0129900112",
+  "email" : "lina@example.com",
+  "dateOfBirth" : "2002-10-05",
+  "nationality" : "Malaysian"
+} ], [ "entity.Patient", {
+  "id" : "P0013",
+  "name" : "Daniel",
+  "gender" : "Male",
+  "phoneNumber" : "0129011223",
+  "email" : "daniel@example.com",
+  "dateOfBirth" : "1988-02-28",
+  "nationality" : "Foreigner"
 } ] ] ]
