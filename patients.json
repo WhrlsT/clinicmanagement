@@ -46,4 +46,12 @@
   "email" : "hey@ijsutmet.you",
   "dateOfBirth" : "2005-10-10",
   "nationality" : "Malaysian"
+} ], [ "entity.Patient", {
+  "id" : "P0007",
+  "name" : "Kelvin",
+  "gender" : "Male",
+  "phoneNumber" : "0121231234",
+  "email" : "1234@gmail.com",
+  "dateOfBirth" : "2005-10-12",
+  "nationality" : "Malaysian"
 } ] ] ]

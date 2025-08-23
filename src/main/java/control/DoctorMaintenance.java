@@ -2,14 +2,17 @@ package control;
 
 import adt.*;
 import entity.Doctor;
+import entity.Consultation;
 import utility.InputUtil;
 import dao.DoctorDAO;
+import dao.ConsultationDAO;
 import boundary.DoctorMaintenanceUI;
 import java.util.Scanner;
 
 public class DoctorMaintenance {
     private ADTInterface<Doctor> doctorList = new CustomADT<>();
     private DoctorDAO doctorDAO = new DoctorDAO();
+    private ConsultationDAO consultationDAO = new ConsultationDAO();
     DoctorMaintenanceUI doctorUI = new DoctorMaintenanceUI();
     private Scanner scanner = new Scanner(System.in);
 
@@ -45,12 +48,15 @@ public class DoctorMaintenance {
                     setDoctorAvailabilityRange();
                     break;
                 case 8:
+                    viewDoctorConsultations();
+                    break;
+                case 9:
                     System.out.println("Returning to Main Menu...");
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
             }
-        } while (choice != 8);
+        } while (choice != 9);
     }
 
     public String getAllDoctors() {
@@ -270,5 +276,33 @@ public class DoctorMaintenance {
             tempList.get(i).setId(String.format("D%04d", i + 1));
             doctorList.set(i, tempList.get(i));
         }
+    }
+
+    private void viewDoctorConsultations() {
+        String doctorId = InputUtil.getInput(scanner, "Enter doctor ID to view consultations: ");
+        Doctor doctor = findDoctorById(doctorId);
+        if (doctor == null) {
+            doctorUI.displayNotFoundMessage(doctorId);
+            return;
+        }
+
+        // Load consultations and filter by doctor ID
+        ADTInterface<Consultation> allConsultations = consultationDAO.load();
+        StringBuilder consultationsOutput = new StringBuilder();
+        
+        for (int i = 0; i < allConsultations.size(); i++) {
+            Consultation consultation = allConsultations.get(i);
+            if (consultation.getDoctorId().equals(doctorId)) {
+                consultationsOutput.append(String.format("%-10s %-10s %-12s %-10s %-30s\n",
+                    consultation.getId(),
+                    consultation.getPatientId(),
+                    consultation.getDate(),
+                    consultation.getStatus(),
+                    consultation.getReason()
+                ));
+            }
+        }
+
+        doctorUI.displayConsultations(doctor.getName(), consultationsOutput.toString());
     }
 }

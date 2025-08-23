@@ -9,4 +9,26 @@
   "instructions" : "",
   "notes" : "",
   "cost" : null
+}, {
+  "id" : "T0002",
+  "consultationId" : null,
+  "type" : "LAB",
+  "name" : "5",
+  "medicationIds" : null,
+  "status" : "PLANNED",
+  "orderedDate" : [ 2025, 8, 24 ],
+  "instructions" : "5",
+  "notes" : "5",
+  "cost" : 5.0
+}, {
+  "id" : "T0003",
+  "consultationId" : "C0003",
+  "type" : "MEDICATION",
+  "name" : "M0001",
+  "medicationIds" : [ "M0001" ],
+  "status" : "PLANNED",
+  "orderedDate" : [ 2025, 8, 24 ],
+  "instructions" : "a",
+  "notes" : "a",
+  "cost" : null
 } ]

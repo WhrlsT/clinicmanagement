@@ -79,4 +79,47 @@ public class InputUtil {
             try { LocalDate.parse(v, fmt); return v; } catch (DateTimeParseException e) { System.out.println("Invalid date (use yyyy-MM-dd). Try again."); }
         }
     }
+    
+    /**
+     * Clears the screen for better UI experience
+     * Works on both Windows and Unix-based systems
+     */
+    public static void clearScreen() {
+        try {
+            // Check if running on Windows
+            String os = System.getProperty("os.name").toLowerCase();
+            if (os.contains("windows")) {
+                // For Windows
+                new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+            } else {
+                // For Unix/Linux/Mac
+                new ProcessBuilder("clear").inheritIO().start().waitFor();
+            }
+        } catch (Exception e) {
+            // Fallback: print multiple newlines
+            for (int i = 0; i < 50; i++) {
+                System.out.println();
+            }
+        }
+    }
+    
+    /**
+     * Pauses execution and waits for user to press Enter
+     * @param message Custom message to display (optional)
+     */
+    public static void pauseScreen(String message) {
+        System.out.println(message != null ? message : "Press Enter to continue...");
+        try {
+            System.in.read();
+        } catch (Exception e) {
+            // Ignore exception
+        }
+    }
+    
+    /**
+     * Pauses execution with default message
+     */
+    public static void pauseScreen() {
+        pauseScreen(null);
+    }
 } 

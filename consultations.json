@@ -3,7 +3,23 @@
   "patientId" : "P0001",
   "doctorId" : "D0001",
   "date" : [ 2025, 8, 25 ],
-  "hour" : 3,
   "reason" : "i think i am him",
-  "notes" : ""
+  "notes" : "",
+  "status" : "ONGOING"
+}, {
+  "id" : "C0002",
+  "patientId" : "P0003",
+  "doctorId" : "D0005",
+  "date" : [ 2025, 8, 23 ],
+  "reason" : "I am ayg",
+  "notes" : "Queue",
+  "status" : "TREATED"
+}, {
+  "id" : "C0003",
+  "patientId" : "P0007",
+  "doctorId" : "D0001",
+  "date" : [ 2025, 8, 24 ],
+  "reason" : "hi",
+  "notes" : "Queue",
+  "status" : "ONGOING"
 } ]

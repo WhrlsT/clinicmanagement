@@ -17,7 +17,8 @@ public class DoctorMaintenanceUI {
         System.out.println("5. Search Doctor");
     System.out.println("6. View Doctor Schedule");
     System.out.println("7. Set Doctor Availability Range");
-    System.out.println("8. Exit");
+    System.out.println("8. View Doctor's Consultations");
+    System.out.println("9. Exit");
         System.out.print("Select an option: ");
         return InputUtil.getIntInput(scanner, "Enter your choice: ");
     }
@@ -73,5 +74,19 @@ public class DoctorMaintenanceUI {
 
     public void displayDeletedMessage(String doctorId) {
         System.out.println("Doctor with ID: " + doctorId + " deleted successfully.");
+    }
+
+    public void displayConsultations(String doctorName, String consultationsOutput) {
+        System.out.println("\n=================================================================");
+        System.out.println("Consultations for Dr. " + doctorName);
+        System.out.println("=================================================================");
+        if (consultationsOutput == null || consultationsOutput.trim().isEmpty()) {
+            System.out.println("No consultations found for this doctor.");
+        } else {
+            System.out.printf("%-10s %-10s %-12s %-10s %-30s%n", "ID", "Patient", "Date", "Status", "Reason");
+            System.out.println("-----------------------------------------------------------------");
+            System.out.println(consultationsOutput);
+        }
+        System.out.println("=================================================================\n");
     }
 }

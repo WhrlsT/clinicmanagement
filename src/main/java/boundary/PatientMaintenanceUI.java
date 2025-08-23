@@ -20,8 +20,8 @@ public class PatientMaintenanceUI {
         System.out.println("1. Add Patient");
         System.out.println("2. Update Patient");
         System.out.println("3. Delete Patient");
-        System.out.println("4. View Patient");
-        System.out.println("5. Search Patient");
+        System.out.println("4. Search Patient");
+        System.out.println("5. View Visit Records");
         System.out.println("6. Exit");
         System.out.print("Select an option: ");
         return InputUtil.getIntInput(scanner, "Enter your choice: ");

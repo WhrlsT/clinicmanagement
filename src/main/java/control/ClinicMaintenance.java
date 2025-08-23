@@ -6,6 +6,7 @@ package control;
 
 import boundary.ClinicMaintenanceUI;
 import utility.MigrationRunner;
+import utility.InputUtil;
 /**
  *
  * @author Whrl
@@ -16,10 +17,12 @@ public class ClinicMaintenance {
     private DoctorMaintenance doctorMaintenance = new DoctorMaintenance();
 
     public void runClinicMaintenance() {
+        InputUtil.clearScreen();
         mainUI.printHeader("Welcome to the Clinic Maintenance System");
         int choice;
         do {
             choice = mainUI.getMenuChoice();
+            InputUtil.clearScreen();
             switch (choice) {
                 case 1:
                     patientMaintenance.runPatientManagementHub();
@@ -40,10 +43,16 @@ public class ClinicMaintenance {
                     new MedicationMaintenance().run();
                     break;
                 case 7:
+                    InputUtil.clearScreen();
                     System.out.println("Exiting the Clinic Maintenance System...");
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
+                    InputUtil.pauseScreen();
+            }
+            if (choice != 7) {
+                InputUtil.clearScreen();
+                mainUI.printHeader("Welcome to the Clinic Maintenance System");
             }
     } while (choice != 7);
 
