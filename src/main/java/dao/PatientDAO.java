@@ -22,7 +22,6 @@ public class PatientDAO {
     public PatientDAO() {
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
     }
 
     public ADTInterface<Patient> retrieveFromFile() {

@@ -19,7 +19,8 @@ public class DoctorMaintenanceUI {
     System.out.println("6. View Overall Duty Schedule");
     System.out.println("7. Set Doctor Availability Range");
     System.out.println("8. View Doctor's Consultations");
-    System.out.println("9. Exit");
+    System.out.println("9. View Duty Dashboard");
+    System.out.println("10. Exit");
         System.out.print("Select an option: ");
         return InputUtil.getIntInput(scanner, "Enter your choice: ");
     }
@@ -118,6 +119,124 @@ public class DoctorMaintenanceUI {
     public void printReturningToMainMenu() {
         System.out.println("Returning to Main Menu...");
     }
+
+    // Dashboard display
+    public void displayDutyDashboard(String content) {
+        System.out.println("Clinic Duty Schedule Dashboard");
+        System.out.println("\u2550".repeat(63));
+        System.out.print(content);
+        System.out.println("\u2550".repeat(63));
+    }
+
+    // Build and show dashboard from doctor list
+    public void showDutyDashboard(ADTInterface<Doctor> doctorList) {
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalTime now = java.time.LocalTime.now();
+        int dow = today.getDayOfWeek().getValue() - 1; // 0=Mon
+
+        int totalDoctors = doctorList.size();
+        int activeToday = 0;
+        for (int i=0;i<doctorList.size();i++) if (isDoctorAvailableOnDay(doctorList.get(i), dow)) activeToday++;
+
+        int hour = now.getHour();
+        int availableNow = 0;
+        for (int i=0;i<doctorList.size();i++) if (isDoctorAvailableAtTime(doctorList.get(i), dow, hour)) availableNow++;
+        int coverageNow = totalDoctors==0?0:(int)Math.round(availableNow * 100.0 / totalDoctors);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("Total Doctors: %d    |    Active Today: %d    |    Coverage: %d%%%n%n", totalDoctors, activeToday, coverageNow));
+
+        // Current On Duty
+        String currentTimeStr = now.format(java.time.format.DateTimeFormatter.ofPattern("h:mm a"));
+        sb.append(String.format("Current On Duty (%s):%n", currentTimeStr));
+        for (int i=0;i<doctorList.size();i++){
+            Doctor d = doctorList.get(i);
+            if (!isDoctorAvailableAtTime(d, dow, hour)) continue;
+            Integer until = findNextOffHour(d, dow, hour);
+            String untilStr = until==null?"--:--":String.format("%02d:00", until);
+            sb.append(String.format("\u2713 Dr. %s (%s)     - Until %s%n", safe(d.getName()), safe(d.getSpecialization()), untilStr));
+        }
+        if (availableNow==0) sb.append("(none)\n");
+        sb.append('\n');
+
+        // Next Shift Changes
+        sb.append("Next Shift Changes:\n");
+        boolean anyChange=false;
+        for (int h=hour+1; h<24; h++){
+            java.util.List<String> changes = new java.util.ArrayList<>();
+            for (int i=0;i<doctorList.size();i++){
+                Doctor d = doctorList.get(i);
+                boolean prev = isDoctorAvailableAtTime(d, dow, h-1);
+                boolean cur = isDoctorAvailableAtTime(d, dow, h);
+                if (prev!=cur){ changes.add(String.format("Dr. %s %s", safe(d.getName()), cur?"starts":"ends")); }
+            }
+            if (!changes.isEmpty()){
+                anyChange=true;
+                sb.append(String.format("• %02d:00 - %s%n", h, String.join(", ", changes)));
+                if (sb.length()>2000) break; // guard against overly long output
+            }
+        }
+        if (!anyChange) sb.append("(no changes)\n");
+        sb.append('\n');
+
+        // Weekly Coverage Summary
+        sb.append("Weekly Coverage Summary:\n");
+        String[] dayNamesShort = {"Mon","Tue","Wed","Thu","Fri","Sat","Sun"};
+        for (int d=0; d<7; d+=2){
+            int cover1 = coveragePercentForDay(doctorList, d);
+            String bar1 = coverageBar(cover1);
+            if (d+1 < 7){
+                int cover2 = coveragePercentForDay(doctorList, d+1);
+                String bar2 = coverageBar(cover2);
+                sb.append(String.format("%-3s: %s %3d%%    ", dayNamesShort[d], bar1, cover1));
+                sb.append(String.format("%-3s: %s %3d%%%n", dayNamesShort[d+1], bar2, cover2));
+            } else {
+                sb.append(String.format("%-3s: %s %3d%%%n", dayNamesShort[d], bar1, cover1));
+            }
+        }
+
+        displayDutyDashboard(sb.toString());
+    }
+
+    private boolean isDoctorAvailableAtTime(Doctor doctor, int dayIndex, int hour) {
+        try { return doctor != null && doctor.getSchedule() != null && doctor.getSchedule().isAvailable(dayIndex, hour); }
+        catch (Exception e) { return false; }
+    }
+
+    private boolean isDoctorAvailableOnDay(Doctor doctor, int dayIndex) {
+        try { for (int hour = 0; hour < 24; hour++) if (isDoctorAvailableAtTime(doctor, dayIndex, hour)) return true; }
+        catch (Exception ignored) {}
+        return false;
+    }
+
+    private Integer findNextOffHour(Doctor d, int day, int startHour){
+        for (int h=startHour+1; h<=24; h++){
+            int check = (h==24)?23:h;
+            if (h==24 || !isDoctorAvailableAtTime(d, day, check)) return (h==24)?24:h;
+        }
+        return null;
+    }
+
+    private int coveragePercentForDay(ADTInterface<Doctor> doctorList, int day){
+        if (doctorList == null || doctorList.size()==0) return 0;
+        int coveredSlots=0;
+        for (int h=0; h<24; h++){
+            int avail=0;
+            for (int i=0;i<doctorList.size();i++) if (isDoctorAvailableAtTime(doctorList.get(i), day, h)) avail++;
+            if (avail>0) coveredSlots++;
+        }
+        return (int)Math.round(coveredSlots * 100.0 / 24.0);
+    }
+
+    private String coverageBar(int percent){
+        int filled = Math.max(0, Math.min(10, (int)Math.round(percent/10.0)));
+        StringBuilder bar = new StringBuilder();
+        for (int i=0;i<filled;i++) bar.append('█');
+        for (int i=filled;i<10;i++) bar.append('░');
+        return bar.toString();
+    }
+
+    private String safe(String s){ return s==null?"":s; }
 
     // Section intros and headers
     public void showAddDoctorIntro() {

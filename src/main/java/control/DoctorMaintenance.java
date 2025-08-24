@@ -64,19 +64,23 @@ public class DoctorMaintenance {
                     viewDoctorConsultations();
                     break;
                 case 9:
+                    InputUtil.clearScreen();
+                    doctorUI.showDutyDashboard(doctorList);
+                    break;
+                case 10:
                     doctorUI.printReturningToMainMenu();
                     break;
                 default:
                     doctorUI.printInvalidChoiceMessage();
             }
-            if (choice != 9 && choice != 4) {
+            if (choice != 10 && choice != 4) {
                 InputUtil.pauseScreen();
                 InputUtil.clearScreen();
                 System.out.println("Doctor Maintenance");
                 System.out.println("─".repeat(50));
                 doctorUI.displayDoctorsTable(getAllDoctors());
             }
-        } while (choice != 9);
+        } while (choice != 10);
     }
 
     public String getAllDoctors() {
@@ -551,6 +555,7 @@ public class DoctorMaintenance {
     doctorUI.displayDayDetails(content.toString());
     doctorUI.displayCoverageLegend();
     }
+
     
     private boolean isDoctorAvailableOnDay(Doctor doctor, int dayIndex) {
         // Check if doctor has any availability on this day
