@@ -172,22 +172,22 @@ public class PatientMaintenance {
     clinicUI.printHeader("Clinic Patient Maintenance");
     patientUI.showAddPatientIntro();
         
-        String name = getInputWithBackOption("Enter patient name: ");
+    String name = InputUtil.getInputWithBackOption(scanner, "Enter patient name: ");
         if (name == null) return; // User chose to go back
         
-        String gender = getMFChoiceWithBackOption("Enter patient gender", "Male", "Female");
+    String gender = InputUtil.getMFChoiceWithBackOption(scanner, "Enter patient gender", "Male", "Female");
         if (gender == null) return;
         
-        String phone = getValidatedPhoneWithBackOption("Enter patient phone number (digits 7-15): ");
+    String phone = InputUtil.getValidatedPhoneWithBackOption(scanner, "Enter patient phone number (digits 7-15): ");
         if (phone == null) return;
         
-        String email = getValidatedEmailWithBackOption("Enter patient email: ");
+    String email = InputUtil.getValidatedEmailWithBackOption(scanner, "Enter patient email: ");
         if (email == null) return;
         
-        String dob = getValidatedDateWithBackOption("Enter patient date of birth (yyyy-MM-dd): ");
+    String dob = InputUtil.getValidatedDateWithBackOption(scanner, "Enter patient date of birth (yyyy-MM-dd): ");
         if (dob == null) return;
         
-        String nationality = getMFChoiceWithBackOption("Enter patient nationality (M=Malaysian, F=Foreigner)", "Malaysian", "Foreigner");
+    String nationality = InputUtil.getMFChoiceWithBackOption(scanner, "Enter patient nationality (M=Malaysian, F=Foreigner)", "Malaysian", "Foreigner");
         if (nationality == null) return;
         
         Patient newPatient = new Patient(null, name, gender, phone, email, dob, nationality);
@@ -476,76 +476,7 @@ public class PatientMaintenance {
     
     // moved display helpers into UI
     
-    // Helper methods for input with back option
-    private String getInputWithBackOption(String prompt) {
-        while (true) {
-            String input = InputUtil.getInput(scanner, prompt);
-            if (input.equals("0")) {
-                return null; // Signal to go back
-            }
-            if (!input.trim().isEmpty()) {
-                return input.trim();
-            }
-            patientUI.displayEmptyInputOrBackMessage();
-        }
-    }
-    
-    private String getMFChoiceWithBackOption(String prompt, String mMeaning, String fMeaning) {
-        while (true) {
-            String input = InputUtil.getInput(scanner, prompt + " (M/F, 0=back): ").trim();
-            if (input.equals("0")) {
-                return null; // Signal to go back
-            }
-            if (input.equalsIgnoreCase("M")) {
-                return mMeaning;
-            }
-            if (input.equalsIgnoreCase("F")) {
-                return fMeaning;
-            }
-            patientUI.displayInvalidGenderOrBackMessage();
-        }
-    }
-    
-    private String getValidatedPhoneWithBackOption(String prompt) {
-        while (true) {
-            String input = InputUtil.getInput(scanner, prompt);
-            if (input.equals("0")) {
-                return null; // Signal to go back
-            }
-            if (input.matches("^[0-9]{7,15}$")) {
-                return input;
-            }
-            patientUI.displayInvalidPhoneWithBackMessage();
-        }
-    }
-    
-    private String getValidatedEmailWithBackOption(String prompt) {
-        while (true) {
-            String input = InputUtil.getInput(scanner, prompt);
-            if (input.equals("0")) {
-                return null; // Signal to go back
-            }
-            if (input.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
-                return input;
-            }
-            patientUI.displayInvalidEmailWithBackMessage();
-        }
-    }
-    
-    private String getValidatedDateWithBackOption(String prompt) {
-        while (true) {
-            String input = InputUtil.getInput(scanner, prompt);
-            if (input.equals("0")) {
-                return null; // Signal to go back
-            }
-            try {
-                java.time.LocalDate.parse(input);
-                return input;
-            } catch (Exception e) {
-                patientUI.displayInvalidDateWithBackMessage();
-            }
-        }
-    }
+    // Removed local helpers in favor of InputUtil reusable versions
 
     private void viewPatientDetails() {
         clinicUI.printHeader("Clinic Patient Maintenance");

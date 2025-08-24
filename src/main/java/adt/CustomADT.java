@@ -8,6 +8,9 @@ package adt;
  *
  * @author Whrl
  */
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.function.Predicate;
 @SuppressWarnings("unchecked")
 public class CustomADT<T> implements ADTInterface<T> {
     // ===== Inner minimal functional/iterable types =====
@@ -205,6 +208,15 @@ public class CustomADT<T> implements ADTInterface<T> {
         return -1;
     }
 
+    /** JDK Predicate-based findIndex overload. */
+    public int findIndex(Predicate<? super T> predicate) {
+        if (predicate == null) return -1;
+        for (int i = 0; i < size; i++) {
+            if (predicate.test(data[i])) return i;
+        }
+        return -1;
+    }
+
     /** In-place stable insertion sort using provided comparator. */
     public void sort(ADTComparator<T> comparator) {
         if (comparator == null || size <= 1) return;
@@ -217,6 +229,12 @@ public class CustomADT<T> implements ADTInterface<T> {
             }
             data[j + 1] = key;
         }
+    }
+
+    /** In-place stable insertion sort using java.util.Comparator. */
+    public void sort(Comparator<? super T> comparator) {
+        if (comparator == null) return;
+        sort(new ADTComparator<T>() { public int compare(T a, T b){ return comparator.compare(a,b); } });
     }
 
     /** Simple bubble sort (stable), useful for teaching/demo. */
@@ -235,6 +253,12 @@ public class CustomADT<T> implements ADTInterface<T> {
         }
     }
 
+    /** Bubble sort using java.util.Comparator. */
+    public void bubbleSort(Comparator<? super T> comparator) {
+        if (comparator == null) return;
+        bubbleSort(new ADTComparator<T>() { public int compare(T a, T b){ return comparator.compare(a,b); } });
+    }
+
     /** Selection sort (not stable) with comparator. */
     public void selectionSort(ADTComparator<T> comparator) {
         if (comparator == null || size <= 1) return;
@@ -247,6 +271,12 @@ public class CustomADT<T> implements ADTInterface<T> {
                 T tmp = data[i]; data[i] = data[minIdx]; data[minIdx] = tmp;
             }
         }
+    }
+
+    /** Selection sort using java.util.Comparator. */
+    public void selectionSort(Comparator<? super T> comparator) {
+        if (comparator == null) return;
+        selectionSort(new ADTComparator<T>() { public int compare(T a, T b){ return comparator.compare(a,b); } });
     }
 
     /** Sort using natural ordering when elements implement Comparable. */
@@ -278,6 +308,12 @@ public class CustomADT<T> implements ADTInterface<T> {
         return -low - 1; // insertion point encoding
     }
 
+    /** Binary search overload using java.util.Comparator. */
+    public int binarySearch(T key, Comparator<? super T> comparator) {
+        if (comparator == null) return -1;
+        return binarySearch(key, new ADTComparator<T>() { public int compare(T a, T b){ return comparator.compare(a,b); } });
+    }
+
     /** Lightweight iterator over the current elements (0..size-1). */
     public ADTIterator<T> iterator() {
         return new ADTIterator<T>() {
@@ -285,6 +321,34 @@ public class CustomADT<T> implements ADTInterface<T> {
             public boolean hasNext() { return idx < size; }
             public T next() { return data[idx++]; }
         };
+    }
+
+    /** JDK Iterator over the current elements. */
+    public Iterator<T> toIterator() {
+        return new Iterator<T>() {
+            private int idx = 0;
+            public boolean hasNext() { return idx < size; }
+            public T next() { return data[idx++]; }
+        };
+    }
+
+    /** Convenience adapter for enhanced-for: for (T x : list.asIterable()) { ... } */
+    public Iterable<T> asIterable() { return this::toIterator; }
+    
+    /** Return a new CustomADT containing elements that satisfy the predicate. */
+    public CustomADT<T> filter(ADTPredicate<T> predicate) {
+        CustomADT<T> out = new CustomADT<>();
+        if (predicate == null) return out;
+        for (int i = 0; i < size; i++) if (predicate.test(data[i])) out.add(data[i]);
+        return out;
+    }
+
+    /** JDK Predicate-based filter overload. */
+    public CustomADT<T> filter(Predicate<? super T> predicate) {
+        CustomADT<T> out = new CustomADT<>();
+        if (predicate == null) return out;
+        for (int i = 0; i < size; i++) if (predicate.test(data[i])) out.add(data[i]);
+        return out;
     }
     
 }

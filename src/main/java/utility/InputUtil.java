@@ -79,6 +79,78 @@ public class InputUtil {
             try { LocalDate.parse(v, fmt); return v; } catch (DateTimeParseException e) { System.out.println("Invalid date (use yyyy-MM-dd). Try again."); }
         }
     }
+
+    // ===== Reusable helpers with '0 to go back' behavior =====
+    public static String getInputWithBackOption(Scanner scanner, String prompt){
+        while (true){
+            String input = getInput(scanner, prompt);
+            if (input.equals("0")) return null; // back
+            if (!input.trim().isEmpty()) return input.trim();
+            System.out.println("Input cannot be empty. Please try again or enter '0' to go back.");
+        }
+    }
+
+    public static String getMFChoiceWithBackOption(Scanner scanner, String prompt, String mMeaning, String fMeaning){
+        while (true){
+            String v = getInput(scanner, prompt + " (M/F, 0=back): ").trim();
+            if (v.equals("0")) return null;
+            if (v.equalsIgnoreCase("M")) return mMeaning;
+            if (v.equalsIgnoreCase("F")) return fMeaning;
+            System.out.println("Please enter M, F, or 0 to go back.");
+        }
+    }
+
+    public static String getValidatedPhoneWithBackOption(Scanner scanner, String prompt){
+        while (true){
+            String v = getInput(scanner, prompt);
+            if (v.equals("0")) return null;
+            if (v.matches("^[0-9]{7,15}$")) return v;
+            System.out.println("Invalid phone number (7-15 digits only). Please try again or enter '0' to go back.");
+        }
+    }
+
+    public static String getValidatedEmailWithBackOption(Scanner scanner, String prompt){
+        while (true){
+            String v = getInput(scanner, prompt);
+            if (v.equals("0")) return null;
+            if (v.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) return v;
+            System.out.println("Invalid email format. Please try again or enter '0' to go back.");
+        }
+    }
+
+    public static String getValidatedDateWithBackOption(Scanner scanner, String prompt){
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        while (true){
+            String v = getInput(scanner, prompt);
+            if (v.equals("0")) return null;
+            try { LocalDate.parse(v, fmt); return v; }
+            catch (DateTimeParseException e){ System.out.println("Invalid date format (use yyyy-MM-dd). Please try again or enter '0' to go back."); }
+        }
+    }
+
+    // LocalDate variant: returns a parsed LocalDate or null if user enters '0'
+    public static LocalDate getValidatedLocalDateWithBackOption(Scanner scanner, String prompt){
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        while (true){
+            String v = getInput(scanner, prompt);
+            if (v.equals("0")) return null;
+            try { return LocalDate.parse(v, fmt); }
+            catch (DateTimeParseException e){ System.out.println("Invalid date format (use yyyy-MM-dd). Please try again or enter '0' to go back."); }
+        }
+    }
+
+    // Hour (0-23) with back option: returns Integer 0-23, or null if user enters '0'
+    public static Integer getValidatedHourWithBackOption(Scanner scanner, String prompt){
+        while (true){
+            String v = getInput(scanner, prompt);
+            if (v.equals("0")) return null;
+            try {
+                int h = Integer.parseInt(v);
+                if (h >= 0 && h <= 23) return h;
+            } catch (NumberFormatException ignored) {}
+            System.out.println("Invalid hour (0-23). Please try again or enter '0' to go back.");
+        }
+    }
     
     /**
      * Clears the screen for better UI experience

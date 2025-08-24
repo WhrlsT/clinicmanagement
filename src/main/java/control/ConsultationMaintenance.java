@@ -11,8 +11,6 @@ import boundary.DoctorMaintenanceUI;
 import boundary.PatientMaintenanceUI;
 import boundary.ConsultationMaintenanceUI;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
@@ -89,8 +87,8 @@ public class ConsultationMaintenance {
     System.out.println();
     showAvailableDatesAndTimeslots(doctor, 14);
 
-    java.time.LocalDate dateOnly = readDateWithBackOption("Date (YYYY-MM-DD, '0' to go back): "); if (dateOnly==null) return;
-    Integer hour = readHourWithBackOption("Hour (0-23, '0' to go back): "); if (hour==null) return;
+    java.time.LocalDate dateOnly = InputUtil.getValidatedLocalDateWithBackOption(scanner, "Date (YYYY-MM-DD, '0' to go back): "); if (dateOnly==null) return;
+    Integer hour = InputUtil.getValidatedHourWithBackOption(scanner, "Hour (0-23, '0' to go back): "); if (hour==null) return;
     java.time.LocalDateTime date = dateOnly.atTime(hour, 0);
 
         // Validate selected slot using schedule, existing consultations and Google Calendar (if configured)
@@ -154,9 +152,9 @@ public class ConsultationMaintenance {
     boolean changedDateTime = false;
         String changeDt = InputUtil.getInput(scanner, "Change Date/Time? (Y/N): ").trim().toUpperCase();
         if (changeDt.equals("Y")) {
-            java.time.LocalDate nd = readDateWithBackOption("Date (YYYY-MM-DD, '0' to cancel): "); if (nd==null) { consultUI.displayDateChangeCancelled(); }
+            java.time.LocalDate nd = InputUtil.getValidatedLocalDateWithBackOption(scanner, "Date (YYYY-MM-DD, '0' to cancel): "); if (nd==null) { consultUI.displayDateChangeCancelled(); }
             else {
-                Integer hour = readHourWithBackOption("Hour (0-23, '0' to cancel): "); if (hour==null) { consultUI.displayTimeChangeCancelled(); }
+                Integer hour = InputUtil.getValidatedHourWithBackOption(scanner, "Hour (0-23, '0' to cancel): "); if (hour==null) { consultUI.displayTimeChangeCancelled(); }
                 else {
                 // Validate slot availability for current doctor if not UNASSIGNED
                 if (!"UNASSIGNED".equals(c.getDoctorId()) && !isSlotAvailable(findDoctor(c.getDoctorId()), nd, hour)) {
@@ -185,8 +183,8 @@ public class ConsultationMaintenance {
             else {
                 // Ensure date/time set; if missing, prompt
                 if (c.getDate() == null) {
-            java.time.LocalDate nd = readDateWithBackOption("Date (YYYY-MM-DD, '0' to cancel): "); if (nd==null){ consultUI.displayDoctorChangeCancelled(); }
-            else { Integer hour = readHourWithBackOption("Hour (0-23, '0' to cancel): "); if (hour==null){ consultUI.displayDoctorChangeCancelled(); } else { c.setDate(nd.atTime(hour,0)); changedDateTime = true; } }
+            java.time.LocalDate nd = InputUtil.getValidatedLocalDateWithBackOption(scanner, "Date (YYYY-MM-DD, '0' to cancel): "); if (nd==null){ consultUI.displayDoctorChangeCancelled(); }
+            else { Integer hour = InputUtil.getValidatedHourWithBackOption(scanner, "Hour (0-23, '0' to cancel): "); if (hour==null){ consultUI.displayDoctorChangeCancelled(); } else { c.setDate(nd.atTime(hour,0)); changedDateTime = true; } }
                 }
                 if (c.getDate()!=null) {
                     if (!isSlotAvailable(newDoc, c.getDate().toLocalDate(), c.getDate().getHour())) {
@@ -336,8 +334,8 @@ public class ConsultationMaintenance {
     if (c==null){consultUI.displayNotFound();return;}
         if (c.getStatus() != Consultation.Status.BOOKED) { consultUI.displayOnlyBookedAllowed(); return; }
     // Reschedule date and hour
-    java.time.LocalDate newDateOnly = readDateWithBackOption("Date (YYYY-MM-DD, '0' to go back): "); if (newDateOnly==null) return;
-    Integer hour = readHourWithBackOption("Hour (0-23, '0' to go back): "); if (hour==null) return;
+    java.time.LocalDate newDateOnly = InputUtil.getValidatedLocalDateWithBackOption(scanner, "Date (YYYY-MM-DD, '0' to go back): "); if (newDateOnly==null) return;
+    Integer hour = InputUtil.getValidatedHourWithBackOption(scanner, "Hour (0-23, '0' to go back): "); if (hour==null) return;
     java.time.LocalDateTime newDate = newDateOnly.atTime(hour,0);
     // Update calendar event if present
     try {
@@ -371,8 +369,8 @@ public class ConsultationMaintenance {
         System.out.println();
     showAvailableDatesAndTimeslotsFrom(doctor, 21, startDate);
 
-    java.time.LocalDate dateOnly = readDateWithBackOption("Date (YYYY-MM-DD, '0' to go back): "); if (dateOnly==null) return;
-    Integer hour = readHourWithBackOption("Hour (0-23, '0' to go back): "); if (hour==null) return;
+    java.time.LocalDate dateOnly = InputUtil.getValidatedLocalDateWithBackOption(scanner, "Date (YYYY-MM-DD, '0' to go back): "); if (dateOnly==null) return;
+    Integer hour = InputUtil.getValidatedHourWithBackOption(scanner, "Hour (0-23, '0' to go back): "); if (hour==null) return;
     if (!isSlotAvailable(doctor, dateOnly, hour)) { consultUI.displaySlotUnavailable(); return; }
     String reason = InputUtil.getInput(scanner, "Reason (blank=Follow-up, '0' to go back): ");
     if (reason.equals("0")) return;
@@ -422,26 +420,7 @@ public class ConsultationMaintenance {
         return String.format("C%04d", max+1);
     }
 
-    // Input helpers with '0' to go back/cancel
-    private LocalDate readDateWithBackOption(String prompt) {
-        while (true) {
-            String ds = InputUtil.getInput(scanner, prompt);
-            if (ds.equals("0")) return null;
-            try { return LocalDate.parse(ds);} catch (DateTimeParseException e){ consultUI.displayInvalidDateBack(); }
-        }
-    }
-
-    private Integer readHourWithBackOption(String prompt) {
-        while (true) {
-            String hs = InputUtil.getInput(scanner, prompt);
-            if (hs.equals("0")) return null;
-            try {
-                int h = Integer.parseInt(hs);
-                if (h>=0 && h<=23) return h;
-            } catch(Exception ignored) {}
-            consultUI.displayInvalidHourBack();
-        }
-    }
+    // Input helpers moved to InputUtil
 
     private void persist() {
         consultationDAO.save(consultations);

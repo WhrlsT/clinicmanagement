@@ -9,8 +9,10 @@ public class Treatment {
 	private Type type;                  // MEDICATION / PROCEDURE / THERAPY / IMAGING / LAB
 	private String name;                // procedure/therapy name (for non-medication)
 	private String[] medicationIds;     // links to Medication entities when type == MEDICATION
+	// Clinician diagnosis supporting the treatment plan
+	private String diagnosis;
 
-	private TreatmentStatus status = TreatmentStatus.PLANNED;
+	private TreatmentStatus status = TreatmentStatus.PRESCRIBED;
 	private LocalDate orderedDate;      // date ordered/prescribed
 	private String instructions;        // patient instructions
 	private String notes;               // clinician notes
@@ -33,6 +35,8 @@ public class Treatment {
 	public void setType(Type type) { this.type = type; }
 	public String getName() { return name; }
 	public void setName(String name) { this.name = name; }
+	public String getDiagnosis() { return diagnosis; }
+	public void setDiagnosis(String diagnosis) { this.diagnosis = diagnosis; }
 	public String[] getMedicationIds() { return medicationIds; }
 	public void setMedicationIds(String[] medicationIds) { this.medicationIds = medicationIds; }
 	public void addMedicationId(String medicationId) {
@@ -55,6 +59,7 @@ public class Treatment {
 	public void setCost(Double cost) { this.cost = cost; }
 
 	public enum Type { MEDICATION, PROCEDURE, THERAPY, IMAGING, LAB }
-	public enum TreatmentStatus { PLANNED, PRESCRIBED, DISPENSED, ADMINISTERED, COMPLETED, CANCELLED }
+	// DISPENSED is only applicable when type == MEDICATION
+	public enum TreatmentStatus { PRESCRIBED, DISPENSED, COMPLETED }
 }
 

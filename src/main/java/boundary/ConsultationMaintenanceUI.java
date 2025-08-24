@@ -47,12 +47,12 @@ public class ConsultationMaintenanceUI {
     }
 
     public void displayConsultationsTable(String rows, boolean includeFollowUp) {
-        if (includeFollowUp) {
-            System.out.printf("%-10s | %-16s | %-20s | %-20s | %-20s | %-10s | %-10s%n",
-                    "ID","Date/Time","Patient","Doctor","Reason","Status","FollowOf");
-        } else {
-            System.out.printf("%-10s | %-16s | %-20s | %-20s | %-20s | %-10s%n",
-                    "ID","Date/Time","Patient","Doctor","Reason","Status");
+    if (includeFollowUp) {
+        System.out.printf("%-12s | %-16s | %-20s | %-20s | %-20s | %-10s | %-10s%n",
+            "ConsultID","Date/Time","Patient","Doctor","Reason","Status","FollowOf");
+    } else {
+        System.out.printf("%-12s | %-16s | %-20s | %-20s | %-20s | %-10s%n",
+            "ConsultID","Date/Time","Patient","Doctor","Reason","Status");
         }
         System.out.println("-".repeat(100));
         System.out.print(rows);

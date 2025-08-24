@@ -119,16 +119,16 @@ public class DoctorMaintenance {
         System.out.println("─".repeat(50));
     doctorUI.showAddDoctorIntro();
         
-        String name = getInputWithBackOption("Enter doctor name: ");
+    String name = InputUtil.getInputWithBackOption(scanner, "Enter doctor name: ");
         if (name == null) return; // User chose to go back
         
-        String specialization = getInputWithBackOption("Enter doctor specialty: ");
+    String specialization = InputUtil.getInputWithBackOption(scanner, "Enter doctor specialty: ");
         if (specialization == null) return;
         
-        String phone = getValidatedPhoneWithBackOption("Enter doctor phone number (digits 7-15): ");
+    String phone = InputUtil.getValidatedPhoneWithBackOption(scanner, "Enter doctor phone number (digits 7-15): ");
         if (phone == null) return;
         
-        String email = getValidatedEmailWithBackOption("Enter doctor email: ");
+    String email = InputUtil.getValidatedEmailWithBackOption(scanner, "Enter doctor email: ");
         if (email == null) return;
         
         Doctor newDoctor = new Doctor(null, name, specialization, phone, email);
@@ -582,42 +582,5 @@ public class DoctorMaintenance {
     }
 
     // Helper methods for input with back option
-    private String getInputWithBackOption(String prompt) {
-        while (true) {
-            String input = InputUtil.getInput(scanner, prompt);
-            if (input.equals("0")) {
-                return null; // Signal to go back
-            }
-            if (!input.trim().isEmpty()) {
-                return input.trim();
-            }
-            doctorUI.displayEmptyInputOrBackMessage();
-        }
-    }
-    
-    private String getValidatedPhoneWithBackOption(String prompt) {
-        while (true) {
-            String input = InputUtil.getInput(scanner, prompt);
-            if (input.equals("0")) {
-                return null; // Signal to go back
-            }
-            if (input.matches("^[0-9]{7,15}$")) {
-                return input;
-            }
-            doctorUI.displayInvalidPhoneWithBackMessage();
-        }
-    }
-    
-    private String getValidatedEmailWithBackOption(String prompt) {
-        while (true) {
-            String input = InputUtil.getInput(scanner, prompt);
-            if (input.equals("0")) {
-                return null; // Signal to go back
-            }
-            if (input.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
-                return input;
-            }
-            doctorUI.displayInvalidEmailWithBackMessage();
-        }
-    }
+    // Removed local back-option helpers; using InputUtil versions
 }

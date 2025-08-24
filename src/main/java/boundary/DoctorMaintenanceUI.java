@@ -102,7 +102,7 @@ public class DoctorMaintenanceUI {
         if (consultationsOutput == null || consultationsOutput.trim().isEmpty()) {
             System.out.println("No consultations found for this doctor.");
         } else {
-            System.out.printf("%-10s %-10s %-12s %-10s %-30s%n", "ID", "Patient", "Date", "Status", "Reason");
+            System.out.printf("%-12s %-10s %-12s %-10s %-30s%n", "ConsultID", "Patient", "Date", "Status", "Reason");
             System.out.println("-----------------------------------------------------------------");
             System.out.println(consultationsOutput);
         }
@@ -168,8 +168,6 @@ public class DoctorMaintenanceUI {
     }
 
     public void displayAdditionalInfo(int consultationCount) {
-        System.out.println("\nAdditional Information:");
-        System.out.println("─".repeat(40));
         System.out.println("Total Consultations: " + consultationCount);
     }
 

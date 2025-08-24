@@ -5,7 +5,7 @@ import dao.DoctorDAO;
 import adt.ADTInterface;
 import entity.Doctor;
 
-/** Runner to invoke schedule migration once at startup (rooms removed) */
+/** Runner to invoke schedule migration once at startup */
 public class MigrationRunner {
     public static boolean run(DoctorMaintenance docMaint, Object unused) {
         try {
