@@ -409,11 +409,6 @@ public class ConsultationMaintenance {
         }
         for (int i=0;i<patients.size();i++) if (patients.get(i).getId().equals(id)) return patients.get(i); return null;
     }
-    // Room model removed
-
-    // hour-based checks removed
-
-    // No room selection now
 
     private String nextConsultationId() {
         int max=0; for (int i=0;i<consultations.size();i++){String id=consultations.get(i).getId(); if (id!=null&&id.startsWith("C")) {try{int n=Integer.parseInt(id.substring(1)); if(n>max)max=n;}catch(Exception ignored){}}}

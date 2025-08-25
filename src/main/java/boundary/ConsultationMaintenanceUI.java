@@ -6,7 +6,9 @@ import java.util.Scanner;
 public class ConsultationMaintenanceUI {
     private final Scanner scanner = new Scanner(System.in);
 
-    // Main header and menu
+    /**
+     * Prints the main header for the consultation maintenance section.
+     */
     public void printMainHeader() {
         System.out.println("═".repeat(100));
         System.out.println("CLINIC CONSULTATION MAINTENANCE");
@@ -29,11 +31,15 @@ public class ConsultationMaintenanceUI {
         System.out.println("Invalid");
     }
 
-    // Generic helpers
+    /**
+     * Prints a hint for going back and pauses the screen.
+     */
     public void printBackHint() { System.out.println("(Enter '0' to go back)"); }
     public void pause() { InputUtil.pauseScreen(); }
 
-    // Listing
+    /**
+     * Displays headers and tables for consultations and booked consultations.
+     */
     public void displayConsultationsHeader() {
         System.out.println("═".repeat(100));
         System.out.println("CONSULTATIONS");
@@ -66,7 +72,9 @@ public class ConsultationMaintenanceUI {
         System.out.println("No booked consultations.");
     }
 
-    // Search
+    /**
+     * Displays search results headers and messages for search operations.
+     */
     public void displaySearchHeader() {
         System.out.println("═".repeat(100));
         System.out.println("SEARCH RESULTS");
@@ -76,7 +84,9 @@ public class ConsultationMaintenanceUI {
     public void displayNoMatches() { System.out.println("(no matches)"); }
     public void displayEmptyQuery() { System.out.println("(empty query)"); }
 
-    // Booking
+    /**
+     * Displays booking headers, status, and error messages for booking consultations.
+     */
     public void showBookHeader() {
         System.out.println("═".repeat(60));
         System.out.println("BOOK CONSULTATION");
@@ -88,7 +98,9 @@ public class ConsultationMaintenanceUI {
     public void displaySlotUnavailable() { System.out.println("(X) Selected slot is not available. Please choose one of the listed slots."); }
     public void displayBooked(String id) { System.out.println("✅ Booked: "+id); }
 
-    // Update
+    /**
+     * Displays details and status messages for updating consultations.
+     */
     public void displayCurrentConsultationDetails(String dateTime, String doctor, String patient,
                                                   String status, String reason, String notes) {
         System.out.println("Current: ");
@@ -107,12 +119,16 @@ public class ConsultationMaintenanceUI {
     public void displayNewDoctorNotAvailable() { System.out.println("(X) New doctor not available at this time."); }
     public void displayUpdated() { System.out.println("Updated."); }
 
-    // Cancel/Reschedule
+    /**
+     * Displays messages for cancelling and rescheduling consultations.
+     */
     public void displayCancelled() { System.out.println("Cancelled."); }
     public void displayRescheduled() { System.out.println("Rescheduled."); }
     public void displayOnlyBookedAllowed() { System.out.println("Only consultations with status BOOKED are allowed for this action."); }
 
-    // Follow-up
+    /**
+     * Displays messages for creating and booking follow-up consultations.
+     */
     public void displayCreatingFollowUpFor(String baseId, String patientDisplay, String doctorDisplay) {
         System.out.println("Creating follow-up for: " + baseId);
         System.out.println("  Patient: " + patientDisplay);
@@ -122,7 +138,9 @@ public class ConsultationMaintenanceUI {
         System.out.println("✅ Follow-up booked: "+id+" (for "+baseId+")");
     }
 
-    // Available slots
+    /**
+     * Displays available slots for a doctor within a given range.
+     */
     public void displayAvailableSlots(String doctorId, String rangeText, String body) {
         System.out.println("\nAvailable slots for doctor " + doctorId + " (" + rangeText + "):");
         if (body == null || body.isBlank()) {
@@ -133,10 +151,14 @@ public class ConsultationMaintenanceUI {
         System.out.println();
     }
 
-    // Validation helpers used by read... methods
+    /**
+     * Displays validation error messages for date and hour input.
+     */
     public void displayInvalidDateBack() { System.out.println("Invalid date (yyyy-MM-dd). Try again or '0' to go back."); }
     public void displayInvalidHourBack() { System.out.println("Invalid hour (0-23). Try again or '0' to go back."); }
 
-    // Generic not-found
+    /**
+     * Displays a generic not found message.
+     */
     public void displayNotFound() { System.out.println("Not found."); }
 }

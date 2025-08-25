@@ -61,8 +61,10 @@ public class ClinicMaintenance {
     public static void main(String[] args) {
         ClinicMaintenance clinicMaintenance = new ClinicMaintenance();
         // Run schedule migration using runner
-    boolean didMig = MigrationRunner.run(clinicMaintenance.doctorMaintenance, null);
-        if (didMig) System.out.println("[Migration] Legacy schedule entries normalized.");
+        boolean didMig = MigrationRunner.run(clinicMaintenance.doctorMaintenance, null);
+        if (didMig) {
+            System.out.println("[Migration] Legacy schedule entries normalized.");
+        }
         clinicMaintenance.runClinicMaintenance();
     }
 }

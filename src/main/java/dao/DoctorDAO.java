@@ -20,27 +20,44 @@ public class DoctorDAO {
     public ADTInterface<Doctor> retrieveFromFile() {
         ADTInterface<Doctor> doctorList = new CustomADT<>();
 
-        try {
-            File file = new File(FILE_PATH);
-            if (file.exists() && file.length() > 0) {
-                Doctor[] doctors = objectMapper.readValue(
-                    file,
-                    Doctor[].class
-                );
-
+        File file = new File(FILE_PATH);
+        boolean migrated = false;
+        if (file.exists() && file.length() > 0) {
+            try {
+                Doctor[] doctors = objectMapper.readValue(file, Doctor[].class);
                 for (Doctor doctor : doctors) {
-                    // Ensure schedule not null after deserialization
-                    if (doctor.getSchedule() == null) {
-                        doctor.setSchedule(new DoctorSchedule());
-                    }
+                    if (doctor.getSchedule() == null) doctor.setSchedule(new DoctorSchedule());
                     doctorList.add(doctor);
                 }
+            } catch (IOException ex) {
+                try {
+                    com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(file);
+                    if (root.isArray()) {
+                        if (root.size() > 1 && root.get(1).isArray()) {
+                            com.fasterxml.jackson.databind.JsonNode entries = root.get(1);
+                            for (com.fasterxml.jackson.databind.JsonNode pair : entries) {
+                                if (pair.isArray() && pair.size() > 1 && pair.get(1).isObject()) {
+                                    Doctor d = objectMapper.treeToValue(pair.get(1), Doctor.class);
+                                    if (d.getSchedule() == null) d.setSchedule(new DoctorSchedule());
+                                    doctorList.add(d);
+                                }
+                            }
+                            migrated = true;
+                        } else {
+                            Doctor[] doctors = objectMapper.treeToValue(root, Doctor[].class);
+                            for (Doctor doctor : doctors) {
+                                if (doctor.getSchedule() == null) doctor.setSchedule(new DoctorSchedule());
+                                doctorList.add(doctor);
+                            }
+                            migrated = true;
+                        }
+                    }
+                } catch (IOException ex2) {
+                    System.out.println("Error reading doctor data: " + ex2.getMessage());
+                }
             }
-        } catch (FileNotFoundException e) {
-            System.out.println("No existing doctor data found. Starting with empty list.");
-        } catch (IOException e) {
-            System.out.println("Error reading doctor data: " + e.getMessage());
         }
+        if (migrated && doctorList.size() > 0) saveToFile(doctorList);
 
         return doctorList;
     }

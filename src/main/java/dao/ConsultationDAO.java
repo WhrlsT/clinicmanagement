@@ -21,15 +21,37 @@ public class ConsultationDAO {
 
     public ADTInterface<Consultation> load() {
         ADTInterface<Consultation> list = new CustomADT<>();
-        try {
-            File f = new File(FILE);
-            if (f.exists() && f.length() > 0) {
+        File f = new File(FILE);
+        boolean migrated = false;
+        if (f.exists() && f.length() > 0) {
+            try {
                 Consultation[] arr = mapper.readValue(f, Consultation[].class);
                 for (Consultation c : arr) list.add(c);
+            } catch (IOException ex) {
+                try {
+                    com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(f);
+                    if (root.isArray()) {
+                        if (root.size() > 1 && root.get(1).isArray()) {
+                            com.fasterxml.jackson.databind.JsonNode entries = root.get(1);
+                            for (com.fasterxml.jackson.databind.JsonNode pair : entries) {
+                                if (pair.isArray() && pair.size() > 1 && pair.get(1).isObject()) {
+                                    Consultation c = mapper.treeToValue(pair.get(1), Consultation.class);
+                                    list.add(c);
+                                }
+                            }
+                            migrated = true;
+                        } else {
+                            Consultation[] arr = mapper.treeToValue(root, Consultation[].class);
+                            for (Consultation c : arr) list.add(c);
+                            migrated = true;
+                        }
+                    }
+                } catch (IOException ex2) {
+                    System.out.println("Error loading consultations: " + ex2.getMessage());
+                }
             }
-        } catch (IOException e) {
-            System.out.println("Error loading consultations: " + e.getMessage());
         }
+        if (migrated && list.size() > 0) save(list);
         return list;
     }
 

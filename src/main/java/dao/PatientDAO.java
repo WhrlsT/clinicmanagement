@@ -27,22 +27,43 @@ public class PatientDAO {
     public ADTInterface<Patient> retrieveFromFile() {
         ADTInterface<Patient> patientList = new CustomADT<>();
 
-        try {
-            File file = new File(FILE_PATH);
-            if (file.exists() && file.length() > 0) {
-                Patient[] patients = objectMapper.readValue(
-                    file,
-                    Patient[].class
-                );
-
-                for (Patient patient : patients) {
-                    patientList.add(patient);
+        File file = new File(FILE_PATH);
+        if (file.exists() && file.length() > 0) {
+                boolean migrated = false;
+                try {
+                    // Try normal deserialization: JSON array of Patient objects
+                    Patient[] patients = objectMapper.readValue(file, Patient[].class);
+                    for (Patient patient : patients) patientList.add(patient);
+                } catch (IOException ex) {
+                    // Fallback: handle legacy/wrapped format like ["[Lentity.Patient;", [ ["entity.Patient", {..}], ... ] ]
+                    try {
+                        com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(file);
+                        if (root.isArray()) {
+                            // If second element is an array of pairs [type, object]
+                            if (root.size() > 1 && root.get(1).isArray()) {
+                                com.fasterxml.jackson.databind.JsonNode entries = root.get(1);
+                                for (com.fasterxml.jackson.databind.JsonNode pair : entries) {
+                                    if (pair.isArray() && pair.size() > 1 && pair.get(1).isObject()) {
+                                        Patient p = objectMapper.treeToValue(pair.get(1), Patient.class);
+                                        patientList.add(p);
+                                    }
+                                }
+                                migrated = true;
+                            } else {
+                                // Try treating root itself as array of Patient objects
+                                Patient[] patients = objectMapper.treeToValue(root, Patient[].class);
+                                for (Patient patient : patients) patientList.add(patient);
+                                migrated = true;
+                            }
+                        }
+                    } catch (IOException ex2) {
+                        System.out.println("Error reading patient data: " + ex2.getMessage());
+                    }
                 }
-            }
-        } catch (FileNotFoundException e) {
-            System.out.println("No existing patient data found. Starting with empty list.");
-        } catch (IOException e) {
-            System.out.println("Error reading patient data: " + e.getMessage());
+                // If we read a legacy format, persist a clean JSON array for future runs
+                if (migrated && patientList.size() > 0) {
+                    saveToFile(patientList);
+                }
         }
 
         return patientList;

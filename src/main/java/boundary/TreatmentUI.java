@@ -4,6 +4,14 @@ import utility.InputUtil;
 import java.util.Scanner;
 import entity.Treatment;
 
+/**
+ * Console UI helper for treatment management flows.
+ *
+ * This class centralises all text output and small input prompts used by the
+ * treatment controller. It focuses on presentation: printing headers, menus,
+ * tables and short status/validation messages. No business logic or persistence
+ * is performed here.
+ */
 public class TreatmentUI {
     private final Scanner sc = new Scanner(System.in);
 
@@ -14,7 +22,10 @@ public class TreatmentUI {
     }
 
     public int menu() {
-        // Keep menu simple; caller may clear screen and print headers before this
+    /**
+     * Display the treatment management menu and return the user's choice.
+     * Note: callers may print a module header before invoking this menu.
+     */
         System.out.println("Treatment Management");
         System.out.println("1. Add Treatment");
         System.out.println("2. Update Treatment");
@@ -63,8 +74,9 @@ public class TreatmentUI {
     }
 
     private String nz(Object o){ return o==null?"":o.toString(); }
-
-    // Headers and small UI helpers for consistency with other modules
+    /**
+     * Header helpers used by add/update/delete flows 
+     */
     public void showAddHeader() {
         System.out.println("\n" + "═".repeat(94));
         System.out.println("ADD TREATMENT");
@@ -84,8 +96,9 @@ public class TreatmentUI {
     }
 
     public void printBackHint() { System.out.println("(Enter '0' to go back)"); }
-
-    // Messages similar to PatientMaintenanceUI for consistency
+    /**
+     * Treatment detail and status messages. 
+     */
     public void displayTreatmentDetails(Treatment t){
         System.out.println("\nTreatment Details");
         System.out.println("-----------------------------------------------");
@@ -117,8 +130,9 @@ public class TreatmentUI {
     public void displayNotFoundMessage(String id){
         System.out.println("Treatment with ID: " + id + " not found.");
     }
-
-    // Search prompts
+    /**
+     * Search-related prompts and helpers.
+     */
     public int searchMenu(){
         System.out.println("Search By:");
         System.out.println("1. Treatment ID");
@@ -129,7 +143,9 @@ public class TreatmentUI {
     }
     public String promptSearchQuery(){ return InputUtil.getInput(sc, "Enter search text: "); }
 
-    // Sort prompts
+    /**
+     * Sort field and direction prompts used by callers that support sorting.
+     */
     public int sortFieldMenu(){
         System.out.println("Sort Field:");
         System.out.println("1. Treatment ID");
@@ -143,6 +159,4 @@ public class TreatmentUI {
         System.out.println("Direction: 1=Ascending 2=Descending");
         return InputUtil.getIntInput(sc, "Choose: ");
     }
-
-    // Dispense helpers moved under Medication module
 }

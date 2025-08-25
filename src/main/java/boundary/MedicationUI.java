@@ -40,7 +40,9 @@ public class MedicationUI {
 
     private String nz(Object o){ return o==null?"":o.toString(); }
 
-    // New UI helpers for consistent UX
+    /**
+     * UI helpers for consistent user experience in medication management.
+     */
     public void showAddIntro(){
         System.out.println("Adding a New Medication (Enter '0' to go back)");
         System.out.println("─".repeat(50));
@@ -83,7 +85,9 @@ public class MedicationUI {
         System.out.println("Medication with ID: " + id + " not found.");
     }
 
-    // Dispense UI under Medication module
+    /**
+     * UI helpers for dispensing medications under the Medication module.
+     */
     public void showDispenseIntro(){
         System.out.println("Dispense Medications for Prescribed Treatments (Enter '0' to go back)");
         System.out.println("─".repeat(50));

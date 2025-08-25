@@ -24,3 +24,60 @@ Mon: ████████░░ 80%    Fri: ██████████ 1
 Tue: ██████████ 100%   Sat: ████░░░░░░ 40%
 Wed: ████████░░ 80%    Sun: ░░░░░░░░░░ 0%
 Thu: ██████████ 100%
+
+ConsultationMaintenance
+
+Consultation workload & utilization
+What/Why: per-doctor and overall counts by status and period (day/week/month); peak hours and utilization for capacity planning.
+Key fields/output: consultation.id, date, doctorId, status → CSV/JSON + simple console table.
+Follow‑up & no‑show tracking
+What/Why: chains of follow-ups, potential no‑shows (BOOKED past threshold), conversion rates BOOKED→TREATED.
+Key fields/output: consultation.id, patientId, doctorId, date, status, followUpOfId → CSV + summary counts.
+ClinicMaintenance
+
+Clinic KPI dashboard
+What/Why: aggregated KPIs (total consultations, avg wait time, avg treatment time, daily throughput) to monitor clinic health.
+Key fields/output: rolled-up metrics from consultations, queues, treatments → compact dashboard (CSV/console).
+Resource & staffing summary
+What/Why: map scheduled duty-hours vs consultations served per day to reveal understaffing/overstaffing.
+Key fields/output: doctor.schedule, consultations per doctor per day → utilization table.
+DoctorMaintenance
+
+Doctor activity & utilization report
+What/Why: per-doctor counts, average session length, busiest hours to inform rostering.
+Key fields/output: doctor.id, name, consultation counts, hours worked → CSV + per-day summary.
+Credentials & availability audit
+What/Why: list doctors with missing/expired credentials or inconsistent schedule entries and calendar sync status.
+Key fields/output: doctor.id, license/expiry, schedule completeness, calendarId → compliance report.
+PatientMaintenance
+
+Patient demographics & visit frequency
+What/Why: breakdown by age group, gender, and visit counts to support outreach and service planning.
+Key fields/output: patient.id, birthdate, gender, visitCount → CSV + histogram.
+High‑risk / chronic follow‑up list
+What/Why: identify patients with chronic conditions or frequent visits lacking recent follow‑ups for care management.
+Key fields/output: patient.id, diagnoses/tags, lastVisitDate, followUpDue → actionable list.
+QueueMaintenance
+
+Wait‑time & throughput analysis
+What/Why: per-station/doctor average wait, peak queue lengths, and median service time to optimize flow.
+Key fields/output: queueEntry.timestamp, servedTimestamp, doctorId, status → time-series CSV and summaries.
+Bottleneck & abandonment report
+What/Why: identify where patients wait longest or leave (abandon), with counts by time-of-day and staff assignment.
+Key fields/output: queueEntry, status transitions, time durations → prioritized improvement list.
+MedicationMaintenance
+
+Stock & expiry report
+What/Why: current stock levels, upcoming expiries, reorder recommendations to avoid stockouts and waste.
+Key fields/output: medication.id, qtyOnHand, reorderLevel, expiryDate → CSV with flags.
+Prescription & usage trends
+What/Why: most-prescribed meds, usage growth/decline, and patient-level medication history for stewardship.
+Key fields/output: medication.id, prescriptions count, patientId → trend charts/CSV.
+TreatmentMaintenance
+
+Treatment outcome & success rates
+What/Why: success/complication rates per treatment type and per doctor to support quality improvement.
+Key fields/output: treatment.id, consultationId, outcome/status, duration → CSV + summary rates.
+Treatment duration & resource use
+What/Why: average treatment time, materials/meds used per treatment to inform costing and scheduling.
+Key fields/output: start/end timestamps, medsUsed, staff involved → per-treatment report.

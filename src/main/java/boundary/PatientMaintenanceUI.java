@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package boundary;
 
 import java.util.Scanner;
@@ -12,9 +8,15 @@ import entity.Consultation;
 import entity.Treatment;
 import entity.Medication;
 import entity.Doctor;
+
 /**
+ * Console-based UI helper for patient maintenance flows.
  *
- * @author Whrl
+ * This class centralises all text output and small input prompts used by the
+ * patient maintenance controller. It is responsible for formatting tables,
+ * showing section headers, and printing validation or status messages. The
+ * methods are presentation-only and do not perform business logic or I/O
+ * persistence.
  */
 public class PatientMaintenanceUI {
     
@@ -29,9 +31,74 @@ public class PatientMaintenanceUI {
         System.out.println("5. Search Patient");
         System.out.println("6. View Visit Records");
         System.out.println("7. Exit");
+        System.out.println("8. Patient Demographics Report");
         System.out.print("Select an option: ");
         return InputUtil.getIntInput(scanner, "Enter your choice: ");
     }
+
+    /**
+     * Demographics report UI helpers
+     */
+    public void showDemographicsHeader() {
+        System.out.println("═".repeat(60));
+        System.out.println("PATIENT DEMOGRAPHICS REPORT");
+        System.out.println("═".repeat(60));
+    }
+
+    public void displayDemographicsSummary(int totalPatients, double avgAge, adt.ADTInterface<String> genderCounts, adt.ADTInterface<String> nationalityCounts, int highFreqCount) {
+        System.out.println("Summary:");
+        System.out.println("Total patients: " + totalPatients);
+        System.out.println("Average age: " + String.format("%.1f", avgAge));
+        System.out.println("High-frequency patients (>=5 visits): " + highFreqCount);
+        System.out.println("Gender distribution:");
+        if (genderCounts != null) {
+            for (int i = 0; i < genderCounts.size(); i++) {
+                String kv = genderCounts.get(i);
+                int idx = kv.indexOf(':');
+                String k = idx>=0?kv.substring(0,idx):kv;
+                String v = idx>=0?kv.substring(idx+1):"0";
+                System.out.println("  " + k + ": " + v);
+            }
+        }
+        System.out.println("Nationality distribution:");
+        if (nationalityCounts != null) {
+            for (int i = 0; i < nationalityCounts.size(); i++) {
+                String kv = nationalityCounts.get(i);
+                int idx = kv.indexOf(':');
+                String k = idx>=0?kv.substring(0,idx):kv;
+                String v = idx>=0?kv.substring(idx+1):"0";
+                System.out.println("  " + k + ": " + v);
+            }
+        }
+    }
+
+    public void displayAgeGroupTable(adt.ADTInterface<String> ageGroups, int total) {
+        System.out.println("\nAge group distribution:");
+        System.out.println("Group | Count | %");
+        if (ageGroups != null) {
+            for (int i = 0; i < ageGroups.size(); i++) {
+                String kv = ageGroups.get(i);
+                int idx = kv.indexOf(':');
+                String key = idx>=0?kv.substring(0,idx):kv;
+                int val = 0; try { val = Integer.parseInt(idx>=0?kv.substring(idx+1):"0"); } catch(Exception ex) { val = 0; }
+                double pct = total==0?0.0:(val * 100.0 / total);
+                System.out.println(String.format("%-6s | %-5d | %4.1f%%", key, val, pct));
+            }
+        }
+    }
+
+    public void displayPerPatientCSV(String csv) {
+        System.out.println("\nPer-patient CSV (first lines):");
+        System.out.println(csv);
+    }
+
+    public boolean promptExportCSV() {
+        String ans = InputUtil.getInput(scanner, "Export CSV to 'patient_demographics.csv'? (y/N): ");
+        return ans.equalsIgnoreCase("y") || ans.equalsIgnoreCase("yes");
+    }
+
+    public void displayExportSaved(String path) { System.out.println("Exported CSV to: " + path); }
+    public void displayExportFailed(String msg) { System.out.println("Failed to save CSV: " + msg); }
 
     public void displayPatientsTable(String outputStr) {
         System.out.println("\n----------------------------------------------------------------------------------------------------------------------");
@@ -46,7 +113,11 @@ public class PatientMaintenanceUI {
         }
     }
 
-    // Overload: build and display table from list of patients
+    /**
+     * Build and display a patients table from an ADTInterface list.
+     * This overload converts the ADT list into a formatted string and delegates
+     * to {@link #displayPatientsTable(String)} for printing.
+     */
     public void displayPatientsTable(ADTInterface<Patient> patients) {
         StringBuilder sb = new StringBuilder();
         if (patients != null) {
@@ -118,7 +189,9 @@ public class PatientMaintenanceUI {
         System.out.println("Patient with ID: " + patientId + " deleted successfully.");
     }
     
-    // New UI helpers to keep display logic here
+    /**
+     * UI section helpers for add/update/delete flows and navigation hints.
+     */
     public void showAddPatientIntro() {
         System.out.println("Adding a New Patient (Enter '0' to go back)");
         System.out.println("─".repeat(50));
@@ -159,7 +232,10 @@ public class PatientMaintenanceUI {
         System.out.println("Queue Summary: WAITING="+waiting+" CALLED="+called+" IN_PROGRESS="+inprog+" SKIPPED="+skipped+" COMPLETED="+completed);
     }
 
-    // Visit records
+    /**
+     * Visit records display helpers. These methods handle listing and detailed
+     * views of a patient's consultations, treatments and medications.
+     */
     public void displayVisitRecordsIntro() {
         System.out.println("View Patient Visit Records (Enter '0' to go back)");
         System.out.println("─".repeat(50));
@@ -288,7 +364,10 @@ public class PatientMaintenanceUI {
         System.out.println("Total Treatments: Unable to calculate");
     }
 
-    // Validation and prompt error messages (moved from control)
+    /**
+     * Validation and prompt error messages used by input helper methods.
+     * Keeping these messages in the UI class centralises wording and formatting.
+     */
     public void displayEmptyInputOrBackMessage() {
         System.out.println("Input cannot be empty. Please try again or enter '0' to go back.");
     }
@@ -325,7 +404,9 @@ public class PatientMaintenanceUI {
         System.out.println("Invalid date format (use yyyy-MM-dd). Please try again or enter '0' to go back.");
     }
 
-    // small helpers used in UI formatting
+    /**
+     * Small helper methods used by the UI to lookup and format related data.
+     */
     private String getDoctorName(ADTInterface<Doctor> doctors, String doctorId) {
         if (doctorId == null || doctorId.equals("UNASSIGNED")) {
             return "UNASSIGNED";

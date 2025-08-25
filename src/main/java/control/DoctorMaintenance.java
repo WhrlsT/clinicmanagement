@@ -248,8 +248,6 @@ public class DoctorMaintenance {
         if (startHour < 0) startHour = 0;
         if (endHour > 24) endHour = 24;
         if (endHour <= startHour) { doctorUI.displayEndHourMustBeGreater(); return; }
-        // If marking NOT_AVAILABLE, ensure no booked slots would be overridden
-    // BOOKED state removed; no need to guard against overriding bookings in template
         doctor.getSchedule().setAvailabilityRange(day, startHour, endHour, status);
         doctorDAO.saveToFile(doctorList);
     doctorUI.displayAvailabilityUpdated();
@@ -291,7 +289,6 @@ public class DoctorMaintenance {
             System.out.println("─".repeat(50));
             doctorUI.showSearchResultsHeader(query);
             
-            // Build table string similar to getAllDoctors()
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < foundDoctors.size(); i++) {
                 Doctor d = foundDoctors.get(i);
@@ -559,7 +556,6 @@ public class DoctorMaintenance {
     
     private boolean isDoctorAvailableOnDay(Doctor doctor, int dayIndex) {
         // Check if doctor has any availability on this day
-        // This is a simplified check - you might need to adjust based on your Schedule implementation
         try {
             for (int hour = 0; hour < 24; hour++) { // Check all 24 hours
                 if (isDoctorAvailableAtTime(doctor, dayIndex, hour)) {
@@ -575,17 +571,12 @@ public class DoctorMaintenance {
     
     private boolean isDoctorAvailableAtTime(Doctor doctor, int dayIndex, int hour) {
         // Check if doctor is available at specific day and hour
-        // This is a simplified implementation - adjust based on your Schedule class methods
         try {
-            // Assuming your Schedule class has a method to check availability
-            // You'll need to adjust this based on your actual Schedule implementation
             return doctor.getSchedule().isAvailable(dayIndex, hour);
         } catch (Exception e) {
-            // Handle any schedule access errors gracefully
             return false;
         }
     }
 
-    // Helper methods for input with back option
-    // Removed local back-option helpers; using InputUtil versions
+
 }

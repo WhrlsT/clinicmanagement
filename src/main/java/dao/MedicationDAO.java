@@ -18,15 +18,37 @@ public class MedicationDAO {
 
     public ADTInterface<Medication> load() {
         ADTInterface<Medication> list = new CustomADT<>();
-        try {
-            File f = new File(FILE);
-            if (f.exists() && f.length() > 0) {
+        File f = new File(FILE);
+        boolean migrated = false;
+        if (f.exists() && f.length() > 0) {
+            try {
                 Medication[] arr = mapper.readValue(f, Medication[].class);
                 for (Medication m : arr) list.add(m);
+            } catch (IOException ex) {
+                try {
+                    com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(f);
+                    if (root.isArray()) {
+                        if (root.size() > 1 && root.get(1).isArray()) {
+                            com.fasterxml.jackson.databind.JsonNode entries = root.get(1);
+                            for (com.fasterxml.jackson.databind.JsonNode pair : entries) {
+                                if (pair.isArray() && pair.size() > 1 && pair.get(1).isObject()) {
+                                    Medication m = mapper.treeToValue(pair.get(1), Medication.class);
+                                    list.add(m);
+                                }
+                            }
+                            migrated = true;
+                        } else {
+                            Medication[] arr = mapper.treeToValue(root, Medication[].class);
+                            for (Medication m : arr) list.add(m);
+                            migrated = true;
+                        }
+                    }
+                } catch (IOException ex2) {
+                    System.out.println("Error loading medications: " + ex2.getMessage());
+                }
             }
-        } catch (IOException e) {
-            System.out.println("Error loading medications: " + e.getMessage());
         }
+        if (migrated && list.size() > 0) save(list);
         return list;
     }
 

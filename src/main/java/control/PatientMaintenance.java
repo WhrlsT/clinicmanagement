@@ -63,6 +63,10 @@ public class PatientMaintenance {
             InputUtil.clearScreen();
             viewPatientVisitRecords();
                     break;
+                case 8:
+            InputUtil.clearScreen();
+            generateAndShowDemographicsReport();
+                    break;
                 case 7:
             patientUI.printReturningToMainMenu();
                     break;
@@ -76,6 +80,115 @@ public class PatientMaintenance {
                 patientUI.displayPatientsTable(getAllPatients());
             }
         } while (choice != 7);
+    }
+
+    /**
+     * Generate patient demographics and print via UI. Also offer CSV export.
+     */
+    private void generateAndShowDemographicsReport() {
+        clinicUI.printHeader("Clinic Patient Maintenance");
+        patientUI.showDemographicsHeader();
+
+        int total = patientList.size();
+        double ageSum = 0.0;
+    ADTInterface<String> genderCounts = new CustomADT<>();
+    ADTInterface<String> nationalityCounts = new CustomADT<>();
+    ADTInterface<String> ageGroups = new CustomADT<>();
+    // store as "key:count"
+    ageGroups.add("0-17:0");
+    ageGroups.add("18-35:0");
+    ageGroups.add("36-50:0");
+    ageGroups.add("51-65:0");
+    ageGroups.add("66+:0");
+
+        // Build per-patient CSV lines
+        StringBuilder csv = new StringBuilder();
+        csv.append("id,name,dateOfBirth,age,gender,phone,email,nationality,visitCount,lastVisitDate,chronicFlag\n");
+
+        // Preload consultations to compute visit counts / last visit
+        ADTInterface<Consultation> allConsults = consultationDAO.load();
+
+        for (int i = 0; i < patientList.size(); i++) {
+            Patient p = patientList.get(i);
+            String ageStr = p.calculateAge(p.getDateOfBirth());
+            int age = 0;
+            try { age = Integer.parseInt(ageStr); } catch(Exception ex) { age = 0; }
+            ageSum += age;
+
+            incrementCount(genderCounts, p.getGender());
+            incrementCount(nationalityCounts, p.getNationality());
+
+            if (age <= 17) incrementCount(ageGroups, "0-17");
+            else if (age <= 35) incrementCount(ageGroups, "18-35");
+            else if (age <= 50) incrementCount(ageGroups, "36-50");
+            else if (age <= 65) incrementCount(ageGroups, "51-65");
+            else incrementCount(ageGroups, "66+");
+
+            // visit count and last visit
+            int visitCount = 0;
+            java.time.LocalDate lastVisit = null;
+            for (int j = 0; j < allConsults.size(); j++) {
+                Consultation c = allConsults.get(j);
+                if (c.getPatientId() != null && c.getPatientId().equals(p.getId())) {
+                    visitCount++;
+                    if (c.getDate() != null) {
+                        // consultation.getDate() may be LocalDateTime; convert to LocalDate
+                        java.time.LocalDate d;
+                        try { d = c.getDate().toLocalDate(); } catch (Exception ex) { d = null; }
+                        if (d != null && (lastVisit == null || d.isAfter(lastVisit))) lastVisit = d;
+                    }
+                }
+            }
+
+            String lastVisitStr = lastVisit==null?"":lastVisit.toString();
+            boolean chronic = visitCount >= 5; // heuristic
+
+            csv.append(String.format("%s,%s,%s,%d,%s,%s,%s,%s,%d,%s,%b\n",
+                    p.getId(), escapeCsv(p.getName()), p.getDateOfBirth(), age, p.getGender(), p.getPhoneNumber(), p.getEmail(), p.getNationality(), visitCount, lastVisitStr, chronic
+            ));
+        }
+
+        double avgAge = total==0?0.0:ageSum / total;
+
+        // Count high-frequency patients
+        int highFreq = 0;
+        // Quick scan of CSV lines (or recompute) — recompute for clarity
+        for (int i = 0; i < patientList.size(); i++) {
+            Patient p = patientList.get(i);
+            int visits = 0;
+            for (int j = 0; j < allConsults.size(); j++) if (allConsults.get(j).getPatientId().equals(p.getId())) visits++;
+            if (visits >= 5) highFreq++;
+        }
+
+    patientUI.displayDemographicsSummary(total, avgAge, genderCounts, nationalityCounts, highFreq);
+    patientUI.displayAgeGroupTable(ageGroups, total);
+        patientUI.displayPerPatientCSV(csv.toString().split("\n", 20)[0] + "\n... (truncated) ...\n");
+
+        if (patientUI.promptExportCSV()) {
+            try {
+                java.nio.file.Path out = java.nio.file.Paths.get("patient_demographics.csv");
+                java.nio.file.Files.writeString(out, csv.toString());
+                patientUI.displayExportSaved(out.toAbsolutePath().toString());
+            } catch (Exception e) {
+                patientUI.displayExportFailed(e.getMessage());
+            }
+        }
+    }
+
+    private static String escapeCsv(String s) { if (s==null) return ""; return s.contains(",")?('"'+s.replace("\"","\"\"")+'"'):s; }
+
+    // Helper: increment a 'key:count' stored in an ADTInterface<String>
+    private void incrementCount(ADTInterface<String> list, String key) {
+        if (key == null) key = "";
+        for (int i = 0; i < list.size(); i++) {
+            String kv = list.get(i);
+            int idx = kv.indexOf(':');
+            String k = idx>=0?kv.substring(0,idx):kv;
+            int v = 0; try { v = Integer.parseInt(idx>=0?kv.substring(idx+1):"0"); } catch(Exception ex) { v = 0; }
+            if (k.equals(key)) { list.set(i, k + ":" + (v+1)); return; }
+        }
+        // not found -> add
+        list.add(key + ":1");
     }
 
     // New hub flow as requested
@@ -470,13 +583,8 @@ public class PatientMaintenance {
             }
         }
 
-        // delegate details display to UI
         patientUI.displayConsultationDetails(consultation, consultationTreatments, medications, doctors);
     }
-    
-    // moved display helpers into UI
-    
-    // Removed local helpers in favor of InputUtil reusable versions
 
     private void viewPatientDetails() {
         clinicUI.printHeader("Clinic Patient Maintenance");

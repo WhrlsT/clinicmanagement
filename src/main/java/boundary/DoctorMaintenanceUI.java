@@ -38,7 +38,9 @@ public class DoctorMaintenanceUI {
         }
     }
 
-    // Overload: build and display table from list of doctors
+    /**
+     * Displays a table of doctors from an ADTInterface list.
+     */
     public void displayDoctorsTable(ADTInterface<Doctor> doctors) {
         StringBuilder sb = new StringBuilder();
         if (doctors != null) {
@@ -60,7 +62,7 @@ public class DoctorMaintenanceUI {
         String name = InputUtil.getInput(scanner, "Enter doctor name: ");
         String specialty = InputUtil.getInput(scanner, "Enter doctor specialty: ");
         String phoneNumber = InputUtil.getInput(scanner, "Enter doctor phone number: ");
-    // Address field removed from Doctor entity and listing; omit address input.
+    // Address field removed from Doctor entity and listing; omitted from input.
         String email = InputUtil.getInput(scanner, "Enter doctor email: ");
         // Add other fields as needed
 
@@ -110,7 +112,9 @@ public class DoctorMaintenanceUI {
         System.out.println("=================================================================\n");
     }
 
-    // Generic menu/flow messages
+    /**
+     * Displays generic menu and flow messages for user navigation.
+     */
     public void printInvalidChoiceMessage() {
         System.out.println("Invalid choice. Please try again.");
         InputUtil.pauseScreen();
@@ -120,7 +124,9 @@ public class DoctorMaintenanceUI {
         System.out.println("Returning to Main Menu...");
     }
 
-    // Dashboard display
+    /**
+     * Displays the duty schedule dashboard and related summaries.
+     */
     public void displayDutyDashboard(String content) {
         System.out.println("Clinic Duty Schedule Dashboard");
         System.out.println("\u2550".repeat(63));
@@ -238,7 +244,9 @@ public class DoctorMaintenanceUI {
 
     private String safe(String s){ return s==null?"":s; }
 
-    // Section intros and headers
+    /**
+     * Displays section intros and headers for doctor operations.
+     */
     public void showAddDoctorIntro() {
         System.out.println("Adding a New Doctor (Enter '0' to go back)");
         System.out.println("─".repeat(50));
@@ -306,7 +314,9 @@ public class DoctorMaintenanceUI {
         System.out.println("Schedule: Unable to display");
     }
 
-    // Validation messages
+    /**
+     * Displays validation messages for user input.
+     */
     public void displayEmptyInputOrBackMessage() {
         System.out.println("Input cannot be empty. Please try again or enter '0' to go back.");
     }
@@ -327,7 +337,9 @@ public class DoctorMaintenanceUI {
         System.out.println("Invalid email format. Please try again or enter '0' to go back.");
     }
 
-    // Availability messages
+    /**
+     * Displays messages related to doctor availability and scheduling.
+     */
     public void displayAvailabilityStatusDefaulted() {
         System.out.println("Invalid status, defaulting to AVAILABLE");
     }
@@ -340,7 +352,9 @@ public class DoctorMaintenanceUI {
         System.out.println("Availability updated.");
     }
 
-    // Overall duty schedule headers
+    /**
+     * Displays headers and summaries for overall duty schedules.
+     */
     public void displayOverallDutyHeader() {
         System.out.println("Overall Duty Schedule");
         System.out.println("─".repeat(50));
