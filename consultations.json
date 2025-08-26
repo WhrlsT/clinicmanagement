@@ -25,7 +25,7 @@
   "date" : [ 2025, 8, 25, 0, 0 ],
   "reason" : "I am sick",
   "notes" : "",
-  "status" : "BOOKED",
+  "status" : "ONGOING",
   "calendarEventId" : null,
   "followUpOfId" : null
 }, {
@@ -38,4 +38,24 @@
   "status" : "BOOKED",
   "calendarEventId" : null,
   "followUpOfId" : "C0001"
+}, {
+  "id" : "C0005",
+  "patientId" : "P0001",
+  "doctorId" : "D0003",
+  "date" : [ 2025, 9, 3, 0, 0 ],
+  "reason" : "appointment",
+  "notes" : "",
+  "status" : "BOOKED",
+  "calendarEventId" : null,
+  "followUpOfId" : null
+}, {
+  "id" : "C0006",
+  "patientId" : "P0001",
+  "doctorId" : "D0001",
+  "date" : [ 2025, 9, 8, 13, 0 ],
+  "reason" : "a",
+  "notes" : "",
+  "status" : "BOOKED",
+  "calendarEventId" : null,
+  "followUpOfId" : null
 } ]

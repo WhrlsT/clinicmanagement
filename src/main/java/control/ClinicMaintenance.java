@@ -4,7 +4,7 @@
  */
 package control;
 
-import boundary.ClinicMaintenanceUI;
+import boundary.*;
 import utility.MigrationRunner;
 import utility.InputUtil;
 /**
@@ -13,8 +13,10 @@ import utility.InputUtil;
  */
 public class ClinicMaintenance {
     private ClinicMaintenanceUI mainUI = new ClinicMaintenanceUI();
-    private PatientMaintenance patientMaintenance = new PatientMaintenance();
-    private DoctorMaintenance doctorMaintenance = new DoctorMaintenance();
+    private boundary.PatientMaintenanceUI patientUI = new boundary.PatientMaintenanceUI();
+    private DoctorMaintenanceUI doctorUI = new DoctorMaintenanceUI();
+    private ConsultationMaintenanceUI consultUI = new ConsultationMaintenanceUI();
+    DoctorMaintenance doctorMaintenance = new DoctorMaintenance();
 
     public void runClinicMaintenance() {
         InputUtil.clearScreen();
@@ -25,13 +27,13 @@ public class ClinicMaintenance {
             InputUtil.clearScreen();
             switch (choice) {
                 case 1:
-                    patientMaintenance.runPatientManagementHub();
+                    patientUI.runHub();
                     break;
                 case 2:
-                    doctorMaintenance.runDoctorMaintenance();
+                    doctorUI.run();
                     break;
                 case 3:
-                    new ConsultationMaintenance().run();
+                    consultUI.run();
                     break;
                 case 4:
                     new QueueMaintenance().run();

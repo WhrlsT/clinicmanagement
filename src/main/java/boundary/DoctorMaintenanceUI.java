@@ -4,10 +4,15 @@ import java.util.Scanner;
 import utility.InputUtil;
 import entity.Doctor;
 import adt.ADTInterface;
+import control.DoctorMaintenance;
+import entity.Consultation;
+import entity.SlotStatus;
 
 public class DoctorMaintenanceUI {
 
     private Scanner scanner = new Scanner(System.in);
+    private final DoctorMaintenance control = new DoctorMaintenance();
+    private final ClinicMaintenanceUI clinicUI = new ClinicMaintenanceUI();
 
     public int getMenuChoice() {
         System.out.println("Please select an option:");
@@ -16,21 +21,50 @@ public class DoctorMaintenanceUI {
         System.out.println("3. Delete Doctor");
         System.out.println("4. View Doctor Details");
         System.out.println("5. Search Doctor");
-    System.out.println("6. View Overall Duty Schedule");
-    System.out.println("7. Set Doctor Availability Range");
-    System.out.println("8. View Doctor's Consultations");
-    System.out.println("9. View Duty Dashboard");
-    System.out.println("10. Exit");
+        System.out.println("6. View Overall Duty Schedule");
+        System.out.println("7. Set Doctor Availability Range");
+        System.out.println("8. View Doctor's Consultations");
+        System.out.println("9. View Duty Dashboard");
+        System.out.println("10. Exit");
         System.out.print("Select an option: ");
         return InputUtil.getIntInput(scanner, "Enter your choice: ");
+    }
+
+    public void run() {
+        InputUtil.clearScreen();
+        clinicUI.printHeader("Clinic Doctor Maintenance");
+        displayDoctorsTable(control.getAllDoctors());
+        int choice;
+        do {
+            choice = getMenuChoice();
+            switch (choice) {
+                case 1 -> { InputUtil.clearScreen(); handleAdd(); }
+                case 2 -> { InputUtil.clearScreen(); handleUpdate(); }
+                case 3 -> { InputUtil.clearScreen(); handleDelete(); }
+                case 4 -> { InputUtil.clearScreen(); handleViewDetails(); }
+                case 5 -> { InputUtil.clearScreen(); handleSearch(); }
+                case 6 -> { InputUtil.clearScreen(); handleOverallDutySchedule(); }
+                case 7 -> { InputUtil.clearScreen(); handleSetAvailabilityRange(); }
+                case 8 -> { InputUtil.clearScreen(); handleViewConsultations(); }
+                case 9 -> { InputUtil.clearScreen(); showDutyDashboard(control.getAllDoctors()); }
+                case 10 -> printReturningToMainMenu();
+                default -> printInvalidChoiceMessage();
+            }
+            if (choice != 10 && choice != 4) {
+                InputUtil.pauseScreen();
+                InputUtil.clearScreen();
+                clinicUI.printHeader("Clinic Doctor Maintenance");
+                displayDoctorsTable(control.getAllDoctors());
+            }
+        } while (choice != 10);
     }
 
     public void displayDoctorsTable(String outputStr) {
         System.out.println("\n----------------------------------------------------------------------------------------------------------------------------------------");
         System.out.println("Doctor List");
         System.out.println("----------------------------------------------------------------------------------------------------------------------------------------");
-    System.out.printf("%-10s|%-20s|%-15s|%-20s|%-20s\n", "ID", "Name", "Specialty", "Phone", "Email");
-    System.out.println("----------------------------------------------------------------------------------------------------------------------------------------");
+        System.out.printf("%-10s|%-20s|%-15s|%-20s|%-20s\n", "ID", "Name", "Specialty", "Phone", "Email");
+        System.out.println("----------------------------------------------------------------------------------------------------------------------------------------");
         if (outputStr == null || outputStr.trim().isEmpty()) {
             System.out.println("No records found.\n");
         } else {
@@ -62,10 +96,7 @@ public class DoctorMaintenanceUI {
         String name = InputUtil.getInput(scanner, "Enter doctor name: ");
         String specialty = InputUtil.getInput(scanner, "Enter doctor specialty: ");
         String phoneNumber = InputUtil.getInput(scanner, "Enter doctor phone number: ");
-    // Address field removed from Doctor entity and listing; omitted from input.
         String email = InputUtil.getInput(scanner, "Enter doctor email: ");
-        // Add other fields as needed
-
         return new Doctor(null, name, specialty, phoneNumber, email);
     }
 
@@ -112,9 +143,6 @@ public class DoctorMaintenanceUI {
         System.out.println("=================================================================\n");
     }
 
-    /**
-     * Displays generic menu and flow messages for user navigation.
-     */
     public void printInvalidChoiceMessage() {
         System.out.println("Invalid choice. Please try again.");
         InputUtil.pauseScreen();
@@ -124,9 +152,6 @@ public class DoctorMaintenanceUI {
         System.out.println("Returning to Main Menu...");
     }
 
-    /**
-     * Displays the duty schedule dashboard and related summaries.
-     */
     public void displayDutyDashboard(String content) {
         System.out.println("Clinic Duty Schedule Dashboard");
         System.out.println("\u2550".repeat(63));
@@ -134,7 +159,6 @@ public class DoctorMaintenanceUI {
         System.out.println("\u2550".repeat(63));
     }
 
-    // Build and show dashboard from doctor list
     public void showDutyDashboard(ADTInterface<Doctor> doctorList) {
         java.time.LocalDate today = java.time.LocalDate.now();
         java.time.LocalTime now = java.time.LocalTime.now();
@@ -152,7 +176,6 @@ public class DoctorMaintenanceUI {
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("Total Doctors: %d    |    Active Today: %d    |    Coverage: %d%%%n%n", totalDoctors, activeToday, coverageNow));
 
-        // Current On Duty
         String currentTimeStr = now.format(java.time.format.DateTimeFormatter.ofPattern("h:mm a"));
         sb.append(String.format("Current On Duty (%s):%n", currentTimeStr));
         for (int i=0;i<doctorList.size();i++){
@@ -165,7 +188,6 @@ public class DoctorMaintenanceUI {
         if (availableNow==0) sb.append("(none)\n");
         sb.append('\n');
 
-        // Next Shift Changes
         sb.append("Next Shift Changes:\n");
         boolean anyChange=false;
         for (int h=hour+1; h<24; h++){
@@ -179,13 +201,12 @@ public class DoctorMaintenanceUI {
             if (!changes.isEmpty()){
                 anyChange=true;
                 sb.append(String.format("• %02d:00 - %s%n", h, String.join(", ", changes)));
-                if (sb.length()>2000) break; // guard against overly long output
+                if (sb.length()>2000) break;
             }
         }
         if (!anyChange) sb.append("(no changes)\n");
         sb.append('\n');
 
-        // Weekly Coverage Summary
         sb.append("Weekly Coverage Summary:\n");
         String[] dayNamesShort = {"Mon","Tue","Wed","Thu","Fri","Sat","Sun"};
         for (int d=0; d<7; d+=2){
@@ -244,9 +265,6 @@ public class DoctorMaintenanceUI {
 
     private String safe(String s){ return s==null?"":s; }
 
-    /**
-     * Displays section intros and headers for doctor operations.
-     */
     public void showAddDoctorIntro() {
         System.out.println("Adding a New Doctor (Enter '0' to go back)");
         System.out.println("─".repeat(50));
@@ -314,9 +332,6 @@ public class DoctorMaintenanceUI {
         System.out.println("Schedule: Unable to display");
     }
 
-    /**
-     * Displays validation messages for user input.
-     */
     public void displayEmptyInputOrBackMessage() {
         System.out.println("Input cannot be empty. Please try again or enter '0' to go back.");
     }
@@ -337,9 +352,6 @@ public class DoctorMaintenanceUI {
         System.out.println("Invalid email format. Please try again or enter '0' to go back.");
     }
 
-    /**
-     * Displays messages related to doctor availability and scheduling.
-     */
     public void displayAvailabilityStatusDefaulted() {
         System.out.println("Invalid status, defaulting to AVAILABLE");
     }
@@ -352,9 +364,6 @@ public class DoctorMaintenanceUI {
         System.out.println("Availability updated.");
     }
 
-    /**
-     * Displays headers and summaries for overall duty schedules.
-     */
     public void displayOverallDutyHeader() {
         System.out.println("Overall Duty Schedule");
         System.out.println("─".repeat(50));
@@ -401,5 +410,250 @@ public class DoctorMaintenanceUI {
     public void showViewDoctorDetailsIntro() {
         System.out.println("View Doctor Details (Enter '0' to go back)");
         System.out.println("─".repeat(50));
+    }
+
+    // ===== Handlers (moved from control) =====
+    private void handleAdd() {
+        clinicUI.printHeader("Clinic Doctor Maintenance");
+        showAddDoctorIntro();
+        String name = InputUtil.getInputWithBackOption(scanner, "Enter doctor name: ");
+        if (name == null) return;
+        String specialization = InputUtil.getInputWithBackOption(scanner, "Enter doctor specialty: ");
+        if (specialization == null) return;
+        String phone = InputUtil.getValidatedPhoneWithBackOption(scanner, "Enter doctor phone number (digits 7-15): ");
+        if (phone == null) return;
+        String email = InputUtil.getValidatedEmailWithBackOption(scanner, "Enter doctor email: ");
+        if (email == null) return;
+        Doctor newDoc = control.addDoctor(name, specialization, phone, email);
+        displayDoctorAddedMessage(newDoc);
+    }
+
+    private void handleUpdate() {
+        clinicUI.printHeader("Clinic Doctor Maintenance");
+        System.out.println("Updating Doctor Details (Enter '0' to go back)");
+        displayDoctorsTable(control.getAllDoctors());
+        String doctorId = InputUtil.getInput(scanner, "Enter doctor ID to update: ");
+        if (doctorId.equals("0")) return;
+        Doctor doctor = control.findDoctorById(doctorId);
+        if (doctor == null) { displayNotFoundMessage(doctorId); return; }
+        showUpdateIntro(doctor);
+        String name = promptOptional("Name", doctor.getName());
+        String spec = promptOptional("Specialty", doctor.getSpecialization());
+        String phone = promptOptionalPhone("Phone Number", doctor.getPhoneNumber());
+        String email = promptOptionalEmail("Email", doctor.getEmail());
+        Doctor updated = new Doctor(doctor.getId(), name, spec, phone, email);
+        if (control.updateDoctor(updated)) displayDoctorUpdatedMessage(updated); else displayNotFoundMessage(doctorId);
+    }
+
+    private String promptOptional(String label, String current) {
+        System.out.println("Current " + label + ": " + (current==null?"":current));
+        String inp = InputUtil.getInput(scanner, "Enter new " + label + " value (leave blank to keep): ");
+        return inp.isEmpty()? current : inp;
+    }
+
+    private String promptOptionalPhone(String label, String current) {
+        System.out.println("Current " + label + ": " + (current==null?"":current));
+        while (true) {
+            String inp = InputUtil.getInput(scanner, "Enter new " + label + " value (leave blank to keep): ");
+            if (inp.isEmpty()) return current;
+            if (inp.matches("^[0-9]{7,15}$")) return inp;
+            displayInvalidPhoneMessage();
+        }
+    }
+
+    private String promptOptionalEmail(String label, String current) {
+        System.out.println("Current " + label + ": " + (current==null?"":current));
+        while (true) {
+            String inp = InputUtil.getInput(scanner, "Enter new " + label + " value (leave blank to keep): ");
+            if (inp.isEmpty()) return current;
+            if (inp.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) return inp;
+            displayInvalidEmailMessage();
+        }
+    }
+
+    private void handleDelete() {
+        clinicUI.printHeader("Clinic Doctor Maintenance");
+        showDeleteIntro();
+        String doctorId = InputUtil.getInput(scanner, "Enter doctor ID to delete: ");
+        if (doctorId.equals("0")) return;
+        Doctor doctor = control.findDoctorById(doctorId);
+        if (doctor == null) { displayNotFoundMessage(doctorId); return; }
+        showDoctorFound();
+        displayDoctorDetails(doctor);
+        System.out.println("─".repeat(50));
+        String confirmation = InputUtil.getInput(scanner, "Are you sure you want to delete this doctor? (y/N): ");
+        if (confirmation.equalsIgnoreCase("y") || confirmation.equalsIgnoreCase("yes")) {
+            if (control.deleteDoctor(doctorId)) displayDeletedMessage(doctorId);
+        } else {
+            showDeleteCancelled();
+        }
+    }
+
+    private void handleViewConsultations() {
+        clinicUI.printHeader("Clinic Doctor Maintenance");
+        displayDoctorsTable(control.getAllDoctors());
+        displayConsultationsIntro();
+        String doctorId = InputUtil.getInput(scanner, "Enter doctor ID to view consultations: ");
+        if (doctorId.equals("0")) return;
+        Doctor doctor = control.findDoctorById(doctorId);
+        if (doctor == null) { displayNotFoundMessage(doctorId); return; }
+        ADTInterface<Consultation> consultations = control.getConsultationsByDoctor(doctorId);
+        StringBuilder sb = new StringBuilder();
+        for (int i=0;i<consultations.size();i++){
+            Consultation c = consultations.get(i);
+            sb.append(String.format("%-10s %-10s %-20s %-10s %-30s\n",
+                c.getId(), c.getPatientId(), c.getDate().toString(), c.getStatus(), c.getReason()));
+        }
+        displayConsultations(doctor.getName(), sb.toString());
+    }
+
+    private void handleViewDetails() {
+        showViewDoctorDetailsIntro();
+        displayDoctorsTable(control.getAllDoctors());
+        String doctorId = InputUtil.getInput(scanner, "Enter doctor ID to view details: ");
+        if (doctorId.equals("0")) return;
+        Doctor doctor = control.findDoctorById(doctorId);
+        if (doctor == null) { displayNotFoundMessage(doctorId); return; }
+        InputUtil.clearScreen();
+        displayDoctorDetailedHeader();
+        displayDoctorDetails(doctor);
+        displayAdditionalInfoHeader();
+        try {
+            ADTInterface<Consultation> all = control.getConsultationsByDoctor(doctorId);
+            int count = all.size();
+            displayAdditionalInfo(count);
+            displayScheduleHeader();
+            doctor.getSchedule().printCompactScheduleTable(false);
+        } catch (Exception e) {
+            displayAdditionalInfoError(e.getMessage());
+        }
+        System.out.println("═".repeat(60));
+        InputUtil.pauseScreen();
+        InputUtil.clearScreen();
+        clinicUI.printHeader("Clinic Doctor Maintenance");
+        displayDoctorsTable(control.getAllDoctors());
+    }
+
+    private void handleOverallDutySchedule() {
+        clinicUI.printHeader("Clinic Doctor Maintenance");
+        displayOverallDutyHeader();
+        String weeklySummary = buildWeeklySummary();
+        displayWeeklySummary(weeklySummary);
+        displayDayMenu();
+        int dayChoice = InputUtil.getIntInput(scanner, "Select day (0-7): ");
+        if (dayChoice == 0) return;
+        if (dayChoice >= 1 && dayChoice <= 7) {
+            InputUtil.clearScreen();
+            displayDayDetails(dayChoice - 1);
+            InputUtil.pauseScreen();
+            InputUtil.clearScreen();
+            handleOverallDutySchedule();
+        } else {
+            printInvalidChoiceMessage();
+            InputUtil.clearScreen();
+            handleOverallDutySchedule();
+        }
+    }
+
+    private String buildWeeklySummary() {
+        String[] dayNames = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
+        StringBuilder sb = new StringBuilder();
+        ADTInterface<Doctor> doctors = control.getAllDoctors();
+        for (int day = 0; day < 7; day++) {
+            StringBuilder doctorsOnDuty = new StringBuilder();
+            int doctorCount = 0;
+            for (int i = 0; i < doctors.size(); i++) {
+                Doctor doctor = doctors.get(i);
+                if (isDoctorAvailableOnDay(doctor, day)) {
+                    if (doctorCount > 0) {
+                        doctorsOnDuty.append(", ");
+                    }
+                    doctorsOnDuty.append("Dr. ").append(doctor.getName());
+                    doctorCount++;
+                }
+            }
+            if (doctorCount == 0) {
+                doctorsOnDuty.append("No doctors on duty");
+            }
+            sb.append(String.format("%-10s: [%s] (%d doctor%s)\n",
+                    dayNames[day],
+                    doctorsOnDuty.toString(),
+                    doctorCount,
+                    doctorCount == 1 ? "" : "s"));
+        }
+        return sb.toString();
+    }
+
+    private void displayDayDetails(int dayIndex) {
+        String[] dayNames = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
+        displayDayDetailsHeader(dayNames[dayIndex]);
+        ADTInterface<Doctor> doctors = control.getAllDoctors();
+        StringBuilder content = new StringBuilder();
+        for (int hour = 0; hour < 24; hour++) {
+            StringBuilder availableDoctors = new StringBuilder();
+            int doctorCount = 0;
+            for (int i = 0; i < doctors.size(); i++) {
+                Doctor doctor = doctors.get(i);
+                if (isDoctorAvailableAtTime(doctor, dayIndex, hour)) {
+                    if (doctorCount > 0) {
+                        availableDoctors.append(", ");
+                    }
+                    availableDoctors.append("Dr. ").append(doctor.getName());
+                    doctorCount++;
+                }
+            }
+            String timeSlot = String.format("%02d:00-%02d:00", hour, (hour + 1) % 24);
+            String warning = (doctorCount <= 1) ? "  ⚠️" : "";
+            if (doctorCount == 0) {
+                availableDoctors.append("No doctors available");
+            }
+            content.append(String.format("%-12s Available: %-40s (%d doctor%s)%s\n",
+                timeSlot, availableDoctors.toString(), doctorCount, doctorCount == 1 ? "" : "s", warning));
+        }
+        displayDayDetails(content.toString());
+        displayCoverageLegend();
+    }
+
+    private void handleSearch() {
+        showSearchIntro();
+        String query = InputUtil.getInput(scanner, "Enter doctor ID or name to search: ");
+        if (query.equals("0")) return;
+        ADTInterface<Doctor> foundDoctors = control.findDoctorByIdOrName(query);
+        if (foundDoctors.size() > 0) {
+            InputUtil.clearScreen();
+            clinicUI.printHeader("Clinic Doctor Maintenance");
+            showSearchResultsHeader(query);
+            displayDoctorsTable(foundDoctors);
+        } else {
+            displayNotFoundMessage(query);
+        }
+    }
+
+    private void handleSetAvailabilityRange() {
+        displayDoctorsTable(control.getAllDoctors());
+        System.out.println("Set Doctor Availability Range (Enter '0' to go back)");
+        String doctorId = InputUtil.getInput(scanner, "Enter doctor ID: ");
+        if (doctorId.equals("0")) return;
+        Doctor doctor = control.findDoctorById(doctorId);
+        if (doctor == null) { displayNotFoundMessage(doctorId); return; }
+        System.out.println("Select day (0=Mon .. 6=Sun)");
+        int day = InputUtil.getIntInput(scanner, "Day index: ");
+        int startHour = InputUtil.getIntInput(scanner, "Start hour (0-23): ");
+        int endHour = InputUtil.getIntInput(scanner, "End hour (1-24): ");
+        System.out.println("Status: 1=AVAILABLE, 2=NOT_AVAILABLE");
+        int statusChoice = InputUtil.getIntInput(scanner, "Choose status: ");
+        SlotStatus status = switch (statusChoice) {
+            case 2 -> SlotStatus.NOT_AVAILABLE;
+            default -> SlotStatus.AVAILABLE;
+        };
+        if (!control.setDoctorAvailabilityRange(doctorId, day, startHour, endHour, status)) {
+            displayEndHourMustBeGreater();
+            return;
+        }
+        displayAvailabilityUpdated();
+        InputUtil.pauseScreen();
+        InputUtil.clearScreen();
+        clinicUI.printHeader("Clinic Doctor Maintenance");
+        displayDoctorsTable(control.getAllDoctors());
     }
 }

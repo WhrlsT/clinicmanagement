@@ -8,6 +8,7 @@ import entity.Consultation;
 import entity.Treatment;
 import entity.Medication;
 import entity.Doctor;
+import control.PatientMaintenance;
 
 /**
  * Console-based UI helper for patient maintenance flows.
@@ -19,8 +20,62 @@ import entity.Doctor;
  * persistence.
  */
 public class PatientMaintenanceUI {
-    
-    private Scanner scanner = new Scanner(System.in);
+    private final Scanner scanner = new Scanner(System.in);
+    private final PatientMaintenance control = new PatientMaintenance();
+    private final ClinicMaintenanceUI clinicUI = new ClinicMaintenanceUI();
+
+    // === Hub & Main run ===
+    public void runHub() {
+        int choice;
+        do {
+            InputUtil.clearScreen();
+            clinicUI.printHeader("Patient Management Hub");
+            displayPatientsTable(control.getAllPatients());
+            // Queue summary (via control)
+            int[] qs = control.getQueueSummaryCounts();
+            displayQueueSummary(qs[0], qs[1], qs[2], qs[3], qs[4]);
+            System.out.println("1. Manage Patient Details");
+            System.out.println("2. Manage Patient Queue");
+            System.out.println("3. Back to Main Menu");
+            choice = InputUtil.getIntInput(scanner, "Select option: ");
+            switch (choice) {
+                case 1 -> run();
+                case 2 -> {
+                    InputUtil.clearScreen();
+                    new control.QueueMaintenance().run();
+                }
+                case 3 -> printReturningToMainMenu();
+                default -> printInvalidChoiceMessage();
+            }
+        } while (choice != 3);
+    }
+
+    public void run() {
+        InputUtil.clearScreen();
+        clinicUI.printHeader("Clinic Patient Maintenance");
+        displayPatientsTable(control.getAllPatients());
+        int choice;
+        do {
+            choice = getMenuChoice();
+            switch (choice) {
+                case 1 -> { InputUtil.clearScreen(); handleAdd(); }
+                case 2 -> { InputUtil.clearScreen(); handleUpdate(); }
+                case 3 -> { InputUtil.clearScreen(); handleDelete(); }
+                case 4 -> { InputUtil.clearScreen(); handleViewDetails(); }
+                case 5 -> { InputUtil.clearScreen(); handleSearch(); }
+                case 6 -> { InputUtil.clearScreen(); handleVisitRecords(); }
+                case 7 -> { InputUtil.clearScreen(); handleDemographics(); }
+                case 8 -> printReturningToMainMenu();
+                default -> printInvalidChoiceMessage();
+            }
+            if (choice != 8 && choice != 4) {
+                InputUtil.pauseScreen();
+                InputUtil.clearScreen();
+                clinicUI.printHeader("Clinic Patient Maintenance");
+                displayPatientsTable(control.getAllPatients());
+            }
+        } while (choice != 7);
+    }
 
     public int getMenuChoice() {
         System.out.println("Please select an option:");
@@ -30,8 +85,8 @@ public class PatientMaintenanceUI {
         System.out.println("4. View Patient Details");
         System.out.println("5. Search Patient");
         System.out.println("6. View Visit Records");
-        System.out.println("7. Exit");
-        System.out.println("8. Patient Demographics Report");
+        System.out.println("7. Patient Demographics Report");
+        System.out.println("8. Exit");
         System.out.print("Select an option: ");
         return InputUtil.getIntInput(scanner, "Enter your choice: ");
     }
@@ -154,7 +209,7 @@ public class PatientMaintenanceUI {
         String dateOfBirth = InputUtil.getInput(scanner, "Enter patient date of birth (yyyy-MM-dd): ");
         String nationality = InputUtil.getInput(scanner, "Enter patient nationality: ");
 
-    return new Patient(null, name, gender, phoneNumber, email, dateOfBirth, nationality);
+        return new Patient(null, name, gender, phoneNumber, email, dateOfBirth, nationality);
     }
 
     public void displayPatientDetails(Patient patient) {
@@ -202,6 +257,12 @@ public class PatientMaintenanceUI {
         System.out.println("─".repeat(50));
         displayPatientDetails(patient);
         System.out.println("Enter new values (leave blank to keep current, '0' to cancel):");
+        System.out.println("─".repeat(50));
+    }
+
+    // Initial header before asking for patient ID to update
+    public void showUpdateStartIntro() {
+        System.out.println("Updating Patient Details (Enter '0' to go back)");
         System.out.println("─".repeat(50));
     }
 
@@ -350,6 +411,12 @@ public class PatientMaintenanceUI {
         System.out.println("═".repeat(60));
     }
 
+    // Header for the view patient details flow
+    public void showViewPatientDetailsIntro() {
+        System.out.println("View Patient Details (Enter '0' to go back)");
+        System.out.println("─".repeat(50));
+    }
+
     public void displayAdditionalInfo(int consultationCount, int treatmentCount) {
         System.out.println("\nAdditional Information:");
         System.out.println("─".repeat(40));
@@ -402,6 +469,217 @@ public class PatientMaintenanceUI {
 
     public void displayInvalidDateWithBackMessage() {
         System.out.println("Invalid date format (use yyyy-MM-dd). Please try again or enter '0' to go back.");
+    }
+
+    /**
+     * Prompt for delete confirmation and return true if user confirms.
+     */
+    public boolean promptDeleteConfirmation() {
+        String confirmation = InputUtil.getInput(scanner, "Are you sure you want to delete this patient? (y/N): ");
+        return confirmation.equalsIgnoreCase("y") || confirmation.equalsIgnoreCase("yes");
+    }
+
+    // === Handlers (UI orchestrates inputs and calls control) ===
+    private void handleAdd() {
+        clinicUI.printHeader("Clinic Patient Maintenance");
+        displayPatientsTable(control.getAllPatients());
+        showAddPatientIntro();
+
+        String name = InputUtil.getInputWithBackOption(scanner, "Enter patient name: ");
+        if (name == null) return;
+        String gender = InputUtil.getMFChoiceWithBackOption(scanner, "Enter patient gender", "Male", "Female");
+        if (gender == null) return;
+        String phone = InputUtil.getValidatedPhoneWithBackOption(scanner, "Enter patient phone number (digits 7-15): ");
+        if (phone == null) return;
+        String email = InputUtil.getValidatedEmailWithBackOption(scanner, "Enter patient email: ");
+        if (email == null) return;
+        String dob = InputUtil.getValidatedDateWithBackOption(scanner, "Enter patient date of birth (yyyy-MM-dd): ");
+        if (dob == null) return;
+        String nationality = InputUtil.getMFChoiceWithBackOption(scanner, "Enter patient nationality (M=Malaysian, F=Foreigner)", "Malaysian", "Foreigner");
+        if (nationality == null) return;
+
+        Patient newPatient = control.addPatient(name, gender, phone, email, dob, nationality);
+        displayPatientAddedMessage(newPatient);
+    }
+
+    private void handleUpdate() {
+        clinicUI.printHeader("Clinic Patient Maintenance");
+        showUpdateStartIntro();
+        displayPatientsTable(control.getAllPatients());
+        String patientId = InputUtil.getInput(scanner, "Enter patient ID to update: ");
+        if (patientId.equals("0")) return;
+        Patient patient = control.findPatientById(patientId);
+        if (patient == null) { displayNotFoundMessage(patientId); return; }
+
+        InputUtil.clearScreen();
+        clinicUI.printHeader("Clinic Patient Maintenance");
+        displayPatientsTable(control.getAllPatients());
+        showUpdateIntro(patient);
+
+        patient.setName(promptOptionalNonEmpty("Name", patient.getName()));
+        patient.setGender(promptOptionalMF("Gender", patient.getGender(), "Male", "Female"));
+        patient.setPhoneNumber(promptOptionalValidatedPhone("Phone Number", patient.getPhoneNumber()));
+        patient.setEmail(promptOptionalValidatedEmail("Email", patient.getEmail()));
+        patient.setDateOfBirth(promptOptionalDate("Date of Birth (yyyy-MM-dd)", patient.getDateOfBirth()));
+        patient.setNationality(promptOptionalMF("Nationality (M=Malaysian,F=Foreigner)", patient.getNationality(), "Malaysian", "Foreigner"));
+
+        control.updatePatient(patient);
+        displayPatientUpdatedMessage(patient);
+    }
+
+    private void handleDelete() {
+        clinicUI.printHeader("Clinic Patient Maintenance");
+        displayPatientsTable(control.getAllPatients());
+        showDeleteIntro();
+        String patientId = InputUtil.getInput(scanner, "Enter patient ID to delete: ");
+        if (patientId.equals("0")) return;
+        Patient patient = control.findPatientById(patientId);
+        if (patient == null) { displayNotFoundMessage(patientId); return; }
+        showPatientFound();
+        displayPatientDetails(patient);
+        System.out.println("─".repeat(50));
+        if (promptDeleteConfirmation()) {
+            control.deletePatient(patientId);
+            displayDeletedMessage(patientId);
+        } else {
+            showDeleteCancelled();
+        }
+    }
+
+    private void handleSearch() {
+        clinicUI.printHeader("Clinic Patient Maintenance");
+        showSearchIntro();
+        String query = InputUtil.getInput(scanner, "Enter patient ID or name to search: ");
+        if (query.equals("0")) return;
+        ADTInterface<Patient> results = control.findPatientByIdOrName(query);
+        if (results.isEmpty()) { displayNotFoundMessage(query); return; }
+        InputUtil.clearScreen();
+        clinicUI.printHeader("Clinic Patient Maintenance");
+        showSearchResultsHeader(query);
+        displayPatientsTable(results);
+    }
+
+    private void handleViewDetails() {
+        clinicUI.printHeader("Clinic Patient Maintenance");
+        showViewPatientDetailsIntro();
+        displayPatientsTable(control.getAllPatients());
+        String patientId = InputUtil.getInput(scanner, "Enter patient ID to view details: ");
+        if (patientId.equals("0")) return;
+        Patient patient = control.findPatientById(patientId);
+        if (patient == null) { displayNotFoundMessage(patientId); return; }
+
+        InputUtil.clearScreen();
+        clinicUI.printHeader("Clinic Patient Maintenance");
+        displayPatientDetailedHeader();
+        displayPatientDetails(patient);
+        try {
+            int c = control.countConsultationsForPatient(patientId);
+            int t = control.countTreatmentsForPatient(patientId);
+            displayAdditionalInfo(c, t);
+        } catch (Exception e) {
+            displayAdditionalInfoError(e.getMessage());
+        }
+    }
+
+    private void handleVisitRecords() {
+        clinicUI.printHeader("Clinic Patient Maintenance");
+        displayVisitRecordsIntro();
+        displayPatientsTable(control.getAllPatients());
+        String patientId = InputUtil.getInput(scanner, "Enter Patient ID to view visit records: ");
+        if (patientId.equals("0")) return;
+        Patient patient = control.findPatientById(patientId);
+        if (patient == null) { displayNotFoundMessage(patientId); return; }
+        InputUtil.clearScreen();
+        displayPatientVisitOverview(patient);
+        ADTInterface<Consultation> consultations = control.getConsultationsByPatient(patientId);
+        if (consultations.isEmpty()) { displayNoVisitRecords(); return; }
+        ADTInterface<Doctor> doctors = control.getAllDoctors();
+        displayVisitRecordsTable(consultations, doctors);
+        String consultationId = promptConsultationIdForDetails();
+        if (!consultationId.isEmpty()) {
+            InputUtil.clearScreen();
+            Consultation cons = findConsultationById(consultations, consultationId);
+            if (cons == null) { displayNotFoundMessage(consultationId); return; }
+            ADTInterface<Treatment> treatments = control.getTreatmentsByConsultation(consultationId);
+            ADTInterface<Medication> medications = control.getAllMedications();
+            displayConsultationDetails(cons, treatments, medications, doctors);
+        }
+    }
+
+    private Consultation findConsultationById(ADTInterface<Consultation> list, String id) {
+        for (int i = 0; i < list.size(); i++) if (list.get(i).getId().equals(id)) return list.get(i);
+        return null;
+    }
+
+    private void handleDemographics() {
+        clinicUI.printHeader("Clinic Patient Maintenance");
+        showDemographicsHeader();
+        PatientMaintenance.DemographicsReport r = control.generateDemographicsReport();
+        displayDemographicsSummary(r.totalPatients, r.averageAge, r.genderCounts, r.nationalityCounts, r.highFrequencyPatients);
+        displayAgeGroupTable(r.ageGroupCounts, r.totalPatients);
+        // show first line + placeholder if large
+        String[] lines = r.csv.split("\n");
+        String preview = lines.length > 0 ? lines[0] + (lines.length > 1 ? "\n... (truncated) ...\n" : "\n") : "";
+        displayPerPatientCSV(preview);
+        if (promptExportCSV()) {
+            try {
+                java.nio.file.Path out = java.nio.file.Paths.get("patient_demographics.csv");
+                java.nio.file.Files.writeString(out, r.csv);
+                displayExportSaved(out.toAbsolutePath().toString());
+            } catch (Exception e) {
+                displayExportFailed(e.getMessage());
+            }
+        }
+    }
+
+    // === Prompt helpers used in update flow ===
+    private String promptOptionalNonEmpty(String label, String current) {
+        System.out.println("Current " + label + ": " + (current==null?"":current));
+        while (true) {
+            String inp = InputUtil.getInput(scanner, "Enter new " + label + " value (leave blank to keep): ");
+            if (inp.isEmpty()) return current;
+            return inp;
+        }
+    }
+
+    private String promptOptionalMF(String label, String current, String mMeaning, String fMeaning) {
+        System.out.println("Current " + label + ": " + (current==null?"":current));
+        while (true) {
+            String inp = InputUtil.getInput(scanner, "Enter new " + label + " (M/F, blank keep): ").trim();
+            if (inp.isEmpty()) return current;
+            if (inp.equalsIgnoreCase("M")) return mMeaning;
+            if (inp.equalsIgnoreCase("F")) return fMeaning;
+            displayInvalidGenderMessage();
+        }
+    }
+
+    private String promptOptionalValidatedPhone(String label, String current) {
+        System.out.println("Current " + label + ": " + (current==null?"":current));
+        while (true) {
+            String inp = InputUtil.getInput(scanner, "Enter new " + label + " value (leave blank to keep): ");
+            if (inp.isEmpty()) return current;
+            if (inp.matches("^[0-9]{7,15}$")) return inp;
+            displayInvalidPhoneMessage();
+        }
+    }
+
+    private String promptOptionalValidatedEmail(String label, String current) {
+        System.out.println("Current " + label + ": " + (current==null?"":current));
+        while (true) {
+            String inp = InputUtil.getInput(scanner, "Enter new " + label + " value (leave blank to keep): ");
+            if (inp.isEmpty()) return current;
+            if (inp.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) return inp;
+            displayInvalidEmailMessage();
+        }
+    }
+
+    private String promptOptionalDate(String label, String current) {
+        System.out.println("Current " + label + ": " + (current==null?"":current));
+        while (true) {
+            String inp = InputUtil.getInput(scanner, "Enter new " + label + " value (leave blank to keep): ");
+            if (inp.isEmpty()) return current;
+            try { java.time.LocalDate.parse(inp); return inp; } catch(Exception e){ displayInvalidDateMessage(); }
+        }
     }
 
     /**
