@@ -42,7 +42,7 @@ public class ClinicMaintenance {
                     new TreatmentMaintenance().run();
                     break;
                 case 6:
-                    new MedicationMaintenance().run();
+                    new boundary.MedicationMaintenanceUI().run();
                     break;
                 case 7:
                     InputUtil.clearScreen();

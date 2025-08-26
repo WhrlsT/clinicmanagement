@@ -132,7 +132,7 @@ public class TreatmentMaintenance {
         tr.setNotes(InputUtil.getInput(sc, "Notes (opt): "));
     if (type == Treatment.Type.MEDICATION){
             // allow adding multiple medication IDs
-            new boundary.MedicationUI().printTable(buildMedicationRowsForUI());
+            new boundary.MedicationMaintenanceUI().printTable(buildMedicationRowsForUI());
             while (true){
                 String mid = InputUtil.getInput(sc, "Medication ID to link (blank to stop): ").trim();
                 if (mid.isEmpty()) break;
@@ -241,7 +241,7 @@ public class TreatmentMaintenance {
         }
         // manage medication links
         if (tr.getType()== Treatment.Type.MEDICATION){
-            new boundary.MedicationUI().showMedications(medications);
+            new boundary.MedicationMaintenanceUI().showMedications(medications);
             System.out.println("Manage Medication Links: 1=Add 2=Clear All 3=Skip");
             int c = InputUtil.getIntInput(sc, "Choose: ");
             if (c==1){
