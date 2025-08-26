@@ -486,7 +486,7 @@ public class ConsultationMaintenance {
         }
         String range = "next " + days + " days";
         consultUI.displayAvailableSlots(doctor.getId(), range, any ? body.toString() : "");
-    }
+    }   
 
     // Print available slots starting from a specific date for a given range
     private void showAvailableDatesAndTimeslotsFrom(Doctor doctor, int days, java.time.LocalDate startDate) {

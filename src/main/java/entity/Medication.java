@@ -7,6 +7,7 @@ public class Medication {
     private String dosage;       // e.g., "500 mg"
     private String frequency;    // e.g., "2x/day"
     private String route;        // e.g., "Oral", "IV"
+    private Double price;        // optional unit price
     private Integer durationDays;// e.g., 7
     private Integer quantity;    // e.g., 14
     private String instructions; // patient instructions
@@ -39,4 +40,6 @@ public class Medication {
     public void setInstructions(String instructions) { this.instructions = instructions; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+    public Double getPrice() { return price; }
+    public void setPrice(Double price) { this.price = price; }
 }

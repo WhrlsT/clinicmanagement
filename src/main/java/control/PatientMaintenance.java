@@ -283,7 +283,9 @@ public class PatientMaintenance {
 
     public void addNewPatient() {
     clinicUI.printHeader("Clinic Patient Maintenance");
+    patientUI.displayPatientsTable(getAllPatients());   
     patientUI.showAddPatientIntro();
+
         
     String name = InputUtil.getInputWithBackOption(scanner, "Enter patient name: ");
         if (name == null) return; // User chose to go back
@@ -325,7 +327,9 @@ public class PatientMaintenance {
         if (patient != null) {
             InputUtil.clearScreen();
             clinicUI.printHeader("Clinic Patient Maintenance");
+            patientUI.displayPatientsTable(getAllPatients());
             patientUI.showUpdateIntro(patient);
+
             
             // For each field: show current, allow blank to keep
             patient.setName(promptOptionalNonEmpty("Name", patient.getName()));
@@ -453,6 +457,7 @@ public class PatientMaintenance {
 
     public void deletePatient() {
     clinicUI.printHeader("Clinic Patient Maintenance");
+    patientUI.displayPatientsTable(getAllPatients());
     patientUI.showDeleteIntro();
         
         String patientId = InputUtil.getInput(scanner, "Enter patient ID to delete: ");

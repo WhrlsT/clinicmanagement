@@ -123,9 +123,9 @@ public class QueueMaintenance {
             return;
         }
 
-        QueueMaintenanceUI ui = new QueueMaintenanceUI();
-        String id = nextQueueId();
-        PatientQueueEntry e = ui.promptEnqueue(id, patients);
+    QueueMaintenanceUI ui = new QueueMaintenanceUI();
+    String id = nextQueueId();
+    PatientQueueEntry e = ui.promptEnqueue(id, patients, doctors);
         if (e == null) return; // user cancelled/back
 
         // Validate patient exists

@@ -147,6 +147,8 @@ public class DoctorMaintenance {
     System.out.println("─".repeat(50));
     System.out.println("Updating Doctor Details (Enter '0' to go back)");
     System.out.println("─".repeat(50));
+    doctorUI.displayDoctorsTable(getAllDoctors());
+
         
         String doctorId = InputUtil.getInput(scanner, "Enter doctor ID to update: ");
         if (doctorId.equals("0")) {

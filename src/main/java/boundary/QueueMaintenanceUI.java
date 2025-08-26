@@ -220,11 +220,33 @@ public class QueueMaintenanceUI {
     }
 
     /**
+     * Display a concise list of doctors currently on duty (available now).
+     */
+    public void displayAvailableDoctors(ADTInterface<Doctor> doctors) {
+        System.out.println("\n-- Available Doctors --");
+        if (doctors == null || doctors.size() == 0) {
+            System.out.println("(no doctors configured)");
+            return;
+        }
+        int dayOfWeek = java.time.LocalDate.now().getDayOfWeek().getValue() - 1;
+        int hour = java.time.LocalTime.now().getHour();
+        boolean any = false;
+        for (int i = 0; i < doctors.size(); i++) {
+            Doctor d = doctors.get(i);
+            if (d.getSchedule() != null && d.getSchedule().isAvailable(dayOfWeek, hour)) {
+                any = true;
+                System.out.printf("%s - %s%n", d.getId(), d.getName() == null ? "(no name)" : d.getName());
+            }
+        }
+        if (!any) System.out.println("(none on duty right now)");
+    }
+
+    /**
      * Prompt the operator to create a new queue entry. Returns the created
      * PatientQueueEntry or null if the user chose to go back/cancel.
      * The caller should provide the ID to use for the new entry.
      */
-    public PatientQueueEntry promptEnqueue(String id, ADTInterface<Patient> patients) {
+    public PatientQueueEntry promptEnqueue(String id, ADTInterface<Patient> patients, ADTInterface<Doctor> doctors) {
         System.out.println("═".repeat(60));
         System.out.println("QUEUE MANAGEMENT - ADD PATIENT TO QUEUE");
         System.out.println("═".repeat(60));
@@ -237,7 +259,10 @@ public class QueueMaintenanceUI {
         String patientId = InputUtil.getInputWithBackOption(sc, "Patient ID (enter 0 to go back): ");
         if (patientId == null) return null; // user chose to go back
 
-        String prefDoc = InputUtil.getInputWithBackOption(sc, "Preferred Doctor ID (blank=any, 0=back): ");
+    // Show available doctors immediately before prompting for preferred doctor
+    displayAvailableDoctors(doctors);
+
+    String prefDoc = InputUtil.getInputWithBackOption(sc, "Preferred Doctor ID (blank=any, 0=back): ");
         if (prefDoc == null) return null; // back
         prefDoc = prefDoc.trim();
         if (prefDoc.isEmpty()) prefDoc = null;

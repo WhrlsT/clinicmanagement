@@ -22,7 +22,7 @@ public class MedicationUI {
         System.out.println("\n---------------------------------------------------------------");
         System.out.println("Medications");
         System.out.println("---------------------------------------------------------------");
-        System.out.printf("%-8s|%-24s|%-10s|%-8s|%-8s|%-10s|%-8s\n","ID","Name","Code","Dose","Freq","Route","Qty");
+    System.out.printf("%-8s|%-24s|%-10s|%-10s|%-8s|%-8s|%-10s|%-8s\n","ID","Name","Price","Code","Dose","Freq","Route","Qty");
         System.out.println("---------------------------------------------------------------");
         System.out.print(rows == null || rows.isBlank()?"(none)\n":rows);
         System.out.println("---------------------------------------------------------------");
@@ -31,10 +31,11 @@ public class MedicationUI {
     public <T> void showMedications(adt.ADTInterface<entity.Medication> meds){
         System.out.println("Available Medications:");
         if (meds==null || meds.size()==0){ System.out.println("(none)"); return; }
-        System.out.printf("%-8s|%-24s|%-10s|%-8s|%-8s|%-10s|%-8s%n","ID","Name","Code","Dose","Freq","Route","Qty");
+        System.out.printf("%-8s|%-24s|%-10s|%-10s|%-8s|%-8s|%-10s|%-8s%n","ID","Name","Price","Code","Dose","Freq","Route","Qty");
         for (int i=0;i<meds.size();i++){
             entity.Medication m = meds.get(i);
-            System.out.printf("%-8s|%-24s|%-10s|%-8s|%-8s|%-10s|%-8s%n", m.getId(), nz(m.getName()), nz(m.getCode()), nz(m.getDosage()), nz(m.getFrequency()), nz(m.getRoute()), nz(m.getQuantity()));
+            String price = m.getPrice()==null? "" : String.format("%.2f", m.getPrice());
+            System.out.printf("%-8s|%-24s|%-10s|%-10s|%-8s|%-8s|%-10s|%-8s%n", m.getId(), nz(m.getName()), price, nz(m.getCode()), nz(m.getDosage()), nz(m.getFrequency()), nz(m.getRoute()), nz(m.getQuantity()));
         }
     }
 
@@ -64,7 +65,9 @@ public class MedicationUI {
         System.out.printf("Dosage: %s\n", nz(m.getDosage()));
         System.out.printf("Frequency: %s\n", nz(m.getFrequency()));
         System.out.printf("Route: %s\n", nz(m.getRoute()));
-        System.out.printf("Quantity: %s\n", nz(m.getQuantity()));
+    String price = m.getPrice()==null? "" : String.format("%.2f", m.getPrice());
+    System.out.printf("Price: %s\n", price);
+    System.out.printf("Quantity: %s\n", nz(m.getQuantity()));
         System.out.printf("Duration (days): %s\n", nz(m.getDurationDays()));
         System.out.printf("Instructions: %s\n", nz(m.getInstructions()));
         System.out.printf("Notes: %s\n", nz(m.getNotes()));

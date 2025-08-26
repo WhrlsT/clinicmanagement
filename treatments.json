@@ -22,4 +22,16 @@
   "instructions" : "take a knife, cut urself",
   "notes" : "womp womp",
   "cost" : 90.0
+}, {
+  "id" : "T0003",
+  "consultationId" : "C0001",
+  "type" : "MEDICATION",
+  "name" : "Gay Treat",
+  "medicationIds" : [ "M0001", "M0003" ],
+  "diagnosis" : "he might be gay",
+  "status" : "DISPENSED",
+  "orderedDate" : [ 2025, 8, 25 ],
+  "instructions" : "Hehe haha",
+  "notes" : "123",
+  "cost" : 10005.0
 } ]

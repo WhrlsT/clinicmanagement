@@ -130,8 +130,6 @@ public class TreatmentMaintenance {
         tr.setOrderedDate(LocalDate.now());
         tr.setInstructions(InputUtil.getInput(sc, "Instructions (opt): "));
         tr.setNotes(InputUtil.getInput(sc, "Notes (opt): "));
-    String cost = InputUtil.getInput(sc, "Cost (opt): "); if(!cost.isEmpty()) try{ tr.setCost(Double.parseDouble(cost)); }catch(Exception ignored){}
-
     if (type == Treatment.Type.MEDICATION){
             // allow adding multiple medication IDs
             new boundary.MedicationUI().printTable(buildMedicationRowsForUI());
@@ -143,6 +141,21 @@ public class TreatmentMaintenance {
                 System.out.println("Linked "+mid);
             }
         }
+    // Compute medication total from linked medications
+    double medTotal = 0.0;
+    if (tr.getMedicationIds() != null) {
+        for (String mid : tr.getMedicationIds()){
+            if (mid==null||mid.isBlank()) continue;
+            Medication m = findMedication(mid);
+            if (m!=null && m.getPrice()!=null) medTotal += m.getPrice();
+        }
+    }
+    String extraCostInput = InputUtil.getInput(sc, "Additional Cost (opt, will be added to medication prices): ");
+    if (!extraCostInput.isEmpty()){
+        try{ double extra = Double.parseDouble(extraCostInput); tr.setCost(medTotal + extra); } catch(Exception ignored){ tr.setCost(medTotal); }
+    } else if (medTotal>0) {
+        tr.setCost(medTotal);
+    }
 
         treatments.add(tr);
         ui.displayTreatmentAddedMessage(tr);
@@ -211,7 +224,21 @@ public class TreatmentMaintenance {
         v = InputUtil.getInput(sc, "Name (blank keep): "); if(!v.isEmpty()) tr.setName(v);
         v = InputUtil.getInput(sc, "Instructions (blank keep): "); if(!v.isEmpty()) tr.setInstructions(v);
         v = InputUtil.getInput(sc, "Notes (blank keep): "); if(!v.isEmpty()) tr.setNotes(v);
-        v = InputUtil.getInput(sc, "Cost (blank keep): "); if(!v.isEmpty()) try{ tr.setCost(Double.parseDouble(v)); }catch(Exception ignored){}
+        v = InputUtil.getInput(sc, "Cost (blank keep - interpreted as additional cost to medication prices): ");
+        if(!v.isEmpty()){
+            try{
+                double extra = Double.parseDouble(v);
+                double medTotal = 0.0;
+                if (tr.getMedicationIds()!=null){
+                    for (String mid : tr.getMedicationIds()){
+                        if (mid==null||mid.isBlank()) continue;
+                        Medication m = findMedication(mid);
+                        if (m!=null && m.getPrice()!=null) medTotal += m.getPrice();
+                    }
+                }
+                tr.setCost(medTotal + extra);
+            }catch(Exception ignored){}
+        }
         // manage medication links
         if (tr.getType()== Treatment.Type.MEDICATION){
             new boundary.MedicationUI().showMedications(medications);

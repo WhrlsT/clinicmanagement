@@ -5,6 +5,7 @@ import adt.CustomADT;
 import boundary.MedicationUI;
 import boundary.ClinicMaintenanceUI;
 import dao.MedicationDAO;
+import dao.ConsultationDAO;
 import entity.Medication;
 import utility.InputUtil;
 
@@ -55,8 +56,9 @@ public class MedicationMaintenance {
         StringBuilder sb=new StringBuilder();
         for (int i=0;i<list.size();i++){
             Medication m=list.get(i);
-            sb.append(String.format("%-8s|%-24s|%-10s|%-8s|%-8s|%-10s|%-8s\n",
-                m.getId(), m.getName(), nz(m.getCode()), nz(m.getDosage()), nz(m.getFrequency()), nz(m.getRoute()), nz(m.getQuantity())));
+            String price = m.getPrice()==null? "" : String.format("%.2f", m.getPrice());
+            sb.append(String.format("%-8s|%-24s|%-10s|%-10s|%-8s|%-8s|%-10s|%-8s\n",
+                m.getId(), m.getName(), price, nz(m.getCode()), nz(m.getDosage()), nz(m.getFrequency()), nz(m.getRoute()), nz(m.getQuantity())));
         }
         return sb.toString();
     }
@@ -68,16 +70,47 @@ public class MedicationMaintenance {
     String name = InputUtil.getInput(sc, "Name ('0' to cancel): ");
     if (name.equals("0")) return;
     if (name.isBlank()) { System.out.println("Name cannot be empty."); return; }
-        Medication m = new Medication(nextId(), name);
-        m.setCode(InputUtil.getInput(sc, "Code (opt): "));
-        m.setDosage(InputUtil.getInput(sc, "Dosage (opt): "));
-        m.setFrequency(InputUtil.getInput(sc, "Frequency (opt): "));
-        m.setRoute(InputUtil.getInput(sc, "Route (opt): "));
-        String dur = InputUtil.getInput(sc, "Duration days (opt): "); if(!dur.isEmpty()) try{ m.setDurationDays(Integer.parseInt(dur)); }catch(Exception ignored){}
-        String qty = InputUtil.getInput(sc, "Quantity (opt): "); if(!qty.isEmpty()) try{ m.setQuantity(Integer.parseInt(qty)); }catch(Exception ignored){}
-        m.setInstructions(InputUtil.getInput(sc, "Instructions (opt): "));
-        m.setNotes(InputUtil.getInput(sc, "Notes (opt): "));
-        list.add(m);
+    Medication m = new Medication(nextId(), name);
+    // Price (required)
+    while (true) {
+        String priceInput = InputUtil.getInput(sc, "Price (required, '0' to cancel): ");
+        if (priceInput.equals("0")) return;
+        if (priceInput.isBlank()) { System.out.println("Price is required."); continue; }
+        try { m.setPrice(Double.parseDouble(priceInput)); break; } catch (Exception e) { System.out.println("Invalid price. Enter a numeric value."); }
+    }
+    m.setCode(InputUtil.getInput(sc, "Code (opt): "));
+    // Dosage (required)
+    while (true) {
+        String d = InputUtil.getInput(sc, "Dosage (required, '0' to cancel): ");
+        if (d.equals("0")) return;
+        if (d.isBlank()) { System.out.println("Dosage is required."); continue; }
+        m.setDosage(d); break;
+    }
+    // Frequency (required)
+    while (true) {
+        String f = InputUtil.getInput(sc, "Frequency (required, '0' to cancel): ");
+        if (f.equals("0")) return;
+        if (f.isBlank()) { System.out.println("Frequency is required."); continue; }
+        m.setFrequency(f); break;
+    }
+    // Route (required)
+    while (true) {
+        String r = InputUtil.getInput(sc, "Route (required, '0' to cancel): ");
+        if (r.equals("0")) return;
+        if (r.isBlank()) { System.out.println("Route is required."); continue; }
+        m.setRoute(r); break;
+    }
+    String dur = InputUtil.getInput(sc, "Duration days (opt): "); if(!dur.isEmpty()) try{ m.setDurationDays(Integer.parseInt(dur)); }catch(Exception ignored){}
+    // Quantity (required)
+    while (true) {
+        String qty = InputUtil.getInput(sc, "Quantity (required, '0' to cancel): ");
+        if (qty.equals("0")) return;
+        if (qty.isBlank()) { System.out.println("Quantity is required."); continue; }
+        try { m.setQuantity(Integer.parseInt(qty)); break; } catch (Exception e) { System.out.println("Invalid quantity. Enter an integer."); }
+    }
+    m.setInstructions(InputUtil.getInput(sc, "Instructions (opt): "));
+    m.setNotes(InputUtil.getInput(sc, "Notes (opt): "));
+    list.add(m);
     ui.displayMedicationAddedMessage(m);
     }
 
@@ -95,8 +128,9 @@ public class MedicationMaintenance {
         v = InputUtil.getInput(sc, "Dosage (blank keep): "); if(!v.isEmpty()) m.setDosage(v);
         v = InputUtil.getInput(sc, "Frequency (blank keep): "); if(!v.isEmpty()) m.setFrequency(v);
         v = InputUtil.getInput(sc, "Route (blank keep): "); if(!v.isEmpty()) m.setRoute(v);
-        v = InputUtil.getInput(sc, "Duration days (blank keep): "); if(!v.isEmpty()) try{ m.setDurationDays(Integer.parseInt(v)); }catch(Exception ignored){}
+    v = InputUtil.getInput(sc, "Duration days (blank keep): "); if(!v.isEmpty()) try{ m.setDurationDays(Integer.parseInt(v)); }catch(Exception ignored){}
         v = InputUtil.getInput(sc, "Quantity (blank keep): "); if(!v.isEmpty()) try{ m.setQuantity(Integer.parseInt(v)); }catch(Exception ignored){}
+    v = InputUtil.getInput(sc, "Price (blank keep): "); if(!v.isEmpty()) try{ m.setPrice(Double.parseDouble(v)); }catch(Exception ignored){}
         v = InputUtil.getInput(sc, "Instructions (blank keep): "); if(!v.isEmpty()) m.setInstructions(v);
         v = InputUtil.getInput(sc, "Notes (blank keep): "); if(!v.isEmpty()) m.setNotes(v);
     ui.displayMedicationUpdatedMessage(m);
@@ -133,7 +167,8 @@ public class MedicationMaintenance {
         // Load treatments and medications
         dao.TreatmentDAO tdao = new dao.TreatmentDAO();
         ADTInterface<entity.Treatment> treatments = tdao.load();
-        ADTInterface<entity.Medication> medications = dao.load();
+    // Use the shared in-memory medication list so updates persist across the run loop
+    ADTInterface<entity.Medication> medications = (ADTInterface<entity.Medication>)(ADTInterface) list;
 
         // Build list of PRESCRIBED medication-type treatments
         CustomADT<entity.Treatment> pending = new CustomADT<>();
@@ -172,12 +207,30 @@ public class MedicationMaintenance {
                     medications.set(midx, m);
                 }
             }
-            // Save medications after deduction
-            dao.save(medications);
+            // Save medications after deduction (save shared list)
+            dao.save(list);
         }
         tr.setStatus(entity.Treatment.TreatmentStatus.DISPENSED);
         treatments.set(idx, tr);
         tdao.save(treatments);
+
+        // Mark the linked consultation as TREATED when a treatment has been dispensed
+        if (tr.getConsultationId() != null && !tr.getConsultationId().isBlank()) {
+            ConsultationDAO cdao = new ConsultationDAO();
+            ADTInterface<entity.Consultation> consultations = cdao.load();
+            if (consultations != null) {
+                for (int i = 0; i < consultations.size(); i++) {
+                    entity.Consultation c = consultations.get(i);
+                    if (c != null && tr.getConsultationId().equals(c.getId())) {
+                        c.setStatus(entity.Consultation.Status.TREATED);
+                        consultations.set(i, c);
+                        cdao.save(consultations);
+                        break;
+                    }
+                }
+            }
+        }
+
         ui.displayDispenseSuccess(tr.getId());
     }
 }
