@@ -36,15 +36,12 @@ public class ClinicMaintenance {
                     consultUI.run();
                     break;
                 case 4:
-                    new boundary.QueueMaintenanceUI().run();
-                    break;
-                case 5:
                     new boundary.TreatmentMaintenanceUI().run();
                     break;
-                case 6:
+                case 5:
                     new boundary.MedicationMaintenanceUI().run();
                     break;
-                case 7:
+                case 6:
                     InputUtil.clearScreen();
                     System.out.println("Exiting the Clinic Maintenance System...");
                     break;

@@ -17,10 +17,9 @@ public class ClinicMaintenanceUI {
         System.out.println("1. Patient Management");
         System.out.println("2. Doctor Management");
     System.out.println("3. Consultation Management");
-    System.out.println("4. Patient Queue Management");
-    System.out.println("5. Medical Treatment Management");
-    System.out.println("6. Pharmacy Management");
-    System.out.println("7. Exit");
+    System.out.println("4. Medical Treatment Management");
+    System.out.println("5. Pharmacy Management");
+    System.out.println("6. Exit");
         System.out.println("-----------------------------------------------");
         return InputUtil.getIntInput(input, "Enter your choice: ");
     }
