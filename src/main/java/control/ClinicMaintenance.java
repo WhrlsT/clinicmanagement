@@ -39,7 +39,7 @@ public class ClinicMaintenance {
                     new QueueMaintenance().run();
                     break;
                 case 5:
-                    new TreatmentMaintenance().run();
+                    new boundary.TreatmentMaintenanceUI().run();
                     break;
                 case 6:
                     new boundary.MedicationMaintenanceUI().run();
