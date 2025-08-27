@@ -37,6 +37,7 @@ public class ClinicMaintenanceUI {
         System.out.println("Please select an option:");
         System.out.println("1. User Side");
         System.out.println("2. Admin Side");
+        System.out.println("3. Exit");
         System.out.println("-----------------------------------------------");
         return InputUtil.getIntInput(input, "Enter your choice: ");
     }
@@ -133,6 +134,10 @@ public class ClinicMaintenanceUI {
                 clearScreen();
                 printHeader("Welcome to the Clinic Maintenance System");
                 continue;
+            } else if (mainChoice == 3) {
+                // Exit
+                System.out.println("Exiting the system...");
+                break;
             } else {
                 System.out.println("Invalid choice. Please try again.");
                 pause();
