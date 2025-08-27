@@ -119,18 +119,71 @@ public class QueueMaintenance {
 
     // Domain-specific queue helpers (kept out of the generic ADT)
     private int findNextWaitingIndex(String doctorId) {
-        // Prefer a waiting patient who prefers this doctor (if provided)
+        // First pass: if doctorId provided, pick the first waiting entry we can serve for that doctor
+        if (doctorId != null) {
+            for (int i = 0; i < queue.size(); i++) {
+                PatientQueueEntry e = queue.get(i);
+                if (e.getStatus() != QueueStatus.WAITING) continue;
+                if (canServe(e, doctorId)) return i;
+            }
+            return -1;
+        }
+        // ANY doctor: pick the first waiting entry that is servable now
         for (int i = 0; i < queue.size(); i++) {
             PatientQueueEntry e = queue.get(i);
             if (e.getStatus() != QueueStatus.WAITING) continue;
-            if (doctorId == null) return i;
-            if (doctorId.equals(e.getPreferredDoctorId())) return i;
-        }
-        // Fallback: any waiting patient
-        for (int i = 0; i < queue.size(); i++) {
-            if (queue.get(i).getStatus() == QueueStatus.WAITING) return i;
+            if (canServe(e, null)) return i;
         }
         return -1;
+    }
+
+    /** A patient can be served only if their preferred doctor is not currently consulting. */
+    private boolean canServe(PatientQueueEntry e, String doctorId) {
+        // If the patient has a preferred doctor, only serve when that doctor is not consulting
+        if (e.getPreferredDoctorId() != null) {
+            // If doctorId is provided and doesn't match preference, skip this patient for this call
+            if (doctorId != null && !doctorId.equals(e.getPreferredDoctorId())) return false;
+            return !isDoctorConsulting(e.getPreferredDoctorId());
+        }
+        // No preferred doctor (ANY)
+        if (doctorId != null) {
+            // Only serve if the requested doctor is not consulting
+            return !isDoctorConsulting(doctorId);
+        }
+        // ANY call and ANY preference; OK
+        return true;
+    }
+
+    private boolean isDoctorConsulting(String doctorId) {
+        if (doctorId == null) return false;
+        for (int i = 0; i < queue.size(); i++) {
+            PatientQueueEntry e = queue.get(i);
+            if (e.getStatus() == QueueStatus.IN_PROGRESS && doctorId.equals(e.getPreferredDoctorId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Public helper for UI: is this doctor currently consulting someone? */
+    public boolean isDoctorConsultingNow(String doctorId) {
+        return isDoctorConsulting(doctorId);
+    }
+
+    /**
+     * Are there any doctors on duty who are not currently consulting?
+     */
+    public boolean anyOnDutyDoctorFree() {
+        LocalDate today = LocalDate.now();
+        int currentHour = LocalTime.now().getHour();
+        int dow = today.getDayOfWeek().getValue() - 1;
+        for (int i = 0; i < doctors.size(); i++) {
+            Doctor d = doctors.get(i);
+            boolean onDuty = d.getSchedule() != null && d.getSchedule().isAvailable(dow, currentHour);
+            if (!onDuty) continue;
+            if (!isDoctorConsulting(d.getId())) return true;
+        }
+        return false;
     }
 
     private void repositionAfterCalled(int index) {
@@ -152,10 +205,14 @@ public class QueueMaintenance {
 
         int hour = java.time.LocalTime.now().getHour();
         java.time.LocalDate date = java.time.LocalDate.now();
-        String doctorId = pickDoctorForEntry(e, date, hour);
-
-        if (doctorId == null) {
-            doctorId = "UNASSIGNED"; // create consultation without doctor assignment
+        // Use the doctor assigned when the patient was called (now stored in preferredDoctorId)
+    String doctorId = e.getPreferredDoctorId();
+        if (doctorId == null || doctorId.trim().isEmpty()) {
+            // Fallback: pick an available doctor at this time
+            doctorId = pickDoctorForEntry(e, date, hour);
+            if (doctorId == null) {
+                doctorId = "UNASSIGNED"; // create consultation without doctor assignment
+            }
         }
 
         java.time.LocalDateTime dt = date.atTime(hour, 0);

@@ -32,6 +32,8 @@ public class QueueMaintenanceUI {
                     InputUtil.clearScreen();
                     if (!ctl.anyDoctorOnDuty()) {
                         System.out.println("(X) Cannot call patient: No doctors are currently on duty.");
+                    } else if (!ctl.anyOnDutyDoctorFree()) {
+                        System.out.println("(X) No doctors are available right now. Please wait until one is free.");
                     } else {
                         var e = ctl.callNext(null);
                         if (e == null) System.out.println("No waiting entry.");
@@ -46,6 +48,8 @@ public class QueueMaintenanceUI {
                         System.out.println("No doctor entered.");
                     } else if (!ctl.isDoctorOnDuty(doc)) {
                         System.out.println("(X) Cannot call patient: Doctor " + doc + " is currently off duty.");
+                    } else if (ctl.isDoctorConsultingNow(doc)) {
+                        System.out.println("(X) Your preferred doctor is unavailable at the moment (currently consulting).");
                     } else {
                         var e = ctl.callNext(doc);
                         if (e == null) System.out.println("No waiting entry.");
