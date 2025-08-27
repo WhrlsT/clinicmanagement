@@ -1,6 +1,7 @@
 package boundary;
 
 import adt.ADTInterface;
+import control.QueueMaintenance;
 import entity.*;
 import utility.InputUtil;
 
@@ -8,6 +9,113 @@ import java.util.Scanner;
 
 public class QueueMaintenanceUI {
     private final Scanner sc = new Scanner(System.in);
+
+    public void run() {
+        QueueMaintenance ctl = new QueueMaintenance();
+        int c;
+        do {
+            InputUtil.clearScreen();
+            showHeader(ctl.getQueue(), ctl.getDoctors(), ctl.getPatients());
+            c = menu();
+            switch (c) {
+                case 1 -> {
+                    InputUtil.clearScreen();
+                    handleEnqueue(ctl);
+                    InputUtil.pauseScreen();
+                }
+                case 2 -> {
+                    InputUtil.clearScreen();
+                    displayQueue(ctl.getQueue());
+                    InputUtil.pauseScreen();
+                }
+                case 3 -> {
+                    InputUtil.clearScreen();
+                    if (!ctl.anyDoctorOnDuty()) {
+                        System.out.println("(X) Cannot call patient: No doctors are currently on duty.");
+                    } else {
+                        var e = ctl.callNext(null);
+                        if (e == null) System.out.println("No waiting entry.");
+                        else System.out.println("✅ Called and started: " + e.getId());
+                    }
+                    InputUtil.pauseScreen();
+                }
+                case 4 -> {
+                    InputUtil.clearScreen();
+                    String doc = InputUtil.getInput(sc, "Doctor ID: ");
+                    if (doc == null || doc.isEmpty()) {
+                        System.out.println("No doctor entered.");
+                    } else if (!ctl.isDoctorOnDuty(doc)) {
+                        System.out.println("(X) Cannot call patient: Doctor " + doc + " is currently off duty.");
+                    } else {
+                        var e = ctl.callNext(doc);
+                        if (e == null) System.out.println("No waiting entry.");
+                        else System.out.println("✅ Called and started: " + e.getId() + " for doctor " + doc);
+                    }
+                    InputUtil.pauseScreen();
+                }
+                case 5 -> {
+                    InputUtil.clearScreen();
+                    displayInProgressEntries(ctl.getQueue());
+                    if (!hasInProgressEntries(ctl.getQueue())) {
+                        System.out.println("No patients are currently in progress. Call a patient first.");
+                    } else {
+                        String id = promptComplete();
+                        if (id != null && !id.isEmpty()) {
+                            try {
+                                var cns = ctl.complete(id);
+                                System.out.println("(/) Consultation logged: " + cns.getId());
+                                System.out.println("(/) Patient dequeued successfully.");
+                                System.out.println("(/) Completed and dequeued.");
+                            } catch (Exception ex) {
+                                System.out.println("(X) " + ex.getMessage());
+                            }
+                        }
+                    }
+                    InputUtil.pauseScreen();
+                }
+                case 6 -> {
+                    InputUtil.clearScreen();
+                    String id = promptBumpId();
+                    Integer delta = promptBumpDelta();
+                    try {
+                        int newPr = ctl.bump(id, delta);
+                        System.out.println("Priority updated to " + newPr + ".");
+                    } catch (Exception ex) {
+                        System.out.println("(X) " + ex.getMessage());
+                    }
+                    InputUtil.pauseScreen();
+                }
+                case 7 -> {
+                    InputUtil.clearScreen();
+                    String id = promptRemove();
+                    boolean ok = ctl.remove(id);
+                    System.out.println(ok ? "Removed." : "Not found.");
+                    InputUtil.pauseScreen();
+                }
+                case 8 -> {
+                    InputUtil.clearScreen();
+                    displayRecentConsultations(ctl.getConsultations());
+                    InputUtil.pauseScreen();
+                }
+                case 9 -> {
+                    InputUtil.clearScreen();
+                    boolean confirm = promptClearConfirmation();
+                    if (confirm) {
+                        boolean changed = ctl.clearQueueAll();
+                        System.out.println(changed ? "(!!) Queue cleared." : "Queue is already empty.");
+                    } else {
+                        System.out.println("Clear cancelled.");
+                    }
+                    InputUtil.pauseScreen();
+                }
+                case 10 -> {}
+                default -> {
+                    System.out.println("Invalid");
+                    InputUtil.pauseScreen();
+                }
+            }
+        } while (c != 10);
+    }
 
     public int menu() {
         System.out.println("\nPatient Queue (Hybrid)");
@@ -170,6 +278,15 @@ public class QueueMaintenanceUI {
         System.out.println();
     }
 
+    private boolean hasInProgressEntries(ADTInterface<PatientQueueEntry> queue) {
+        for (int i = 0; i < (queue == null ? 0 : queue.size()); i++) {
+            if (queue.get(i).getStatus() == QueueStatus.IN_PROGRESS) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** Prompt for Queue ID to complete and return the entered ID (or null) */
     public String promptComplete() {
         return InputUtil.getInput(sc, "Queue ID to complete: ");
@@ -298,6 +415,23 @@ public class QueueMaintenanceUI {
             PatientQueueEntry e = queue.get(i);
             System.out.printf("%-6s %-8s %-8s %-3d %-10s %-10s%n",
                     e.getId(), e.getPatientId(), e.getPreferredDoctorId()==null?"ANY":e.getPreferredDoctorId(), e.getPriority(), e.getStatus(), e.getReason());
+        }
+    }
+
+    private void handleEnqueue(QueueMaintenance ctl) {
+        if (!ctl.anyDoctorOnDuty()) {
+            System.out.println("(X) Cannot enqueue: No doctors are currently on duty.");
+            return;
+        }
+        String id = ctl.generateNextQueueId();
+        PatientQueueEntry e = promptEnqueue(id, ctl.getPatients(), ctl.getDoctors());
+        if (e == null) return;
+        try {
+            ctl.enqueue(e.getId(), e.getPatientId(), e.getPreferredDoctorId(), e.getReason(), e.getPriority());
+            System.out.println("✅ Enqueued: " + e.getId());
+        } catch (Exception ex) {
+            System.out.println("(X) " + ex.getMessage());
+            System.out.println("Available doctors: " + ctl.getOnDutyDoctorsList());
         }
     }
 

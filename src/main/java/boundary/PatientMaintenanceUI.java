@@ -42,7 +42,7 @@ public class PatientMaintenanceUI {
                 case 1 -> run();
                 case 2 -> {
                     InputUtil.clearScreen();
-                    new control.QueueMaintenance().run();
+                    new QueueMaintenanceUI().run();
                 }
                 case 3 -> printReturningToMainMenu();
                 default -> printInvalidChoiceMessage();

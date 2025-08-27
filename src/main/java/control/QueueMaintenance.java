@@ -3,14 +3,11 @@ package control;
 import adt.ADTInterface;
 import dao.*;
 import entity.*;
-import boundary.QueueMaintenanceUI;
-import utility.InputUtil;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Scanner;
 
-/** Hybrid queue: single structure with preferredDoctorId + priority handling */
+/** Queue control: business logic only (no I/O). */
 public class QueueMaintenance {
     private final QueueDAO queueDAO = new QueueDAO();
     private final ConsultationDAO consultationDAO = new ConsultationDAO();
@@ -22,8 +19,6 @@ public class QueueMaintenance {
     private final ADTInterface<Doctor> doctors;
     private final ADTInterface<Patient> patients;
 
-    private final Scanner sc = new Scanner(System.in);
-
     public QueueMaintenance() {
         queue = queueDAO.load();
         consultations = consultationDAO.load();
@@ -31,144 +26,52 @@ public class QueueMaintenance {
         patients = patientDAO.retrieveFromFile();
     }
 
-    public void run() {
-        int c;
-        do {
-            InputUtil.clearScreen();
-            QueueMaintenanceUI ui = new QueueMaintenanceUI();
-            ui.showHeader(queue, doctors, patients);
-            c = ui.menu();
-            switch (c) {
-                case 1 -> {
-                    InputUtil.clearScreen();
-                    enqueue();
-                    InputUtil.pauseScreen();
-                }
-                case 2 -> {
-                    InputUtil.clearScreen();
-                    view();
-                    InputUtil.pauseScreen();
-                }
-                case 3 -> {
-                    InputUtil.clearScreen();
-                    if (!anyDoctorOnDuty()) {
-                        System.out.println("(X) Cannot call patient: No doctors are currently on duty.");
-                    } else {
-                        callNext(null);
-                    }
-                    InputUtil.pauseScreen();
-                }
-                case 4 -> { 
-                    InputUtil.clearScreen();
-                    String doc = InputUtil.getInput(sc, "Doctor ID: ");
-                    if (findDoctor(doc) == null) {
-                        System.out.println("(X) Doctor not found.");
-                    } else if (!isDoctorOnDuty(doc)) {
-                        System.out.println("(X) Cannot call patient: Doctor " + doc + " is currently off duty.");
-                    } else {
-                        callNext(doc);
-                    }
-                    InputUtil.pauseScreen();
-                }
-                case 5 -> {
-                    InputUtil.clearScreen();
-                    complete();
-                    InputUtil.pauseScreen();
-                }
-                case 6 -> {
-                    InputUtil.clearScreen();
-                    bump();
-                    InputUtil.pauseScreen();
-                }
-                case 7 -> {
-                    InputUtil.clearScreen();
-                    remove();
-                    InputUtil.pauseScreen();
-                }
-                case 8 -> {
-                    InputUtil.clearScreen();
-                    viewRecentConsultations();
-                    InputUtil.pauseScreen();
-                }
-                case 9 -> {
-                    InputUtil.clearScreen();
-                    clearQueue();
-                    InputUtil.pauseScreen();
-                }
-                case 10 -> {}
-                default -> {
-                    System.out.println("Invalid");
-                    InputUtil.pauseScreen();
-                }
-            }
-        } while (c != 10);
-        persist();
-    }
+    // Data accessors for UI layer
+    public ADTInterface<PatientQueueEntry> getQueue() { return queue; }
+    public ADTInterface<Consultation> getConsultations() { return consultations; }
+    public ADTInterface<Doctor> getDoctors() { return doctors; }
+    public ADTInterface<Patient> getPatients() { return patients; }
 
-    private void clearQueue() {
-        QueueMaintenanceUI ui = new QueueMaintenanceUI();
-        if (queue.size() == 0) { System.out.println("Queue is already empty."); return; }
-        boolean ok = ui.promptClearConfirmation();
-        if (!ok) { System.out.println("Clear cancelled."); return; }
-        // Remove all entries
-        while (queue.size() > 0) queue.remove(0);
-        persist();
-        System.out.println("(!!) Queue cleared.");
-    }
+    // Core actions
+    public String generateNextQueueId() { return nextQueueId(); }
 
-    private void enqueue() {
-        // UI handles prompts; control enforces business rules and persistence
+    public PatientQueueEntry enqueue(String id, String patientId, String preferredDoctorId, String reason, int priority) {
         if (!anyDoctorOnDuty()) {
-            System.out.println("(X) Cannot enqueue: No doctors are currently on duty.");
-            return;
+            throw new IllegalStateException("No doctors are currently on duty");
         }
-
-    QueueMaintenanceUI ui = new QueueMaintenanceUI();
-    String id = nextQueueId();
-    PatientQueueEntry e = ui.promptEnqueue(id, patients, doctors);
-        if (e == null) return; // user cancelled/back
-
-        // Validate patient exists
-        if (findPatient(e.getPatientId()) == null) { System.out.println("Patient not found"); return; }
-
-        // Validate preferred doctor (if provided) and duty
-        if (e.getPreferredDoctorId() != null) {
-            if (findDoctor(e.getPreferredDoctorId()) == null) { System.out.println("Doctor not found"); return; }
-            if (!isDoctorOnDuty(e.getPreferredDoctorId())) {
-                System.out.println("(X) Cannot enqueue: Doctor " + e.getPreferredDoctorId() + " is currently off duty.");
-                System.out.println("Available doctors: " + getOnDutyDoctorsList());
-                return;
+        if (findPatient(patientId) == null) throw new IllegalArgumentException("Patient not found");
+        if (preferredDoctorId != null) {
+            if (findDoctor(preferredDoctorId) == null) throw new IllegalArgumentException("Doctor not found");
+            if (!isDoctorOnDuty(preferredDoctorId)) {
+                throw new IllegalStateException("Preferred doctor is currently off duty");
             }
         }
-
-        // Enqueue and persist
+        PatientQueueEntry e = new PatientQueueEntry(id, patientId, preferredDoctorId, reason, priority);
         queue.enqueue(e);
         persist();
-        System.out.println("✅ Enqueued: " + e.getId());
+        return e;
     }
 
-    private void remove() {
-    QueueMaintenanceUI ui = new QueueMaintenanceUI();
-    String id = ui.promptRemove();
-    for (int i = 0; i < queue.size(); i++) if (queue.get(i).getId().equals(id)) { queue.remove(i); persist(); System.out.println("Removed."); return; }
-    System.out.println("Not found.");
+    public boolean remove(String id) {
+        for (int i = 0; i < queue.size(); i++) {
+            if (queue.get(i).getId().equals(id)) {
+                queue.remove(i);
+                persist();
+                return true;
+            }
+        }
+        return false;
     }
 
-    private void view() {
-    QueueMaintenanceUI ui = new QueueMaintenanceUI();
-    ui.displayQueue(queue);
-    }
-
-    private void callNext(String doctorId) {
+    public PatientQueueEntry callNext(String doctorId) {
         int idx = findNextWaitingIndex(doctorId);
-        if (idx<0){System.out.println("No waiting entry.");return;}
+        if (idx < 0) return null;
         PatientQueueEntry e = queue.get(idx);
-        e.setStatus(QueueStatus.IN_PROGRESS); // Automatically start when called
+        e.setStatus(QueueStatus.IN_PROGRESS); // start when called
         e.incrementCallAttempts();
-        // Move entry just after last IN_PROGRESS to keep order stable
         repositionAfterCalled(idx);
         persist();
-        System.out.println("✅ Called and started: "+e.getId()+ (doctorId!=null?" for doctor "+doctorId: ""));
+        return e;
     }
 
     // Domain-specific queue helpers (kept out of the generic ADT)
@@ -199,44 +102,25 @@ public class QueueMaintenance {
         queue.add(target, temp);
     }
 
-    private void complete() {
-        System.out.println("═".repeat(60));
-        System.out.println("QUEUE MANAGEMENT - COMPLETE PATIENT CONSULTATION");
-        System.out.println("═".repeat(60));
+    public Consultation complete(String queueId) {
+        PatientQueueEntry e = queue.findEntry(queueId);
+        if (e == null) throw new IllegalArgumentException("Queue entry not found");
+        if (e.getStatus() != QueueStatus.IN_PROGRESS) throw new IllegalStateException("Patient is not in progress");
 
-        // First show only IN_PROGRESS entries (UI)
-        QueueMaintenanceUI ui = new QueueMaintenanceUI();
-        ui.displayInProgressEntries(queue);
+        int hour = java.time.LocalTime.now().getHour();
+        java.time.LocalDate date = java.time.LocalDate.now();
+        String doctorId = pickDoctorForEntry(e, date, hour);
 
-        if (!hasInProgressEntries()) {
-            System.out.println("No patients are currently in progress. Call a patient first.");
-            return;
+        if (doctorId == null) {
+            doctorId = "UNASSIGNED"; // create consultation without doctor assignment
         }
 
-        String id = ui.promptComplete();
-        PatientQueueEntry e = queue.findEntry(id);
-        if (e==null){System.out.println("Not found.");return;}
-        if (e.getStatus()!=QueueStatus.IN_PROGRESS){System.out.println("Patient not in progress (must be called first).");return;}
-        
-    // Get current time and date for consultation
-    int hour = java.time.LocalTime.now().getHour();
-    java.time.LocalDate date = java.time.LocalDate.now();
-    String doctorId = pickDoctorForEntry(e, date, hour);
-        
-        // Always create a consultation record
-        if (doctorId==null) {
-            System.out.println("(!!) No doctor free this hour; creating consultation record without doctor assignment.");
-            doctorId = "UNASSIGNED"; // Use placeholder for unassigned consultations
-        }
-        
-    // Create and save consultation record (with date+hour)
-    java.time.LocalDateTime dt = date.atTime(hour,0);
+        java.time.LocalDateTime dt = date.atTime(hour, 0);
         Consultation c = new Consultation(nextConsultationId(), e.getPatientId(), doctorId, dt, e.getReason(), "Queue", Consultation.Status.ONGOING);
-        // Create a calendar event when a specific doctor is assigned
         if (!"UNASSIGNED".equals(doctorId)) {
             try {
                 Doctor d = findDoctor(doctorId);
-                if (d != null && d.getCalendarId()!=null && !d.getCalendarId().isEmpty()) {
+                if (d != null && d.getCalendarId() != null && !d.getCalendarId().isEmpty()) {
                     String evId = utility.GoogleCalendarService.getInstance().addConsultationEvent(d, dt, 60, "Consultation - " + e.getPatientId(), e.getReason());
                     c.setCalendarEventId(evId);
                 }
@@ -244,50 +128,27 @@ public class QueueMaintenance {
         }
         consultations.add(c);
         consultationDAO.save(consultations);
-        System.out.println("(/) Consultation logged: "+c.getId());
-        
-        // Remove patient from queue (dequeue)
-        int queueIndex = queue.indexOf(id);
+
+        int queueIndex = queue.indexOf(queueId);
         if (queueIndex >= 0) {
             queue.remove(queueIndex);
-            System.out.println("(/) Patient dequeued successfully.");
         }
-        
         persist();
-        System.out.println("(/) Completed and dequeued.");
+        return c;
     }
 
-    // showInProgressEntries moved to QueueMaintenanceUI
+    // showInProgressEntries moved to UI
 
-    private void bump() {
-    QueueMaintenanceUI ui = new QueueMaintenanceUI();
-    String id = ui.promptBumpId();
-    PatientQueueEntry e = queue.findEntry(id);
-    if (e==null){System.out.println("Not found.");return;}
-    int delta = ui.promptBumpDelta();
-    e.setPriority(e.getPriority() + delta);
-        // Reorder: bubble upward from current position
+    public int bump(String id, int delta) {
+        PatientQueueEntry e = queue.findEntry(id);
+        if (e == null) throw new IllegalArgumentException("Queue entry not found");
+        e.setPriority(e.getPriority() + delta);
         int idx = queue.indexOf(id);
         queue.bubbleUp(idx);
         persist();
-        System.out.println("Priority updated.");
+        return e.getPriority();
     }
 
-    private void viewRecentConsultations() {
-    QueueMaintenanceUI ui = new QueueMaintenanceUI();
-    ui.displayRecentConsultations(consultations);
-    }
-
-    private boolean hasInProgressEntries() {
-        for (int i = 0; i < queue.size(); i++) {
-            if (queue.get(i).getStatus() == QueueStatus.IN_PROGRESS) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    
     private Doctor findDoctor(String id){ for (int i=0;i<doctors.size();i++) if (doctors.get(i).getId().equals(id)) return doctors.get(i); return null; }
     private Patient findPatient(String id){ for (int i=0;i<patients.size();i++) if (patients.get(i).getId().equals(id)) return patients.get(i); return null; }
 
@@ -331,7 +192,7 @@ public class QueueMaintenance {
     /**
      * Check if any doctor is currently on duty
      */
-    private boolean anyDoctorOnDuty() {
+    public boolean anyDoctorOnDuty() {
         LocalDate today = LocalDate.now();
         int currentHour = LocalTime.now().getHour();
         int dayOfWeek = today.getDayOfWeek().getValue() - 1; // 0 = Monday
@@ -349,7 +210,7 @@ public class QueueMaintenance {
     /**
      * Check if a specific doctor is currently on duty
      */
-    private boolean isDoctorOnDuty(String doctorId) {
+    public boolean isDoctorOnDuty(String doctorId) {
         Doctor doctor = findDoctor(doctorId);
         if (doctor == null) return false;
         
@@ -364,7 +225,7 @@ public class QueueMaintenance {
     /**
      * Get a comma-separated list of doctors currently on duty
      */
-    private String getOnDutyDoctorsList() {
+    public String getOnDutyDoctorsList() {
         LocalDate today = LocalDate.now();
         int currentHour = LocalTime.now().getHour();
         int dayOfWeek = today.getDayOfWeek().getValue() - 1; // 0 = Monday
@@ -384,5 +245,12 @@ public class QueueMaintenance {
             }
         }
         return onDutyDoctors.length() > 0 ? onDutyDoctors.toString() : "None";
+    }
+
+    public boolean clearQueueAll() {
+        if (queue.size() == 0) return false;
+        while (queue.size() > 0) queue.remove(0);
+        persist();
+        return true;
     }
 }
