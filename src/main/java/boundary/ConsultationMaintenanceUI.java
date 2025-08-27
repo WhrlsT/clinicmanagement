@@ -32,10 +32,14 @@ public class ConsultationMaintenanceUI {
                 case 4 -> { InputUtil.clearScreen(); handleReschedule(); pause(); }
                 case 5 -> { InputUtil.clearScreen(); handleSearch(); pause(); }
                 case 6 -> { InputUtil.clearScreen(); handleAddFollowUp(); pause(); }
-                case 7 -> {return;}
+                case 7 -> { InputUtil.clearScreen(); handleSortByDate(); pause(); }
+                case 8 -> { InputUtil.clearScreen(); handleBubbleSortStatusDate(); pause(); }
+                case 9 -> { InputUtil.clearScreen(); handleSelectionSortDoctorPatient(); pause(); }
+                case 10 -> { InputUtil.clearScreen(); handleBinarySearchById(); pause(); }
+                case 11 -> {return;}
                 default -> { printInvalidSelection(); pause(); }
             }
-        } while (choice != 7);
+        } while (choice != 11);
     }
 
     private void listAllConsultations() {
@@ -379,8 +383,12 @@ public class ConsultationMaintenanceUI {
         System.out.println("3. Cancel Consultation");
         System.out.println("4. Reschedule Consultation");
         System.out.println("5. Search Consultations");
-        System.out.println("6. Add Follow-up Consultation");
-        System.out.println("7. Back");
+    System.out.println("6. Add Follow-up Consultation");
+    System.out.println("7. Sort by Date/Time (merge sort)");
+    System.out.println("8. Sort by Status then Date (bubble sort)");
+    System.out.println("9. Sort by Doctor then Patient (selection sort)");
+    System.out.println("10. Binary Search by ID");
+    System.out.println("11. Back");
         return InputUtil.getIntInput(scanner, "Choose: ");
     }
 
@@ -419,6 +427,39 @@ public class ConsultationMaintenanceUI {
         }
         System.out.println("-".repeat(100));
         System.out.print(rows);
+    }
+
+    // === Handlers for new sort/search actions ===
+    private void handleSortByDate() {
+        displayConsultationsHeader();
+        ADTInterface<Consultation> sorted = control.sortByDateTime();
+        if (sorted.isEmpty()) displayNoConsultations();
+        else displayConsultationsTable(sorted, true);
+    }
+
+    private void handleBubbleSortStatusDate() {
+        displayConsultationsHeader();
+        ADTInterface<Consultation> sorted = control.bubbleSortByStatusThenDate();
+        if (sorted.isEmpty()) displayNoConsultations();
+        else displayConsultationsTable(sorted, true);
+    }
+
+    private void handleSelectionSortDoctorPatient() {
+        displayConsultationsHeader();
+        ADTInterface<Consultation> sorted = control.selectionSortByDoctorThenPatient();
+        if (sorted.isEmpty()) displayNoConsultations();
+        else displayConsultationsTable(sorted, true);
+    }
+
+    private void handleBinarySearchById() {
+        String id = InputUtil.getInput(scanner, "Enter Consultation ID to search: ");
+        if (id == null || id.isBlank()) { displayEmptyQuery(); return; }
+        Consultation found = control.binarySearchByIdGet(id);
+        if (found == null) { displayNoMatches(); return; }
+        adt.CustomADT<Consultation> single = new adt.CustomADT<>();
+        single.add(found);
+        displayConsultationsHeader();
+        displayConsultationsTable(single, true);
     }
 
     public void displayNoConsultations() {

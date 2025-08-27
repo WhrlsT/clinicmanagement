@@ -14,14 +14,13 @@ import java.util.Scanner;
  */
 public class MedicationMaintenanceUI {
     private final MedicationMaintenance control = new MedicationMaintenance();
-    private final ClinicMaintenanceUI clinicUI = new ClinicMaintenanceUI();
     private final Scanner sc = new Scanner(System.in);
 
     public void run() {
         int c;
         do {
             InputUtil.clearScreen();
-        clinicUI.printHeader("Clinic Medication Maintenance");
+           printHeader("Clinic Medication Maintenance");
         printTable(buildRows(control.getAllMedications()));
         c = menu();
             switch (c) {
@@ -30,7 +29,7 @@ public class MedicationMaintenanceUI {
                 case 3 -> handleDelete();
                 case 4 -> { // view
                     InputUtil.clearScreen();
-                    clinicUI.printHeader("Clinic Medication Maintenance");
+                    printHeader("Clinic Medication Maintenance");
             printTable(buildRows(control.getAllMedications()));
                     InputUtil.pauseScreen();
                 }
@@ -60,7 +59,7 @@ public class MedicationMaintenanceUI {
 
     private void handleAdd(){
         InputUtil.clearScreen();
-    clinicUI.printHeader("Clinic Medication Maintenance");
+    printHeader("Clinic Medication Maintenance");
     showAddIntro();
         String name = InputUtil.getInput(sc, "Name ('0' to cancel): ");
         if (name.equals("0")) return;
@@ -112,7 +111,7 @@ public class MedicationMaintenanceUI {
 
     private void handleUpdate(){
         InputUtil.clearScreen();
-    clinicUI.printHeader("Clinic Medication Maintenance");
+     printHeader("Clinic Medication Maintenance");
     showUpdateIntro(null);
     printTable(buildRows(control.getAllMedications()));
         String id = InputUtil.getInput(sc, "Medication ID ('0' to cancel): ");
@@ -135,7 +134,7 @@ public class MedicationMaintenanceUI {
 
     private void handleDelete(){
         InputUtil.clearScreen();
-    clinicUI.printHeader("Clinic Medication Maintenance");
+      printHeader("Clinic Medication Maintenance");
     showDeleteIntro();
         String id = InputUtil.getInput(sc, "Medication ID to delete ('0' to cancel): ");
         if (id.equals("0")) return;
@@ -263,4 +262,11 @@ public class MedicationMaintenanceUI {
     }
 
     private String nz(Object o){ return o==null?"":o.toString(); }
+
+    
+    public void printHeader(String headerMsg) {
+        System.out.println("\n-----------------------------------------------");
+        System.out.println(headerMsg);
+        System.out.println("-----------------------------------------------");
+    }
 }

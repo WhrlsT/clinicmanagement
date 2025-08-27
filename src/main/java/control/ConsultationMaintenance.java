@@ -31,6 +31,80 @@ public class ConsultationMaintenance {
     refreshConsultationsFromFile();
         return consultations;
     }
+
+    // ===== Sorting/search helpers leveraging CustomADT =====
+    /** Sort consultations by date/time ascending using stable merge sort; returns a new list. */
+    public ADTInterface<Consultation> sortByDateTime() {
+        refreshConsultationsFromFile();
+        CustomADT<Consultation> copy = new CustomADT<>();
+        for (int i=0;i<consultations.size();i++) copy.add(consultations.get(i));
+        copy.mergeSort((java.util.Comparator<Consultation>) (a,b) -> {
+            java.time.LocalDateTime da = a==null?null:a.getDate();
+            java.time.LocalDateTime db = b==null?null:b.getDate();
+            if (da==null && db==null) return 0;
+            if (da==null) return -1;
+            if (db==null) return 1;
+            return da.compareTo(db);
+        });
+        return copy;
+    }
+
+    /** Bubble sort by status then date for demonstration (stable). */
+    public ADTInterface<Consultation> bubbleSortByStatusThenDate() {
+        refreshConsultationsFromFile();
+        CustomADT<Consultation> copy = new CustomADT<>();
+        for (int i=0;i<consultations.size();i++) copy.add(consultations.get(i));
+        copy.bubbleSort((java.util.Comparator<Consultation>) (a,b) -> {
+            String sa = a==null||a.getStatus()==null?"":a.getStatus().name();
+            String sb = b==null||b.getStatus()==null?"":b.getStatus().name();
+            int cmp = sa.compareTo(sb);
+            if (cmp!=0) return cmp;
+            java.time.LocalDateTime da = a==null?null:a.getDate();
+            java.time.LocalDateTime db = b==null?null:b.getDate();
+            if (da==null && db==null) return 0;
+            if (da==null) return -1;
+            if (db==null) return 1;
+            return da.compareTo(db);
+        });
+        return copy;
+    }
+
+    /** Selection sort by doctor then patient (not stable). */
+    public ADTInterface<Consultation> selectionSortByDoctorThenPatient() {
+        refreshConsultationsFromFile();
+        CustomADT<Consultation> copy = new CustomADT<>();
+        for (int i=0;i<consultations.size();i++) copy.add(consultations.get(i));
+        copy.selectionSort((java.util.Comparator<Consultation>) (a,b) -> {
+            String da = a==null?"":safe(getDoctorDisplay(a.getDoctorId()));
+            String db = b==null?"":safe(getDoctorDisplay(b.getDoctorId()));
+            int cmp = da.compareTo(db);
+            if (cmp!=0) return cmp;
+            String pa = a==null?"":safe(getPatientDisplay(a.getPatientId()));
+            String pb = b==null?"":safe(getPatientDisplay(b.getPatientId()));
+            return pa.compareTo(pb);
+        });
+        return copy;
+    }
+
+    /** Binary search by ID on a list sorted by ID ascending. Returns index or -insertionPoint-1. */
+    public Consultation binarySearchByIdGet(String id) {
+        refreshConsultationsFromFile();
+        CustomADT<Consultation> copy = new CustomADT<>();
+        for (int i=0;i<consultations.size();i++) copy.add(consultations.get(i));
+        copy.mergeSort((java.util.Comparator<Consultation>) (a,b) -> {
+            String ia = a==null?"":safe(a.getId());
+            String ib = b==null?"":safe(b.getId());
+            return ia.compareTo(ib);
+        });
+        Consultation key = new Consultation(); key.setId(id);
+        int idx = copy.binarySearch(key, (java.util.Comparator<Consultation>) (a,b) -> {
+            String ia = a==null?"":safe(a.getId());
+            String ib = b==null?"":safe(b.getId());
+            return ia.compareTo(ib);
+        });
+        if (idx >= 0 && idx < copy.size()) return copy.get(idx);
+        return null;
+    }
     
     public ADTInterface<Doctor> getAllDoctors() {
         return doctors;

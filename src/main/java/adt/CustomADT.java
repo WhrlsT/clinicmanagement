@@ -237,6 +237,20 @@ public class CustomADT<T> implements ADTInterface<T> {
         sort(new ADTComparator<T>() { public int compare(T a, T b){ return comparator.compare(a,b); } });
     }
 
+    /** Default sort using natural ordering if elements implement Comparable. */
+    @SuppressWarnings({"rawtypes"})
+    public void sort() {
+        if (size <= 1) return;
+        sort(new ADTComparator<T>() {
+            public int compare(T a, T b) {
+                if (a == null && b == null) return 0;
+                if (a == null) return -1;
+                if (b == null) return 1;
+                return ((Comparable) a).compareTo(b);
+            }
+        });
+    }
+
     /** Simple bubble sort (stable), useful for teaching/demo. */
     public void bubbleSort(ADTComparator<T> comparator) {
         if (comparator == null || size <= 1) return;
@@ -277,6 +291,40 @@ public class CustomADT<T> implements ADTInterface<T> {
     public void selectionSort(Comparator<? super T> comparator) {
         if (comparator == null) return;
         selectionSort(new ADTComparator<T>() { public int compare(T a, T b){ return comparator.compare(a,b); } });
+    }
+
+    /** Stable merge sort using provided comparator (O(n log n)). */
+    public void mergeSort(ADTComparator<T> comparator) {
+        if (comparator == null || size <= 1) return;
+        T[] aux = (T[]) new Object[size];
+        mergeSortInternal(0, size - 1, comparator, aux);
+    }
+
+    /** Stable merge sort using java.util.Comparator. */
+    public void mergeSort(Comparator<? super T> comparator) {
+        if (comparator == null) return;
+        mergeSort(new ADTComparator<T>() { public int compare(T a, T b){ return comparator.compare(a,b); } });
+    }
+
+    private void mergeSortInternal(int left, int right, ADTComparator<T> cmp, T[] aux) {
+        if (left >= right) return;
+        int mid = (left + right) >>> 1;
+        mergeSortInternal(left, mid, cmp, aux);
+        mergeSortInternal(mid + 1, right, cmp, aux);
+        // Optimization: if already in order, skip merge
+        if (cmp.compare(data[mid], data[mid + 1]) <= 0) return;
+        merge(left, mid, right, cmp, aux);
+    }
+
+    private void merge(int left, int mid, int right, ADTComparator<T> cmp, T[] aux) {
+        for (int k = left; k <= right; k++) aux[k] = data[k];
+        int i = left, j = mid + 1, idx = left;
+        while (i <= mid && j <= right) {
+            if (cmp.compare(aux[i], aux[j]) <= 0) data[idx++] = aux[i++];
+            else data[idx++] = aux[j++];
+        }
+        while (i <= mid) data[idx++] = aux[i++];
+        while (j <= right) data[idx++] = aux[j++];
     }
 
     /** Sort using natural ordering when elements implement Comparable. */

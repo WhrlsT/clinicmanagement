@@ -16,14 +16,13 @@ import java.util.Scanner;
  */
 public class TreatmentMaintenanceUI {
     private final TreatmentMaintenance control = new TreatmentMaintenance();
-    private final ClinicMaintenanceUI clinicUI = new ClinicMaintenanceUI();
     private final Scanner sc = new Scanner(System.in);
 
     public void run(){
         int c;
         do {
             InputUtil.clearScreen();
-        clinicUI.printHeader("Clinic Treatment Maintenance");
+        printHeader("Clinic Treatment Maintenance");
         printTable(rows(control.getAllTreatments()));
         c = menu();
             switch(c){
@@ -32,7 +31,7 @@ public class TreatmentMaintenanceUI {
                 case 3 -> handleDelete();
                 case 4 -> { // view
                     InputUtil.clearScreen();
-                    clinicUI.printHeader("Clinic Treatment Maintenance");
+                    printHeader("Clinic Treatment Maintenance");
             printTable(rows(control.getAllTreatments()));
                     InputUtil.pauseScreen();
                 }
@@ -59,7 +58,7 @@ public class TreatmentMaintenanceUI {
 
     private void handleAdd(){
         InputUtil.clearScreen();
-    clinicUI.printHeader("Clinic Treatment Maintenance");
+    printHeader("Clinic Treatment Maintenance");
     showAddHeader();
     showAddIntro();
 
@@ -137,7 +136,7 @@ public class TreatmentMaintenanceUI {
 
     private void handleUpdate(){
         InputUtil.clearScreen();
-    clinicUI.printHeader("Clinic Treatment Maintenance");
+    printHeader("Clinic Treatment Maintenance");
     showUpdateHeader();
     printTable(rows(control.getAllTreatments()));
         String id = InputUtil.getInput(sc, "Treatment ID ('0' to cancel): ");
@@ -183,7 +182,7 @@ public class TreatmentMaintenanceUI {
 
     private void handleDelete(){
         InputUtil.clearScreen();
-    clinicUI.printHeader("Clinic Treatment Maintenance");
+    printHeader("Clinic Treatment Maintenance");
     showDeleteHeader();
     showDeleteIntro();
         String id = InputUtil.getInput(sc, "Treatment ID to delete ('0' to cancel): ");
@@ -193,7 +192,7 @@ public class TreatmentMaintenanceUI {
 
     private void handleSearch(){
         InputUtil.clearScreen();
-    clinicUI.printHeader("Clinic Treatment Maintenance - Search");
+    printHeader("Clinic Treatment Maintenance - Search");
     int opt = searchMenu();
         if (opt==4) return;
     String q = promptSearchQuery().toLowerCase();
@@ -205,18 +204,18 @@ public class TreatmentMaintenanceUI {
             default -> results = new CustomADT<>();
         }
         InputUtil.clearScreen();
-        clinicUI.printHeader("Search Results");
+        printHeader("Search Results");
     printTable(rows(results));
     }
 
     private void handleSort(){
         InputUtil.clearScreen();
-    clinicUI.printHeader("Clinic Treatment Maintenance - Sort");
+    printHeader("Clinic Treatment Maintenance - Sort");
     int field = sortFieldMenu(); if (field==5) return;
     int dir = sortDirectionMenu(); boolean asc = dir!=2;
         control.sortTreatments(field, asc);
         InputUtil.clearScreen();
-        clinicUI.printHeader("Sorted Treatments");
+        printHeader("Sorted Treatments");
     printTable(rows(control.getAllTreatments()));
     }
 
@@ -374,5 +373,12 @@ public class TreatmentMaintenanceUI {
         System.out.println("---------------------------------------------------------------");
         System.out.print(sb.length()==0?"(none)\n":sb.toString());
         System.out.println("---------------------------------------------------------------");
+    }
+
+    
+    public void printHeader(String headerMsg) {
+        System.out.println("\n-----------------------------------------------");
+        System.out.println(headerMsg);
+        System.out.println("-----------------------------------------------");
     }
 }

@@ -12,7 +12,6 @@ public class DoctorMaintenanceUI {
 
     private Scanner scanner = new Scanner(System.in);
     private final DoctorMaintenance control = new DoctorMaintenance();
-    private final ClinicMaintenanceUI clinicUI = new ClinicMaintenanceUI();
 
     public int getMenuChoice() {
         System.out.println("Please select an option:");
@@ -32,7 +31,7 @@ public class DoctorMaintenanceUI {
 
     public void run() {
         InputUtil.clearScreen();
-        clinicUI.printHeader("Clinic Doctor Maintenance");
+        printHeader("Clinic Doctor Maintenance");
         displayDoctorsTable(control.getAllDoctors());
         int choice;
         do {
@@ -53,7 +52,7 @@ public class DoctorMaintenanceUI {
             if (choice != 10 && choice != 4) {
                 InputUtil.pauseScreen();
                 InputUtil.clearScreen();
-                clinicUI.printHeader("Clinic Doctor Maintenance");
+                printHeader("Clinic Doctor Maintenance");
                 displayDoctorsTable(control.getAllDoctors());
             }
         } while (choice != 10);
@@ -91,6 +90,13 @@ public class DoctorMaintenanceUI {
         }
         displayDoctorsTable(sb.toString());
     }
+
+   
+    public void printHeader(String headerMsg) {
+        System.out.println("\n-----------------------------------------------");
+        System.out.println(headerMsg);
+        System.out.println("-----------------------------------------------");
+    } 
 
     public Doctor inputDoctorDetails() {
         String name = InputUtil.getInput(scanner, "Enter doctor name: ");
@@ -414,7 +420,7 @@ public class DoctorMaintenanceUI {
 
     // ===== Handlers (moved from control) =====
     private void handleAdd() {
-        clinicUI.printHeader("Clinic Doctor Maintenance");
+        printHeader("Clinic Doctor Maintenance");
         showAddDoctorIntro();
         String name = InputUtil.getInputWithBackOption(scanner, "Enter doctor name: ");
         if (name == null) return;
@@ -429,7 +435,7 @@ public class DoctorMaintenanceUI {
     }
 
     private void handleUpdate() {
-        clinicUI.printHeader("Clinic Doctor Maintenance");
+        printHeader("Clinic Doctor Maintenance");
         System.out.println("Updating Doctor Details (Enter '0' to go back)");
         displayDoctorsTable(control.getAllDoctors());
         String doctorId = InputUtil.getInput(scanner, "Enter doctor ID to update: ");
@@ -472,7 +478,7 @@ public class DoctorMaintenanceUI {
     }
 
     private void handleDelete() {
-        clinicUI.printHeader("Clinic Doctor Maintenance");
+        printHeader("Clinic Doctor Maintenance");
         showDeleteIntro();
         String doctorId = InputUtil.getInput(scanner, "Enter doctor ID to delete: ");
         if (doctorId.equals("0")) return;
@@ -490,7 +496,7 @@ public class DoctorMaintenanceUI {
     }
 
     private void handleViewConsultations() {
-        clinicUI.printHeader("Clinic Doctor Maintenance");
+        printHeader("Clinic Doctor Maintenance");
         displayDoctorsTable(control.getAllDoctors());
         displayConsultationsIntro();
         String doctorId = InputUtil.getInput(scanner, "Enter doctor ID to view consultations: ");
@@ -530,12 +536,12 @@ public class DoctorMaintenanceUI {
         System.out.println("═".repeat(60));
         InputUtil.pauseScreen();
         InputUtil.clearScreen();
-        clinicUI.printHeader("Clinic Doctor Maintenance");
+        printHeader("Clinic Doctor Maintenance");
         displayDoctorsTable(control.getAllDoctors());
     }
 
     private void handleOverallDutySchedule() {
-        clinicUI.printHeader("Clinic Doctor Maintenance");
+        printHeader("Clinic Doctor Maintenance");
         displayOverallDutyHeader();
         String weeklySummary = buildWeeklySummary();
         displayWeeklySummary(weeklySummary);
@@ -621,7 +627,7 @@ public class DoctorMaintenanceUI {
         ADTInterface<Doctor> foundDoctors = control.findDoctorByIdOrName(query);
         if (foundDoctors.size() > 0) {
             InputUtil.clearScreen();
-            clinicUI.printHeader("Clinic Doctor Maintenance");
+            printHeader("Clinic Doctor Maintenance");
             showSearchResultsHeader(query);
             displayDoctorsTable(foundDoctors);
         } else {
@@ -653,7 +659,7 @@ public class DoctorMaintenanceUI {
         displayAvailabilityUpdated();
         InputUtil.pauseScreen();
         InputUtil.clearScreen();
-        clinicUI.printHeader("Clinic Doctor Maintenance");
+        printHeader("Clinic Doctor Maintenance");
         displayDoctorsTable(control.getAllDoctors());
     }
 }

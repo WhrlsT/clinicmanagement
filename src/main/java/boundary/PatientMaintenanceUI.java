@@ -22,14 +22,13 @@ import control.PatientMaintenance;
 public class PatientMaintenanceUI {
     private final Scanner scanner = new Scanner(System.in);
     private final PatientMaintenance control = new PatientMaintenance();
-    private final ClinicMaintenanceUI clinicUI = new ClinicMaintenanceUI();
 
     // === Hub & Main run ===
     public void runHub() {
         int choice;
         do {
             InputUtil.clearScreen();
-            clinicUI.printHeader("Patient Management Hub");
+            printHeader("Patient Management Hub");
             displayPatientsTable(control.getAllPatients());
             // Queue summary (via control)
             int[] qs = control.getQueueSummaryCounts();
@@ -52,7 +51,7 @@ public class PatientMaintenanceUI {
 
     public void run() {
         InputUtil.clearScreen();
-        clinicUI.printHeader("Clinic Patient Maintenance");
+        printHeader("Clinic Patient Maintenance");
         displayPatientsTable(control.getAllPatients());
         int choice;
         do {
@@ -74,7 +73,7 @@ public class PatientMaintenanceUI {
             if (choice != 8 && choice != 4) {
                 InputUtil.pauseScreen();
                 InputUtil.clearScreen();
-                clinicUI.printHeader("Clinic Patient Maintenance");
+                printHeader("Clinic Patient Maintenance");
                 displayPatientsTable(control.getAllPatients());
             }
         } while (choice != 7);
@@ -407,6 +406,12 @@ public class PatientMaintenanceUI {
         }
         InputUtil.pauseScreen();
     }
+    
+    public void printHeader(String headerMsg) {
+        System.out.println("\n-----------------------------------------------");
+        System.out.println(headerMsg);
+        System.out.println("-----------------------------------------------");
+    }
 
     public void displayPatientDetailedHeader() {
         System.out.println("═".repeat(60));
@@ -484,7 +489,7 @@ public class PatientMaintenanceUI {
 
     // === Handlers (UI orchestrates inputs and calls control) ===
     private void handleAdd() {
-        clinicUI.printHeader("Clinic Patient Maintenance");
+        printHeader("Clinic Patient Maintenance");
         displayPatientsTable(control.getAllPatients());
         showAddPatientIntro();
 
@@ -506,7 +511,7 @@ public class PatientMaintenanceUI {
     }
 
     private void handleUpdate() {
-        clinicUI.printHeader("Clinic Patient Maintenance");
+        printHeader("Clinic Patient Maintenance");
         showUpdateStartIntro();
         displayPatientsTable(control.getAllPatients());
         String patientId = InputUtil.getInput(scanner, "Enter patient ID to update: ");
@@ -515,7 +520,7 @@ public class PatientMaintenanceUI {
         if (patient == null) { displayNotFoundMessage(patientId); return; }
 
         InputUtil.clearScreen();
-        clinicUI.printHeader("Clinic Patient Maintenance");
+        printHeader("Clinic Patient Maintenance");
         displayPatientsTable(control.getAllPatients());
         showUpdateIntro(patient);
 
@@ -531,7 +536,7 @@ public class PatientMaintenanceUI {
     }
 
     private void handleDelete() {
-        clinicUI.printHeader("Clinic Patient Maintenance");
+        printHeader("Clinic Patient Maintenance");
         displayPatientsTable(control.getAllPatients());
         showDeleteIntro();
         String patientId = InputUtil.getInput(scanner, "Enter patient ID to delete: ");
@@ -550,20 +555,20 @@ public class PatientMaintenanceUI {
     }
 
     private void handleSearch() {
-        clinicUI.printHeader("Clinic Patient Maintenance");
+        printHeader("Clinic Patient Maintenance");
         showSearchIntro();
         String query = InputUtil.getInput(scanner, "Enter patient ID or name to search: ");
         if (query.equals("0")) return;
         ADTInterface<Patient> results = control.findPatientByIdOrName(query);
         if (results.isEmpty()) { displayNotFoundMessage(query); return; }
         InputUtil.clearScreen();
-        clinicUI.printHeader("Clinic Patient Maintenance");
+        printHeader("Clinic Patient Maintenance");
         showSearchResultsHeader(query);
         displayPatientsTable(results);
     }
 
     private void handleViewDetails() {
-        clinicUI.printHeader("Clinic Patient Maintenance");
+        printHeader("Clinic Patient Maintenance");
         showViewPatientDetailsIntro();
         displayPatientsTable(control.getAllPatients());
         String patientId = InputUtil.getInput(scanner, "Enter patient ID to view details: ");
@@ -572,7 +577,7 @@ public class PatientMaintenanceUI {
         if (patient == null) { displayNotFoundMessage(patientId); return; }
 
         InputUtil.clearScreen();
-        clinicUI.printHeader("Clinic Patient Maintenance");
+        printHeader("Clinic Patient Maintenance");
         displayPatientDetailedHeader();
         displayPatientDetails(patient);
         try {
@@ -585,7 +590,7 @@ public class PatientMaintenanceUI {
     }
 
     private void handleVisitRecords() {
-        clinicUI.printHeader("Clinic Patient Maintenance");
+        printHeader("Clinic Patient Maintenance");
         displayVisitRecordsIntro();
         displayPatientsTable(control.getAllPatients());
         String patientId = InputUtil.getInput(scanner, "Enter Patient ID to view visit records: ");
@@ -615,7 +620,7 @@ public class PatientMaintenanceUI {
     }
 
     private void handleDemographics() {
-        clinicUI.printHeader("Clinic Patient Maintenance");
+        printHeader("Clinic Patient Maintenance");
         showDemographicsHeader();
         PatientMaintenance.DemographicsReport r = control.generateDemographicsReport();
         displayDemographicsSummary(r.totalPatients, r.averageAge, r.genderCounts, r.nationalityCounts, r.highFrequencyPatients);

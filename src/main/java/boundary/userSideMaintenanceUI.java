@@ -20,7 +20,6 @@ import java.util.Scanner;
 public class userSideMaintenanceUI {
     private final Scanner sc = new Scanner(System.in);
     private userSideMaintenance control;
-    private final ClinicMaintenanceUI clinicUI = new ClinicMaintenanceUI();
     private final DoctorMaintenance doctorCtrl = new DoctorMaintenance();
 
     public void run() {
@@ -80,7 +79,7 @@ public class userSideMaintenanceUI {
     }
 
     private void handleViewBooked() {
-        clinicUI.printHeader("Booked Consultations (" + getPatientIdLabel() + ")");
+        printHeader("Booked Consultations (" + getPatientIdLabel() + ")");
         ADTInterface<Consultation> booked = control.getBookedConsultations();
         if (booked.size() == 0) {
             System.out.println("No booked consultations.");
@@ -163,7 +162,7 @@ public class userSideMaintenanceUI {
     }
 
     private void handleViewPast() {
-        clinicUI.printHeader("Past Consultations (" + getPatientIdLabel() + ")");
+        printHeader("Past Consultations (" + getPatientIdLabel() + ")");
         ADTInterface<Consultation> past = control.getPastConsultations();
         if (past.size() == 0) {
             System.out.println("No past consultations.");
@@ -246,7 +245,7 @@ public class userSideMaintenanceUI {
     }
 
     private void handlePayment() {
-        clinicUI.printHeader("Make Payment (" + getPatientIdLabel() + ")");
+        printHeader("Make Payment (" + getPatientIdLabel() + ")");
         ADTInterface<Treatment> outstanding = control.getOutstandingTreatments();
         if (outstanding.size() == 0) {
             System.out.println("No outstanding treatments.");
@@ -271,7 +270,7 @@ public class userSideMaintenanceUI {
     }
 
     private void handleDispense() {
-        clinicUI.printHeader("Dispense Medications (" + getPatientIdLabel() + ")");
+        printHeader("Dispense Medications (" + getPatientIdLabel() + ")");
         ADTInterface<Treatment> pending = control.getPendingMedicationTreatmentsForPatient();
         if (pending.size() == 0) {
             System.out.println("No medications ready for dispensing. Pay first to mark treatment COMPLETED.");
@@ -295,7 +294,7 @@ public class userSideMaintenanceUI {
 
     // Change Details uses the same validations semantics as PatientMaintenanceUI update flow
     private void handleChangeDetails() {
-        clinicUI.printHeader("Change My Details (" + getPatientIdLabel() + ")");
+        printHeader("Change My Details (" + getPatientIdLabel() + ")");
         Patient p = control.getCurrentPatient();
         if (p == null) {
             System.out.println("No patient record found.");
@@ -395,5 +394,11 @@ public class userSideMaintenanceUI {
         } catch (Exception e) {
             return userSideMaintenance.FIXED_PATIENT_ID;
         }
+    }
+    
+    public void printHeader(String headerMsg) {
+        System.out.println("\n-----------------------------------------------");
+        System.out.println(headerMsg);
+        System.out.println("-----------------------------------------------");
     }
 }
