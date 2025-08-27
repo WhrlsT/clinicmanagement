@@ -47,7 +47,7 @@ public class DoctorMaintenanceUI {
                 case 7 -> { InputUtil.clearScreen(); handleSetAvailabilityRange(); }
                 case 8 -> { InputUtil.clearScreen(); handleViewConsultations(); }
                 case 9 -> { InputUtil.clearScreen(); showDutyDashboard(control.getAllDoctors()); }
-                case 10 -> printReturningToMainMenu();
+                case 10 -> {printReturningToMainMenu(); return;}
                 default -> printInvalidChoiceMessage();
             }
             if (choice != 10 && choice != 4) {

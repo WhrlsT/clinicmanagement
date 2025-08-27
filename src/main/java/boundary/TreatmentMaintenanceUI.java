@@ -38,7 +38,7 @@ public class TreatmentMaintenanceUI {
                 }
                 case 5 -> handleSearch();
                 case 6 -> handleSort();
-                case 7 -> {}
+                case 7 -> {return;}
                 default -> System.out.println("Invalid");
             }
             if (c != 7 && c != 4) InputUtil.pauseScreen();

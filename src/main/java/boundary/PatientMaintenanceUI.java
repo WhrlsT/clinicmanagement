@@ -65,7 +65,10 @@ public class PatientMaintenanceUI {
                 case 5 -> { InputUtil.clearScreen(); handleSearch(); }
                 case 6 -> { InputUtil.clearScreen(); handleVisitRecords(); }
                 case 7 -> { InputUtil.clearScreen(); handleDemographics(); }
-                case 8 -> printReturningToMainMenu();
+                case 8 -> { 
+                    printReturningToMainMenu();
+                    return;
+                }
                 default -> printInvalidChoiceMessage();
             }
             if (choice != 8 && choice != 4) {

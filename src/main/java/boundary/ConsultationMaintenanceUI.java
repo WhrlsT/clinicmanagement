@@ -32,7 +32,7 @@ public class ConsultationMaintenanceUI {
                 case 4 -> { InputUtil.clearScreen(); handleReschedule(); pause(); }
                 case 5 -> { InputUtil.clearScreen(); handleSearch(); pause(); }
                 case 6 -> { InputUtil.clearScreen(); handleAddFollowUp(); pause(); }
-                case 7 -> {}
+                case 7 -> {return;}
                 default -> { printInvalidSelection(); pause(); }
             }
         } while (choice != 7);

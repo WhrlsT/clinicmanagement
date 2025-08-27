@@ -42,19 +42,18 @@ public class ClinicMaintenance {
                     new boundary.MedicationMaintenanceUI().run();
                     break;
                 case 6:
-                    InputUtil.clearScreen();
                     System.out.println("Exiting the Clinic Maintenance System...");
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
                     InputUtil.pauseScreen();
             }
-            if (choice != 7) {
+            if (choice != 6) {
                 InputUtil.clearScreen();
                 mainUI.printHeader("Welcome to the Clinic Maintenance System");
             }
-    } while (choice != 7);
-
+    } while (choice != 6);
+    return;
     }
 
     public static void main(String[] args) {

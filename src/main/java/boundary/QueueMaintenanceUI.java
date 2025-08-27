@@ -108,7 +108,7 @@ public class QueueMaintenanceUI {
                     }
                     InputUtil.pauseScreen();
                 }
-                case 10 -> {}
+                case 10 -> {return;}
                 default -> {
                     System.out.println("Invalid");
                     InputUtil.pauseScreen();

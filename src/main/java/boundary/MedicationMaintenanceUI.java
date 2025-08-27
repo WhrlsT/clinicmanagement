@@ -39,7 +39,7 @@ public class MedicationMaintenanceUI {
                     handleDispense();
                     InputUtil.pauseScreen();
                 }
-                case 6 -> {}
+                case 6 -> {return;}
                 default -> System.out.println("Invalid");
             }
             if (c != 6 && c != 4 && c != 5) InputUtil.pauseScreen();
