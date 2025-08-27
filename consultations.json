@@ -82,20 +82,20 @@
   "id" : "C0009",
   "patientId" : "P0001",
   "doctorId" : "D0005",
-  "date" : "2025-09-05T03:00:00",
+  "date" : "2025-08-28T03:00:00",
   "reason" : "",
   "notes" : "",
-  "status" : "BOOKED",
+  "status" : "ONGOING",
   "calendarEventId" : null,
   "followUpOfId" : null
 }, {
   "id" : "C0010",
   "patientId" : "P0001",
   "doctorId" : "D0003",
-  "date" : "2025-09-03T04:00:00",
+  "date" : "2025-08-28T04:00:00",
   "reason" : "a",
   "notes" : "",
-  "status" : "BOOKED",
+  "status" : "ONGOING",
   "calendarEventId" : null,
   "followUpOfId" : null
 }, {
@@ -244,6 +244,16 @@
   "doctorId" : "D0004",
   "date" : "2025-08-28T01:00:00",
   "reason" : "2",
+  "notes" : "Queue",
+  "status" : "ONGOING",
+  "calendarEventId" : null,
+  "followUpOfId" : null
+}, {
+  "id" : "C0026",
+  "patientId" : "P0001",
+  "doctorId" : "D0005",
+  "date" : "2025-08-28T02:00:00",
+  "reason" : "",
   "notes" : "Queue",
   "status" : "ONGOING",
   "calendarEventId" : null,

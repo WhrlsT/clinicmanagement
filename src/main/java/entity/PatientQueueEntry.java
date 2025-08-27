@@ -10,6 +10,8 @@ public class PatientQueueEntry {
     private LocalDateTime enqueuedAt = LocalDateTime.now();
     private int priority = 0; // 0 normal, higher = higher priority
     private int callAttempts = 0;
+    // Link to an existing booked consultation (optional)
+    private String linkedConsultationId;
 
     public PatientQueueEntry() {}
 
@@ -29,9 +31,11 @@ public class PatientQueueEntry {
     public LocalDateTime getEnqueuedAt() { return enqueuedAt; }
     public int getPriority() { return priority; }
     public int getCallAttempts() { return callAttempts; }
+    public String getLinkedConsultationId() { return linkedConsultationId; }
 
     public void setStatus(QueueStatus status) { this.status = status; }
     public void setPriority(int priority) { this.priority = priority; }
     public void incrementCallAttempts(){ this.callAttempts++; }
     public void setPreferredDoctorId(String preferredDoctorId) { this.preferredDoctorId = preferredDoctorId; }
+    public void setLinkedConsultationId(String linkedConsultationId) { this.linkedConsultationId = linkedConsultationId; }
 }

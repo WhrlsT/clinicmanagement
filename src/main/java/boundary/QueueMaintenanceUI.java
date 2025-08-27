@@ -103,6 +103,11 @@ public class QueueMaintenanceUI {
                 }
                 case 9 -> {
                     InputUtil.clearScreen();
+                    handleEnqueueTodayBookings(ctl);
+                    InputUtil.pauseScreen();
+                }
+                case 10 -> {
+                    InputUtil.clearScreen();
                     boolean confirm = promptClearConfirmation();
                     if (confirm) {
                         boolean changed = ctl.clearQueueAll();
@@ -112,13 +117,13 @@ public class QueueMaintenanceUI {
                     }
                     InputUtil.pauseScreen();
                 }
-                case 10 -> {return;}
+                case 11 -> {return;}
                 default -> {
                     System.out.println("Invalid");
                     InputUtil.pauseScreen();
                 }
             }
-        } while (c != 10);
+    } while (c != 11);
     }
 
     public int menu() {
@@ -131,8 +136,9 @@ public class QueueMaintenanceUI {
         System.out.println("6. Bump Priority");
         System.out.println("7. Remove Entry");
     System.out.println("8. View Recent Consultations");
-    System.out.println("9. Clear Queue");
-    System.out.println("10. Back");
+    System.out.println("9. Enqueue Today Booked Consultations");
+    System.out.println("10. Clear Queue");
+    System.out.println("11. Back");
         return InputUtil.getIntInput(sc, "Choose: ");
     }
 
@@ -230,11 +236,6 @@ public class QueueMaintenanceUI {
             }
         }
         
-        // If doctor has an in-progress patient, they're consulting
-        if (hasInProgressPatient) {
-            return "Consulting";
-        }
-        
         // Check if doctor is scheduled to work now
         java.time.LocalTime now = java.time.LocalTime.now();
         java.time.LocalDate today = java.time.LocalDate.now();
@@ -243,6 +244,16 @@ public class QueueMaintenanceUI {
         
         boolean isScheduledNow = (doctor.getSchedule() != null && 
                                  doctor.getSchedule().isAvailable(dayOfWeek, currentHour));
+        
+        // If off duty, always show Off Duty, even if linked to an in-progress entry
+        if (!isScheduledNow) {
+            return "Off Duty";
+        }
+
+        // If doctor has an in-progress patient, they're consulting
+        if (hasInProgressPatient) {
+            return "Consulting";
+        }
         
         if (isScheduledNow) {
             if (waitingForThisDoctor > 0) {
@@ -436,6 +447,34 @@ public class QueueMaintenanceUI {
         } catch (Exception ex) {
             System.out.println("(X) " + ex.getMessage());
             System.out.println("Available doctors: " + ctl.getOnDutyDoctorsList());
+        }
+    }
+
+    private void handleEnqueueTodayBookings(QueueMaintenance ctl) {
+        var list = ctl.getTodayBookedConsultations();
+        java.time.LocalDate today = java.time.LocalDate.now();
+        System.out.println("-- Booked Consultations Today: " + today + " --");
+        if (list == null || list.size() == 0) {
+            System.out.println("No booked consultations for today.");
+            return;
+        }
+        System.out.printf("%-8s %-10s %-10s %-12s %-20s %-10s%n",
+                "ID", "Patient", "Doctor", "Date", "Reason", "Status");
+        System.out.println("─".repeat(80));
+        for (int i = 0; i < list.size(); i++) {
+            Consultation c = list.get(i);
+            String doctorDisplay = c.getDoctorId() == null || c.getDoctorId().equals("UNASSIGNED") ? "(any)" : c.getDoctorId();
+            System.out.printf("%-8s %-10s %-10s %-12s %-20s %-10s%n",
+                    c.getId(), c.getPatientId(), doctorDisplay, c.getDate().toString(), c.getReason(), c.getStatus());
+        }
+        String consId = InputUtil.getInputWithBackOption(sc, "Enter Consultation ID to enqueue (0=back): ");
+        if (consId == null) return;
+        String qid = ctl.generateNextQueueId();
+        try {
+            var e = ctl.enqueueFromBooking(qid, consId);
+            System.out.println("✅ Enqueued from booking: " + e.getId());
+        } catch (Exception ex) {
+            System.out.println("(X) " + ex.getMessage());
         }
     }
 

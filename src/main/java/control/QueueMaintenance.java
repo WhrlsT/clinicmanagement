@@ -69,14 +69,31 @@ public class QueueMaintenance {
         PatientQueueEntry e = queue.get(idx);
         // If ANY, assign a concrete on-duty doctor (prefer a free one)
         if (doctorId == null) {
-            String assigned = pickRandomOnDutyDoctorPreferFree();
-            if (assigned != null) e.setPreferredDoctorId(assigned);
+            // Only auto-assign when the entry has no preferred doctor yet (ANY)
+            if (e.getPreferredDoctorId() == null) {
+                String assigned = pickRandomOnDutyDoctorPreferFree();
+                if (assigned != null) e.setPreferredDoctorId(assigned);
+            }
         } else {
-            // Ensure entry is assigned to the requested doctor
+            // Ensure entry is assigned to the requested doctor (must be on duty)
+            if (!isDoctorOnDuty(doctorId)) {
+                throw new IllegalStateException("Requested doctor is off duty");
+            }
             e.setPreferredDoctorId(doctorId);
         }
         e.setStatus(QueueStatus.IN_PROGRESS); // start when called
         e.incrementCallAttempts();
+        // If this queue entry links to a BOOKED consultation, mark it as ONGOING now
+        if (e.getLinkedConsultationId() != null) {
+            for (int i = 0; i < consultations.size(); i++) {
+                Consultation c = consultations.get(i);
+                if (c.getId().equals(e.getLinkedConsultationId())) {
+                    c.setStatus(Consultation.Status.ONGOING);
+                    consultationDAO.save(consultations);
+                    break;
+                }
+            }
+        }
         repositionAfterCalled(idx);
         persist();
         return e;
@@ -137,18 +154,19 @@ public class QueueMaintenance {
         return -1;
     }
 
-    /** A patient can be served only if their preferred doctor is not currently consulting. */
+    /** A patient can be served only if their target doctor is on duty and not currently consulting. */
     private boolean canServe(PatientQueueEntry e, String doctorId) {
         // If the patient has a preferred doctor, only serve when that doctor is not consulting
         if (e.getPreferredDoctorId() != null) {
             // If doctorId is provided and doesn't match preference, skip this patient for this call
             if (doctorId != null && !doctorId.equals(e.getPreferredDoctorId())) return false;
-            return !isDoctorConsulting(e.getPreferredDoctorId());
+            String pref = e.getPreferredDoctorId();
+            return isDoctorOnDuty(pref) && !isDoctorConsulting(pref);
         }
         // No preferred doctor (ANY)
         if (doctorId != null) {
-            // Only serve if the requested doctor is not consulting
-            return !isDoctorConsulting(doctorId);
+            // Only serve if the requested doctor is on duty and not consulting
+            return isDoctorOnDuty(doctorId) && !isDoctorConsulting(doctorId);
         }
         // ANY call and ANY preference; OK
         return true;
@@ -287,6 +305,40 @@ public class QueueMaintenance {
         consultationDAO.save(consultations);
         doctorDAO.saveToFile(doctors);
         patientDAO.saveToFile(patients);
+    }
+
+    // Booked consultations helpers
+    public ADTInterface<Consultation> getTodayBookedConsultations() {
+        adt.CustomADT<Consultation> list = new adt.CustomADT<>();
+        java.time.LocalDate today = java.time.LocalDate.now();
+        for (int i = 0; i < consultations.size(); i++) {
+            Consultation c = consultations.get(i);
+            if (c.getStatus() == Consultation.Status.BOOKED && c.getDate().toLocalDate().equals(today)) {
+                list.add(c);
+            }
+        }
+        return list;
+    }
+
+    public PatientQueueEntry enqueueFromBooking(String queueId, String consultationId) {
+        // Find the consultation
+        Consultation c = null;
+        for (int i = 0; i < consultations.size(); i++) {
+            if (consultations.get(i).getId().equals(consultationId)) { c = consultations.get(i); break; }
+        }
+        if (c == null) throw new IllegalArgumentException("Consultation not found");
+        if (!anyDoctorOnDuty()) throw new IllegalStateException("No doctors are currently on duty");
+        if (findPatient(c.getPatientId()) == null) throw new IllegalArgumentException("Patient not found");
+
+        // Preferred doctor comes from the booking; if UNASSIGNED or null, keep as ANY
+        String pref = c.getDoctorId();
+        if (pref != null && "UNASSIGNED".equals(pref)) pref = null;
+
+        PatientQueueEntry e = new PatientQueueEntry(queueId, c.getPatientId(), pref, c.getReason(), 10);
+        e.setLinkedConsultationId(c.getId());
+        queue.enqueue(e);
+        persist();
+        return e;
     }
 
     /**
