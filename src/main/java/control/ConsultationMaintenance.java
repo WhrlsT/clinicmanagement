@@ -10,10 +10,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.format.DateTimeFormatter;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.ArrayList;
 
 public class ConsultationMaintenance {
     private final ConsultationDAO consultationDAO = new ConsultationDAO();
@@ -376,34 +372,7 @@ public class ConsultationMaintenance {
         for(int i=0; i<freshPatients.size(); i++) patients.add(freshPatients.get(i));
     }
 
-    public Map<LocalDate, ADTInterface<Integer>> getAvailableSlots(Doctor doctor, int days, LocalDate startDate) {
-    refreshConsultationsFromFile();
-        Map<LocalDate, ADTInterface<Integer>> availableSlots = new LinkedHashMap<>();
-        if (doctor == null) return availableSlots;
-
-        utility.GoogleCalendarService gcal = null;
-        boolean useCalendar = false;
-        try {
-            gcal = utility.GoogleCalendarService.getInstance();
-            useCalendar = (doctor.getCalendarId() != null && !doctor.getCalendarId().isEmpty());
-        } catch (Exception ex) {
-            useCalendar = false;
-        }
-
-        for (int d = 0; d < days; d++) {
-            LocalDate date = startDate.plusDays(d);
-            ADTInterface<Integer> hours = new CustomADT<>();
-            for (int h = 0; h < 24; h++) {
-                if (isSlotAvailable(doctor, date, h, useCalendar, gcal)) {
-                    hours.add(h);
-                }
-            }
-            if (!hours.isEmpty()) {
-                availableSlots.put(date, hours);
-            }
-        }
-        return availableSlots;
-    }
+    
 
     public boolean isSlotAvailable(Doctor doctor, LocalDate date, int hour) {
     refreshConsultationsFromFile();
@@ -461,12 +430,15 @@ public class ConsultationMaintenance {
         public LocalDate start;
         public LocalDate end;
         public static class DoctorSummary { public String doctorId; public String doctorName; public int booked; public int ongoing; public int treated; public int total; }
-        public ArrayList<DoctorSummary> perDoctor = new ArrayList<>();
+        public ADTInterface<DoctorSummary> perDoctor = new CustomADT<>();
         public int overallBooked; public int overallOngoing; public int overallTreated; public int overallTotal;
-        public static class HourBucket { public int hour; public int booked; public int capacity; }
+    public static class HourBucket { public int hour; public int booked; public int capacity; public double percentOfBookings; public int consultations; public double percentOfConsultations; }
         public HourBucket[] hours = new HourBucket[24];
-        public int totalBooked; public int totalCapacity;
-        public WorkloadUtilizationReport(){ for(int h=0;h<24;h++){ hours[h]=new HourBucket(); hours[h].hour=h; } }
+    public int totalBooked; public int totalCapacity; public int totalConsultations;
+    // Most consultation hour(s)
+    public int mostConsultationCount;
+    public ADTInterface<Integer> mostConsultationHours = new CustomADT<>();
+    public WorkloadUtilizationReport(){ for(int h=0;h<24;h++){ hours[h]=new HourBucket(); hours[h].hour=h; } }
     }
 
     public static class FollowUpNoShowReport {
@@ -475,11 +447,17 @@ public class ConsultationMaintenance {
         public int thresholdHours;
         public static class FollowUpEntry { public String id; public LocalDateTime dateTime; public String patient; public String doctor; public String status; public String followOf; public LocalDateTime baseDate; public long daysSinceBase; }
         public static class NoShowEntry { public String id; public LocalDateTime dateTime; public String patient; public String doctor; public long ageHours; }
-        public ArrayList<FollowUpEntry> followUps = new ArrayList<>();
-        public ArrayList<NoShowEntry> noShows = new ArrayList<>();
+        public ADTInterface<FollowUpEntry> followUps = new CustomADT<>();
+        public ADTInterface<NoShowEntry> noShows = new CustomADT<>();
         public static class Conversion { public String doctorId; public String doctorName; public int booked; public int treated; public double pct; }
-        public ArrayList<Conversion> conversions = new ArrayList<>();
+        public ADTInterface<Conversion> conversions = new CustomADT<>();
         public int overallBooked; public int overallTreated; public double overallPct;
+    }
+
+    // Simple key-less structure for available slots per day
+    public static class SlotDay {
+        public LocalDate date;
+        public ADTInterface<Integer> hours;
     }
 
     // ===== Reporting generators (logic only, no printing) =====
@@ -488,34 +466,41 @@ public class ConsultationMaintenance {
         WorkloadUtilizationReport r = new WorkloadUtilizationReport();
         r.start = start; r.end = end;
 
-        // Per doctor counts
-        Map<String, WorkloadUtilizationReport.DoctorSummary> byDoctor = new HashMap<>();
+        // Per doctor counts (no java.util.Map): linear scan in list
         for (int i = 0; i < consultations.size(); i++) {
             Consultation c = consultations.get(i);
             if (c == null || c.getDate() == null) continue;
             LocalDate d = c.getDate().toLocalDate();
             if (d.isBefore(start) || d.isAfter(end)) continue;
-            WorkloadUtilizationReport.DoctorSummary ds = byDoctor.computeIfAbsent(c.getDoctorId(), k -> {
-                WorkloadUtilizationReport.DoctorSummary x = new WorkloadUtilizationReport.DoctorSummary();
-                Doctor doc = findDoctor(k);
-                x.doctorId = k; x.doctorName = (doc==null? k : doc.getName());
-                return x;
-            });
+            // find or create
+            WorkloadUtilizationReport.DoctorSummary ds = null;
+            for (int j = 0; j < r.perDoctor.size(); j++) {
+                WorkloadUtilizationReport.DoctorSummary tmp = r.perDoctor.get(j);
+                if (tmp != null && c.getDoctorId().equals(tmp.doctorId)) { ds = tmp; break; }
+            }
+            if (ds == null) {
+                ds = new WorkloadUtilizationReport.DoctorSummary();
+                Doctor doc = findDoctor(c.getDoctorId());
+                ds.doctorId = c.getDoctorId(); ds.doctorName = (doc==null? c.getDoctorId() : doc.getName());
+                r.perDoctor.add(ds);
+            }
             if (c.getStatus() == Consultation.Status.BOOKED) { ds.booked++; r.overallBooked++; }
             else if (c.getStatus() == Consultation.Status.ONGOING) { ds.ongoing++; r.overallOngoing++; }
             else if (c.getStatus() == Consultation.Status.TREATED) { ds.treated++; r.overallTreated++; }
             ds.total++; r.overallTotal++;
 
-            // Hour bucket booked counts
+            // Hour bucket counts
             int hour = c.getDate().getHour();
-            r.hours[hour].booked++;
-            r.totalBooked++;
+            // total consultations irrespective of status
+            r.hours[hour].consultations++;
+            r.totalConsultations++;
+            // keep booked for backward compatibility
+            if (c.getStatus() == Consultation.Status.BOOKED) { r.hours[hour].booked++; r.totalBooked++; }
         }
-        // Move to list preserving insertion of map (order by doctorId)
-        for (Map.Entry<String, WorkloadUtilizationReport.DoctorSummary> e : byDoctor.entrySet()) r.perDoctor.add(e.getValue());
+    // r.perDoctor already filled
 
         // Capacity by hour using doctor schedules (ignores existing bookings)
-        for (int i = 0; i < doctors.size(); i++) {
+    for (int i = 0; i < doctors.size(); i++) {
             Doctor doc = doctors.get(i); if (doc==null || doc.getSchedule()==null) continue;
             LocalDate cur = start;
             while (!cur.isAfter(end)) {
@@ -523,6 +508,20 @@ public class ConsultationMaintenance {
                 for (int h=0; h<24; h++) if (doc.getSchedule().isAvailable(dayIdx, h)) { r.hours[h].capacity++; r.totalCapacity++; }
                 cur = cur.plusDays(1);
             }
+        }
+
+        // Percent% per hour: share of bookings this hour has over all bookings in the range
+        for (int h = 0; h < 24; h++) {
+            r.hours[h].percentOfBookings = (r.totalBooked == 0) ? 0.0 : (r.hours[h].booked * 100.0) / r.totalBooked;
+            r.hours[h].percentOfConsultations = (r.totalConsultations == 0) ? 0.0 : (r.hours[h].consultations * 100.0) / r.totalConsultations;
+        }
+        // Compute most consultation hours
+        int max = 0;
+        for (int h = 0; h < 24; h++) if (r.hours[h].consultations > max) max = r.hours[h].consultations;
+        r.mostConsultationCount = max;
+        r.mostConsultationHours.clear();
+        if (max > 0) {
+            for (int h = 0; h < 24; h++) if (r.hours[h].consultations == max) r.mostConsultationHours.add(h);
         }
         return r;
     }
@@ -532,12 +531,10 @@ public class ConsultationMaintenance {
         FollowUpNoShowReport r = new FollowUpNoShowReport();
         r.start = start; r.end = end; r.thresholdHours = thresholdHours;
 
-        // Index base consultations by id for quick lookup
-        Map<String, Consultation> byId = new HashMap<>();
-        for (int i=0;i<consultations.size();i++){ Consultation c=consultations.get(i); if(c!=null && c.getId()!=null) byId.put(c.getId(), c); }
+        // No java.util.Map; we'll search by ID using existing list when needed
 
         LocalDateTime now = LocalDateTime.now();
-        Map<String, FollowUpNoShowReport.Conversion> convByDoctor = new HashMap<>();
+        // Track conversions in a list; find by doctorId linearly
 
         for (int i = 0; i < consultations.size(); i++) {
             Consultation c = consultations.get(i);
@@ -551,7 +548,7 @@ public class ConsultationMaintenance {
                 FollowUpNoShowReport.FollowUpEntry fe = new FollowUpNoShowReport.FollowUpEntry();
                 fe.id = c.getId(); fe.dateTime = cdt; fe.patient = getPatientDisplay(c.getPatientId()); fe.doctor = getDoctorDisplay(c.getDoctorId());
                 fe.status = c.getStatus()==null?"":c.getStatus().name(); fe.followOf = c.getFollowUpOfId();
-                Consultation base = byId.get(c.getFollowUpOfId());
+                Consultation base = getConsultationById(c.getFollowUpOfId());
                 if (base != null) { fe.baseDate = base.getDate(); if (fe.baseDate!=null && fe.dateTime!=null) fe.daysSinceBase = ChronoUnit.DAYS.between(fe.baseDate, fe.dateTime); }
                 r.followUps.add(fe);
             }
@@ -565,19 +562,58 @@ public class ConsultationMaintenance {
             }
 
             // Conversion per doctor in window
-            FollowUpNoShowReport.Conversion cv = convByDoctor.computeIfAbsent(c.getDoctorId(), k -> {
-                FollowUpNoShowReport.Conversion x = new FollowUpNoShowReport.Conversion();
-                Doctor doc = findDoctor(k); x.doctorId = k; x.doctorName = (doc==null? k : doc.getName()); return x;
-            });
+            FollowUpNoShowReport.Conversion cv = null;
+            for (int j = 0; j < r.conversions.size(); j++) {
+                FollowUpNoShowReport.Conversion tmp = r.conversions.get(j);
+                if (tmp != null && c.getDoctorId().equals(tmp.doctorId)) { cv = tmp; break; }
+            }
+            if (cv == null) {
+                cv = new FollowUpNoShowReport.Conversion();
+                Doctor doc = findDoctor(c.getDoctorId());
+                cv.doctorId = c.getDoctorId(); cv.doctorName = (doc==null? c.getDoctorId() : doc.getName());
+                r.conversions.add(cv);
+            }
             if (c.getStatus() == Consultation.Status.BOOKED) { cv.booked++; r.overallBooked++; }
             if (c.getStatus() == Consultation.Status.TREATED) { cv.treated++; r.overallTreated++; }
         }
 
-        for (FollowUpNoShowReport.Conversion cv : convByDoctor.values()) {
+        for (int i = 0; i < r.conversions.size(); i++) {
+            FollowUpNoShowReport.Conversion cv = r.conversions.get(i);
             cv.pct = cv.booked==0?0.0: (cv.treated*100.0)/cv.booked;
-            r.conversions.add(cv);
         }
         r.overallPct = r.overallBooked==0?0.0:(r.overallTreated*100.0)/r.overallBooked;
         return r;
+    }
+
+    // ===== Available slots without java.util.Map =====
+    public ADTInterface<SlotDay> getAvailableSlots(Doctor doctor, int days, LocalDate startDate) {
+    refreshConsultationsFromFile();
+        ADTInterface<SlotDay> out = new CustomADT<>();
+        if (doctor == null) return out;
+
+        utility.GoogleCalendarService gcal = null;
+        boolean useCalendar = false;
+        try {
+            gcal = utility.GoogleCalendarService.getInstance();
+            useCalendar = (doctor.getCalendarId() != null && !doctor.getCalendarId().isEmpty());
+        } catch (Exception ex) {
+            useCalendar = false;
+        }
+
+        for (int d = 0; d < days; d++) {
+            LocalDate date = startDate.plusDays(d);
+            ADTInterface<Integer> hours = new CustomADT<>();
+            for (int h = 0; h < 24; h++) {
+                if (isSlotAvailable(doctor, date, h, useCalendar, gcal)) {
+                    hours.add(h);
+                }
+            }
+            if (!hours.isEmpty()) {
+                SlotDay sd = new SlotDay();
+                sd.date = date; sd.hours = hours;
+                out.add(sd);
+            }
+        }
+        return out;
     }
 }

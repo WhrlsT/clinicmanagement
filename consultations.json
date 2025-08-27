@@ -128,4 +128,24 @@
   "status" : "BOOKED",
   "calendarEventId" : null,
   "followUpOfId" : null
+}, {
+  "id" : "C0014",
+  "patientId" : "P0001",
+  "doctorId" : "D0001",
+  "date" : "2025-09-29T15:00:00",
+  "reason" : "Follow-up for C0006",
+  "notes" : "",
+  "status" : "BOOKED",
+  "calendarEventId" : null,
+  "followUpOfId" : "C0006"
+}, {
+  "id" : "C0015",
+  "patientId" : "P0001",
+  "doctorId" : "D0001",
+  "date" : "2025-09-08T03:00:00",
+  "reason" : "Follow-up for C0002",
+  "notes" : "",
+  "status" : "BOOKED",
+  "calendarEventId" : null,
+  "followUpOfId" : "C0002"
 } ]

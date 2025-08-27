@@ -125,11 +125,12 @@ public class userSideMaintenanceUI {
         if (slots.isEmpty()) {
             body.append("(No available slots from ").append(LocalDate.now()).append(" for 14 days)");
         } else {
-            for (var e : slots.entrySet()) {
+            for (int i = 0; i < slots.size(); i++) {
+                var sd = slots.get(i);
                 var hours = new StringBuilder();
-                var hourList = e.getValue();
-                for (int i = 0; i < hourList.size(); i++) hours.append(String.format("%02d:00 ", hourList.get(i)));
-                body.append(String.format("%s : %s%n", e.getKey(), hours.toString().trim()));
+                var hourList = sd.hours;
+                for (int j = 0; j < hourList.size(); j++) hours.append(String.format("%02d:00 ", hourList.get(j)));
+                body.append(String.format("%s : %s%n", sd.date, hours.toString().trim()));
             }
         }
         System.out.println("\nAvailable slots for doctor " + doctor.getId() + " (from " + LocalDate.now() + " for 14 days):");

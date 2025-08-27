@@ -11,7 +11,7 @@ import utility.InputUtil;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
+// Avoid java.util collections
 import java.util.Scanner;
 
 public class ConsultationMaintenanceUI {
@@ -347,20 +347,19 @@ public class ConsultationMaintenanceUI {
     }
 
     public void showAvailableSlots(Doctor doctor, int days, LocalDate startDate) {
-        String rangeText = "from " + startDate + " for " + days + " days";
-        Map<LocalDate, ADTInterface<Integer>> slots = control.getAvailableSlots(doctor, days, startDate);
+    String rangeText = "from " + startDate + " for " + days + " days";
+    adt.ADTInterface<control.ConsultationMaintenance.SlotDay> slots = control.getAvailableSlots(doctor, days, startDate);
         
         StringBuilder body = new StringBuilder();
         if (slots.isEmpty()) {
             body.append("(No available slots ").append(rangeText).append(")");
         } else {
-            for (Map.Entry<LocalDate, ADTInterface<Integer>> entry : slots.entrySet()) {
+            for (int i = 0; i < slots.size(); i++) {
+                var sd = slots.get(i);
                 StringBuilder hours = new StringBuilder();
-                ADTInterface<Integer> hourList = entry.getValue();
-                for (int i = 0; i < hourList.size(); i++) {
-                    hours.append(String.format("%02d:00 ", hourList.get(i)));
-                }
-                body.append(String.format("%s : %s%n", entry.getKey(), hours.toString().trim()));
+                ADTInterface<Integer> hourList = sd.hours;
+                for (int j = 0; j < hourList.size(); j++) hours.append(String.format("%02d:00 ", hourList.get(j)));
+                body.append(String.format("%s : %s%n", sd.date, hours.toString().trim()));
             }
         }
         
@@ -478,24 +477,33 @@ public class ConsultationMaintenanceUI {
         System.out.println("Per-Doctor Summary");
         System.out.println("Doctor                  | BOOKED | ONGOING | TREATED | Total");
         System.out.println("------------------------+--------+---------+---------+------");
-        for (var d : r.perDoctor) {
-            System.out.printf("%-24s | %6d | %7d | %7d | %5d\n",
-                    (d.doctorName+" ("+d.doctorId+")"), d.booked, d.ongoing, d.treated, d.total);
-        }
+    for (int i = 0; i < r.perDoctor.size(); i++) {
+        var d = r.perDoctor.get(i);
+        System.out.printf("%-24s | %6d | %7d | %7d | %5d\n",
+            (d.doctorName+" ("+d.doctorId+")"), d.booked, d.ongoing, d.treated, d.total);
+    }
         System.out.printf("%-24s | %6d | %7d | %7d | %5d\n", "Overall", r.overallBooked, r.overallOngoing, r.overallTreated, r.overallTotal);
 
         System.out.println();
         System.out.println("Peak Hours (All Doctors)");
-        System.out.println("Hour | Booked | Cap | Util%");
-        System.out.println("-----+--------+-----+------");
+        System.out.println("Hour | Consultations | Percent%");
+        System.out.println("-----+---------------+----------");
         for (int h=0; h<24; h++) {
             var b = r.hours[h];
-            if (b.booked==0 && b.capacity==0) continue; // skip empty hours
-            double util = b.capacity==0?0.0: (b.booked*100.0)/b.capacity;
-            System.out.printf("%02d   | %6d | %3d | %5.1f%%\n", b.hour, b.booked, b.capacity, util);
+            System.out.printf("%02d   | %13d | %8.1f%%\n", b.hour, b.consultations, b.percentOfConsultations);
         }
-        double overallUtil = r.totalCapacity==0?0.0: (r.totalBooked*100.0)/r.totalCapacity;
-        System.out.printf("\nOverall Utilization: %d booked over %d capacity slots = %.1f%%\n", r.totalBooked, r.totalCapacity, overallUtil);
+
+        System.out.println();
+        if (r.mostConsultationCount > 0 && r.mostConsultationHours != null && !r.mostConsultationHours.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < r.mostConsultationHours.size(); i++) {
+                if (i > 0) sb.append(", ");
+                sb.append(String.format("%02d", r.mostConsultationHours.get(i)));
+            }
+            System.out.println("Most consultation hours: " + sb + " (" + r.mostConsultationCount + ")");
+        } else {
+            System.out.println("Most consultation hours: None");
+        }
     }
 
     private void handleReportFollowUpNoShow() {
@@ -507,34 +515,33 @@ public class ConsultationMaintenanceUI {
         System.out.println("═".repeat(96));
         System.out.println("FOLLOW-UP & NO-SHOW TRACKING — Window: " + start + " to " + end);
         System.out.println("═".repeat(96));
-        System.out.println("Follow-up Entries (sample)");
+    System.out.println("Follow-up Entries");
         System.out.println("FU_ID    | Date/Time        | Patient                  | Doctor                   | Status   | FollowOf | BaseDate   | Days");
         System.out.println("---------+------------------+--------------------------+--------------------------+----------+----------+------------+-----");
-        int shown = 0;
-        for (var fe : r.followUps) {
+        for (int i = 0; i < r.followUps.size(); i++) {
+            var fe = r.followUps.get(i);
             String dt = fe.dateTime==null?"":fe.dateTime.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
             String bd = fe.baseDate==null?"":fe.baseDate.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             System.out.printf("%-8s | %-16s | %-24s | %-24s | %-8s | %-8s | %-10s | %3d\n",
                     fe.id, dt, trim(fe.patient,24), trim(fe.doctor,24), fe.status, fe.followOf, bd, fe.daysSinceBase);
-            if (++shown>=5) break; // show a few rows
         }
 
         System.out.println();
         System.out.println("No-Show Candidates (BOOKED past "+thresholdHours+"h)");
         System.out.println("ID       | Date/Time        | Patient                  | Doctor                   | AgeHrs");
         System.out.println("---------+------------------+--------------------------+--------------------------+-------");
-        shown = 0;
-        for (var ne : r.noShows) {
+        for (int i = 0; i < r.noShows.size(); i++) {
+            var ne = r.noShows.get(i);
             String dt = ne.dateTime==null?"":ne.dateTime.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
             System.out.printf("%-8s | %-16s | %-24s | %-24s | %5d\n", ne.id, dt, trim(ne.patient,24), trim(ne.doctor,24), ne.ageHours);
-            if (++shown>=5) break;
         }
 
         System.out.println();
         System.out.println("Conversion Rates (BOOKED → TREATED)");
         System.out.println("Doctor                    | Booked | Treated | Conversion");
         System.out.println("--------------------------+--------+---------+-----------");
-        for (var cv : r.conversions) {
+        for (int i = 0; i < r.conversions.size(); i++) {
+            var cv = r.conversions.get(i);
             System.out.printf("%-26s | %6d | %7d | %9.1f%%\n", (cv.doctorName+" ("+cv.doctorId+")"), cv.booked, cv.treated, cv.pct);
         }
         System.out.printf("%-26s | %6d | %7d | %9.1f%%\n", "Overall", r.overallBooked, r.overallTreated, r.overallPct);

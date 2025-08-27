@@ -10,12 +10,7 @@ import entity.Medication;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Map;
 
-/**
- * Lightweight controller for patient-side actions using fixed patient ID P0001.
- * Delegates to existing maintenance classes for business logic.
- */
 public class userSideMaintenance {
     public static final String FIXED_PATIENT_ID = "P0001"; // default
 
@@ -152,7 +147,7 @@ public class userSideMaintenance {
     public boolean isSlotAvailable(Doctor doctor, LocalDate dateOnly, int hour) {
         return consultationCtrl.isSlotAvailable(doctor, dateOnly, hour);
     }
-    public Map<LocalDate, ADTInterface<Integer>> getAvailableSlots(Doctor doctor, int days, LocalDate startDate) {
+    public ADTInterface<ConsultationMaintenance.SlotDay> getAvailableSlots(Doctor doctor, int days, LocalDate startDate) {
         return consultationCtrl.getAvailableSlots(doctor, days, startDate);
     }
 }
