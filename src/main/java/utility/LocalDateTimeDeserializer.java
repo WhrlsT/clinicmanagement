@@ -19,13 +19,24 @@ public class LocalDateTimeDeserializer extends JsonDeserializer<LocalDateTime> {
     public LocalDateTime deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         JsonToken t = p.getCurrentToken();
         if (t == JsonToken.START_ARRAY) {
-            // read [yyyy,MM,dd] and return at start of day
-            int year = p.nextIntValue(-1);
-            int month = p.nextIntValue(-1);
-            int day = p.nextIntValue(-1);
-            // consume END_ARRAY
-            while (p.nextToken() != JsonToken.END_ARRAY) { /* skip */ }
-            return LocalDate.of(year, month, day).atStartOfDay();
+            // Accept [yyyy,MM,dd[,HH[,mm[,ss[,nano]]]]]
+            int[] parts = new int[7];
+            int idx = 0;
+            while (p.nextToken() != JsonToken.END_ARRAY && idx < parts.length) {
+                if (p.getCurrentToken().isNumeric()) {
+                    parts[idx++] = p.getIntValue();
+                } else {
+                    // skip non-numeric tokens if any
+                }
+            }
+            int year = (idx > 0 ? parts[0] : 1970);
+            int month = (idx > 1 ? parts[1] : 1);
+            int day = (idx > 2 ? parts[2] : 1);
+            int hour = (idx > 3 ? parts[3] : 0);
+            int minute = (idx > 4 ? parts[4] : 0);
+            int second = (idx > 5 ? parts[5] : 0);
+            int nano = (idx > 6 ? parts[6] : 0);
+            return LocalDateTime.of(year, month, day, hour, minute, second, nano);
         } else if (t == JsonToken.VALUE_STRING) {
             String s = p.getText().trim();
             if (s.isEmpty()) return null;

@@ -5,8 +5,12 @@ import adt.CustomADT;
 import entity.Consultation;
 import entity.Treatment;
 import entity.Patient;
+import entity.Doctor;
+import entity.Medication;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 /**
  * Lightweight controller for patient-side actions using fixed patient ID P0001.
@@ -114,5 +118,31 @@ public class userSideMaintenance {
             }
         }
         return next;
+    }
+
+    // Detail helpers for UI
+    public ADTInterface<Treatment> getTreatmentsByConsultation(String consultationId) {
+        return patientCtrl.getTreatmentsByConsultation(consultationId);
+    }
+    public ADTInterface<Doctor> getAllDoctors() { return patientCtrl.getAllDoctors(); }
+    public ADTInterface<Medication> getAllMedications() { return patientCtrl.getAllMedications(); }
+
+    // Booked consultations only
+    public ADTInterface<Consultation> getBookedConsultations() {
+        ADTInterface<Consultation> allForPatient = patientCtrl.getConsultationsByPatient(patientId);
+        ADTInterface<Consultation> booked = new CustomADT<>();
+        for (int i = 0; i < allForPatient.size(); i++) {
+            Consultation c = allForPatient.get(i);
+            if (c != null && c.getStatus() == Consultation.Status.BOOKED) booked.add(c);
+        }
+        return booked;
+    }
+
+    // Slot availability wrappers
+    public boolean isSlotAvailable(Doctor doctor, LocalDate dateOnly, int hour) {
+        return consultationCtrl.isSlotAvailable(doctor, dateOnly, hour);
+    }
+    public Map<LocalDate, ADTInterface<Integer>> getAvailableSlots(Doctor doctor, int days, LocalDate startDate) {
+        return consultationCtrl.getAvailableSlots(doctor, days, startDate);
     }
 }

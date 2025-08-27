@@ -17,6 +17,8 @@ public class ConsultationDAO {
     com.fasterxml.jackson.datatype.jsr310.JavaTimeModule jtm = new JavaTimeModule();
     jtm.addDeserializer(java.time.LocalDateTime.class, new utility.LocalDateTimeDeserializer());
     mapper.registerModule(jtm);
+    // Prefer ISO-8601 strings for dates instead of numeric arrays
+    mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
     public ADTInterface<Consultation> load() {

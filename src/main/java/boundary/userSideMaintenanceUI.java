@@ -11,7 +11,6 @@ import utility.InputUtil;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
@@ -34,16 +33,17 @@ public class userSideMaintenanceUI {
             switch (choice) {
                 case 1 -> handleBook();
                 case 2 -> handleViewPast();
-                case 3 -> handlePayment();
-                case 4 -> handleDispense();
-                case 5 -> handleChangeDetails();
-                case 6 -> {return;}
+                case 3 -> handleViewBooked();
+                case 4 -> handlePayment();
+                case 5 -> handleDispense();
+                case 6 -> handleChangeDetails();
+                case 7 -> {return;}
                 default -> {
                     System.out.println("Invalid choice.");
                     InputUtil.pauseScreen();
                 }
             }
-        } while (choice != 6);
+        } while (choice != 7);
     }
 
     private void printUserHome() {
@@ -71,36 +71,95 @@ public class userSideMaintenanceUI {
         System.out.println();
         System.out.println("1. Book a consultation");
         System.out.println("2. View past consultations");
-        System.out.println("3. Make payment for treatments");
-        System.out.println("4. Dispense medications (for prescriptions)");
-        System.out.println("5. Change Details ");
-        System.out.println("6. Back to main menu");
+        System.out.println("3. View booked consultations");
+        System.out.println("4. Make payment for treatments");
+        System.out.println("5. Dispense medications (for prescriptions)");
+        System.out.println("6. Change Details ");
+        System.out.println("7. Back to main menu");
         System.out.println("-----------------------------------------------");
     }
 
+    private void handleViewBooked() {
+        clinicUI.printHeader("Booked Consultations (" + getPatientIdLabel() + ")");
+        ADTInterface<Consultation> booked = control.getBookedConsultations();
+        if (booked.size() == 0) {
+            System.out.println("No booked consultations.");
+        } else {
+            System.out.printf("%-8s  %-8s  %-16s  %-20s\n", "ID", "Doctor", "Date", "Reason");
+            for (int i = 0; i < booked.size(); i++) {
+                Consultation c = booked.get(i);
+                String dt = c.getDate() == null ? "" : c.getDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+                System.out.printf("%-8s  %-8s  %-16s  %-20s\n", nz(c.getId()), nz(c.getDoctorId()), dt, truncate(nz(c.getReason()), 20));
+            }
+        }
+        InputUtil.pauseScreen();
+    }
+
     private void handleBook() {
-        clinicUI.printHeader("Book Consultation (" + getPatientIdLabel() + ")");
-        // List doctors brief
+        // Mirror ConsultationMaintenanceUI.handleBook but for the current patient only
+        // 1. Pick doctor
+        InputUtil.clearScreen();
+        System.out.println("═".repeat(60));
+        System.out.println("BOOK CONSULTATION");
+        System.out.println("═".repeat(60));
+
         ADTInterface<Doctor> doctors = doctorCtrl.getAllDoctors();
         System.out.println("Available Doctors:");
         for (int i = 0; i < doctors.size(); i++) {
             Doctor d = doctors.get(i);
             System.out.printf("- %s | %s | %s\n", d.getId(), nz(d.getName()), nz(d.getSpecialization()));
         }
-    String doctorId = InputUtil.getInput(sc, "Enter Doctor ID: ");
+        System.out.println("(Enter '0' to go back)");
+        String doctorId = InputUtil.getInput(sc, "Doctor ID: ");
+        if (doctorId.equals("0")) return;
+        Doctor doctor = null;
+        for (int i = 0; i < doctors.size(); i++) if (doctorId.equals(doctors.get(i).getId())) { doctor = doctors.get(i); break; }
+        if (doctor == null) {
+            System.out.println("(X) Doctor not found.");
+            InputUtil.pauseScreen();
+            return;
+        }
 
-    // Pick date
-    LocalDate date = InputUtil.getValidatedLocalDateWithBackOption(sc, "Enter date (YYYY-MM-DD, 0=back): ");
-    if (date == null) return;
-    Integer hour = InputUtil.getValidatedHourWithBackOption(sc, "Enter hour (0-23, 0=back): ");
-    if (hour == null) return;
-        if (hour < 0) hour = 0; if (hour > 23) hour = 23;
-    LocalDateTime when = LocalDateTime.of(date, LocalTime.of(hour, 0));
-    String reason = InputUtil.getInput(sc, "Reason for visit: ");
+        // 2. Show available slots for next 14 days from today
+        var slots = control.getAvailableSlots(doctor, 14, LocalDate.now());
+        StringBuilder body = new StringBuilder();
+        if (slots.isEmpty()) {
+            body.append("(No available slots from ").append(LocalDate.now()).append(" for 14 days)");
+        } else {
+            for (var e : slots.entrySet()) {
+                var hours = new StringBuilder();
+                var hourList = e.getValue();
+                for (int i = 0; i < hourList.size(); i++) hours.append(String.format("%02d:00 ", hourList.get(i)));
+                body.append(String.format("%s : %s%n", e.getKey(), hours.toString().trim()));
+            }
+        }
+        System.out.println("\nAvailable slots for doctor " + doctor.getId() + " (from " + LocalDate.now() + " for 14 days):");
+        System.out.print(body);
+        System.out.println();
 
-        Consultation c = control.bookConsultation(doctorId, when, reason);
-    System.out.println(c == null ? "Failed to book consultation." : ("Booked: " + c.getId() + " on " + when.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))));
-    InputUtil.pauseScreen();
+        // 3. Pick date and time
+        LocalDate dateOnly = InputUtil.getValidatedLocalDateWithBackOption(sc, "Date (YYYY-MM-DD, '0' to go back): ");
+        if (dateOnly == null) return;
+        Integer hour = InputUtil.getValidatedHourWithBackOption(sc, "Hour (0-23, '0' to go back): ");
+        if (hour == null) return;
+        if (!control.isSlotAvailable(doctor, dateOnly, hour)) {
+            System.out.println("(X) Selected slot is not available. Please choose one of the listed slots.");
+            InputUtil.pauseScreen();
+            return;
+        }
+        LocalDateTime date = dateOnly.atTime(hour, 0);
+
+        // 4. Reason & book
+        String reason = InputUtil.getInput(sc, "Reason (enter '0' to go back): ");
+        if (reason.equals("0")) return;
+
+        Consultation newConsultation = control.bookConsultation(doctorId, date, reason);
+        if (newConsultation != null) {
+            System.out.println("(/) Booked: " + newConsultation.getId());
+        } else {
+            System.out.println("(X) Booking failed.");
+        }
+        InputUtil.pauseScreen();
     }
 
     private void handleViewPast() {
@@ -116,8 +175,74 @@ public class userSideMaintenanceUI {
                 String dt = c.getDate() == null ? "" : c.getDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
                 System.out.printf("%-8s  %-8s  %-16s  %-20s\n", nz(c.getId()), nz(c.getDoctorId()), dt, truncate(nz(c.getReason()), 20));
             }
+
+            // Prompt to view details
+            String id = InputUtil.getInput(sc, "Enter consultation ID to view details (Enter to return): ").trim();
+            if (!id.isEmpty()) {
+                Consultation sel = findConsultationById(past, id);
+                if (sel == null) {
+                    System.out.println("Consultation not found.");
+                } else {
+                    showConsultationDetails(sel);
+                }
+            }
         }
-    InputUtil.pauseScreen();
+        InputUtil.pauseScreen();
+    }
+
+    private Consultation findConsultationById(ADTInterface<Consultation> list, String id) {
+        if (id == null) return null;
+        for (int i = 0; i < list.size(); i++) {
+            Consultation c = list.get(i);
+            if (c != null && id.equalsIgnoreCase(c.getId())) return c;
+        }
+        return null;
+    }
+
+    private void showConsultationDetails(Consultation c) {
+    var treatments = control.getTreatmentsByConsultation(c.getId());
+    var medications = control.getAllMedications();
+
+        System.out.println("\n" + "═".repeat(60));
+        System.out.println("CONSULTATION DETAILS");
+        System.out.println("═".repeat(60));
+        System.out.println("Consultation ID: " + nz(c.getId()));
+        System.out.println("Date: " + (c.getDate()==null?"":c.getDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))));
+        System.out.println("Patient ID: " + nz(c.getPatientId()));
+        System.out.println("Doctor: " + nz(c.getDoctorId()));
+        System.out.println("Reason: " + nz(c.getReason()));
+        if (c.getNotes() != null && !c.getNotes().isEmpty()) System.out.println("Notes: " + c.getNotes());
+        System.out.println("Status: " + (c.getStatus()==null?"":c.getStatus().name()));
+
+        if (treatments != null && treatments.size() > 0) {
+            System.out.println("\n" + "─".repeat(60));
+            System.out.println("TREATMENTS:");
+            System.out.println("─".repeat(60));
+            for (int i = 0; i < treatments.size(); i++) {
+                entity.Treatment t = treatments.get(i);
+                System.out.println("- [" + (t.getType()==null?"":t.getType().name()) + "] " + nz(t.getName()) +
+                        " | Status: " + (t.getStatus()==null?"":t.getStatus().name()) +
+                        (t.getCost()==null?"":" | Cost: " + String.format("%.2f", t.getCost())));
+                if (t.getType() == entity.Treatment.Type.MEDICATION && t.getMedicationIds() != null) {
+                    System.out.println("  Medications:");
+                    for (String mid : t.getMedicationIds()) {
+                        String mname = findMedicationNameById(medications, mid);
+                        System.out.println("   • " + mid + " - " + mname);
+                    }
+                }
+            }
+        } else {
+            System.out.println("\nNo treatments recorded for this consultation.");
+        }
+    }
+
+    private String findMedicationNameById(ADTInterface<entity.Medication> meds, String id) {
+        if (meds == null || id == null) return "";
+        for (int i = 0; i < meds.size(); i++) {
+            entity.Medication m = meds.get(i);
+            if (m != null && id.equalsIgnoreCase(m.getId())) return nz(m.getName());
+        }
+        return "";
     }
 
     private void handlePayment() {
@@ -149,7 +274,7 @@ public class userSideMaintenanceUI {
         clinicUI.printHeader("Dispense Medications (" + getPatientIdLabel() + ")");
         ADTInterface<Treatment> pending = control.getPendingMedicationTreatmentsForPatient();
         if (pending.size() == 0) {
-            System.out.println("No prescribed medications pending dispensing.");
+            System.out.println("No medications ready for dispensing. Pay first to mark treatment COMPLETED.");
             InputUtil.pauseScreen();
             return;
         }

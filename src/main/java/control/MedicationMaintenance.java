@@ -92,7 +92,8 @@ public class MedicationMaintenance {
         CustomADT<Treatment> pending = new CustomADT<>();
         for (int i = 0; i < treatments.size(); i++) {
             Treatment t = treatments.get(i);
-            if (t != null && t.getType() == Treatment.Type.MEDICATION && t.getStatus() == Treatment.TreatmentStatus.PRESCRIBED) {
+            // Only allow dispensing after payment => status must be COMPLETED
+            if (t != null && t.getType() == Treatment.Type.MEDICATION && t.getStatus() == Treatment.TreatmentStatus.COMPLETED) {
                 pending.add(t);
             }
         }
@@ -109,7 +110,9 @@ public class MedicationMaintenance {
             Treatment t = treatments.get(i);
             if (t != null && treatmentId.equals(t.getId())) { tIdx = i; tr = t; break; }
         }
-        if (tr == null || tr.getType() != Treatment.Type.MEDICATION) return false;
+    if (tr == null || tr.getType() != Treatment.Type.MEDICATION) return false;
+    // Enforce payment first: only dispense when treatment has been paid (COMPLETED)
+    if (tr.getStatus() != Treatment.TreatmentStatus.COMPLETED) return false;
 
         // Deduct stock (if tracked)
         if (tr.getMedicationIds() != null) {
@@ -123,8 +126,8 @@ public class MedicationMaintenance {
             }
         }
 
-        // Mark treatment dispensed and save
-        tr.setStatus(Treatment.TreatmentStatus.DISPENSED);
+    // Mark treatment dispensed and save
+    tr.setStatus(Treatment.TreatmentStatus.DISPENSED);
         treatments.set(tIdx, tr);
         tdao.save(treatments);
 

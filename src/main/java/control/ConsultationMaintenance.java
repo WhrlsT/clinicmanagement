@@ -28,6 +28,7 @@ public class ConsultationMaintenance {
     }
 
     public ADTInterface<Consultation> getAllConsultations() {
+    refreshConsultationsFromFile();
         return consultations;
     }
     
@@ -40,6 +41,7 @@ public class ConsultationMaintenance {
     }
 
     public Consultation getConsultationById(String id) {
+    refreshConsultationsFromFile();
         for (int i = 0; i < consultations.size(); i++) {
             if (consultations.get(i).getId().equals(id)) {
                 return consultations.get(i);
@@ -49,6 +51,7 @@ public class ConsultationMaintenance {
     }
     
     public ADTInterface<Consultation> getBookedConsultations() {
+    refreshConsultationsFromFile();
         ADTInterface<Consultation> booked = new CustomADT<>();
         for (int i = 0; i < consultations.size(); i++) {
             Consultation c = consultations.get(i);
@@ -60,6 +63,7 @@ public class ConsultationMaintenance {
     }
 
     public Consultation book(String patientId, String doctorId, LocalDateTime date, String reason) {
+    refreshConsultationsFromFile();
         refreshDoctorsAndPatients();
         Doctor doctor = findDoctor(doctorId);
         if (doctor == null || findPatient(patientId) == null) {
@@ -87,6 +91,7 @@ public class ConsultationMaintenance {
     }
 
     public boolean updateConsultation(Consultation c, String newReason, String newNotes, String newStatus, LocalDateTime newDate, String newDoctorId) {
+    refreshConsultationsFromFile();
         int idx = -1;
         for (int i = 0; i < consultations.size(); i++) {
             if (consultations.get(i).getId().equals(c.getId())) {
@@ -151,6 +156,7 @@ public class ConsultationMaintenance {
     }
 
     public ADTInterface<Consultation> searchConsultations(String q) {
+    refreshConsultationsFromFile();
         ADTInterface<Consultation> results = new CustomADT<>();
         if (q == null || q.isEmpty()) return results;
         String lowerQ = q.toLowerCase();
@@ -177,6 +183,7 @@ public class ConsultationMaintenance {
     private String safe(String s) { return s == null ? "" : s; }
 
     public boolean cancel(String id) {
+    refreshConsultationsFromFile();
         for (int i = 0; i < consultations.size(); i++) {
             Consultation c = consultations.get(i);
             if (c.getId().equals(id)) {
@@ -196,6 +203,7 @@ public class ConsultationMaintenance {
     }
 
     public boolean reschedule(String id, LocalDateTime newDate) {
+    refreshConsultationsFromFile();
         Consultation c = getConsultationById(id);
         if (c == null || c.getStatus() != Consultation.Status.BOOKED) return false;
         
@@ -215,6 +223,7 @@ public class ConsultationMaintenance {
     }
 
     public Consultation addFollowUp(String baseId, LocalDateTime dt, String reason) {
+    refreshConsultationsFromFile();
         Consultation base = getConsultationById(baseId);
         if (base == null) return null;
 
@@ -273,6 +282,14 @@ public class ConsultationMaintenance {
         consultationDAO.save(consultations);
     }
     
+    private void refreshConsultationsFromFile() {
+        ADTInterface<Consultation> fresh = consultationDAO.load();
+        consultations.clear();
+        for (int i = 0; i < fresh.size(); i++) {
+            consultations.add(fresh.get(i));
+        }
+    }
+    
     private void refreshDoctorsAndPatients() {
         doctors.clear();
         patients.clear();
@@ -283,6 +300,7 @@ public class ConsultationMaintenance {
     }
 
     public Map<LocalDate, ADTInterface<Integer>> getAvailableSlots(Doctor doctor, int days, LocalDate startDate) {
+    refreshConsultationsFromFile();
         Map<LocalDate, ADTInterface<Integer>> availableSlots = new LinkedHashMap<>();
         if (doctor == null) return availableSlots;
 
@@ -311,6 +329,7 @@ public class ConsultationMaintenance {
     }
 
     public boolean isSlotAvailable(Doctor doctor, LocalDate date, int hour) {
+    refreshConsultationsFromFile();
         utility.GoogleCalendarService gcal = null;
         boolean useCalendar = false;
         try {

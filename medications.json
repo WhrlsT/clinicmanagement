@@ -7,7 +7,7 @@
   "route" : "mouth",
   "price" : null,
   "durationDays" : 30,
-  "quantity" : 49,
+  "quantity" : 48,
   "instructions" : "HEHE",
   "notes" : "12"
 }, {
@@ -19,7 +19,7 @@
   "route" : "oral",
   "price" : null,
   "durationDays" : 5,
-  "quantity" : 20,
+  "quantity" : 19,
   "instructions" : "Take after food",
   "notes" : ""
 }, {
@@ -55,7 +55,7 @@
   "route" : "oral",
   "price" : null,
   "durationDays" : 30,
-  "quantity" : 60,
+  "quantity" : 59,
   "instructions" : "With meals",
   "notes" : "Type 2 DM"
 }, {
