@@ -8,9 +8,12 @@ import dao.PatientDAO;
 import entity.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
 
 public class ConsultationMaintenance {
     private final ConsultationDAO consultationDAO = new ConsultationDAO();
@@ -451,5 +454,130 @@ public class ConsultationMaintenance {
     public String getPatientDisplay(String patientId) {
         Patient p = findPatient(patientId);
         return (p == null) ? patientId : String.format("%s (%s)", p.getName(), p.getId());
+    }
+
+    // ===== Reporting DTOs =====
+    public static class WorkloadUtilizationReport {
+        public LocalDate start;
+        public LocalDate end;
+        public static class DoctorSummary { public String doctorId; public String doctorName; public int booked; public int ongoing; public int treated; public int total; }
+        public ArrayList<DoctorSummary> perDoctor = new ArrayList<>();
+        public int overallBooked; public int overallOngoing; public int overallTreated; public int overallTotal;
+        public static class HourBucket { public int hour; public int booked; public int capacity; }
+        public HourBucket[] hours = new HourBucket[24];
+        public int totalBooked; public int totalCapacity;
+        public WorkloadUtilizationReport(){ for(int h=0;h<24;h++){ hours[h]=new HourBucket(); hours[h].hour=h; } }
+    }
+
+    public static class FollowUpNoShowReport {
+        public LocalDate start;
+        public LocalDate end;
+        public int thresholdHours;
+        public static class FollowUpEntry { public String id; public LocalDateTime dateTime; public String patient; public String doctor; public String status; public String followOf; public LocalDateTime baseDate; public long daysSinceBase; }
+        public static class NoShowEntry { public String id; public LocalDateTime dateTime; public String patient; public String doctor; public long ageHours; }
+        public ArrayList<FollowUpEntry> followUps = new ArrayList<>();
+        public ArrayList<NoShowEntry> noShows = new ArrayList<>();
+        public static class Conversion { public String doctorId; public String doctorName; public int booked; public int treated; public double pct; }
+        public ArrayList<Conversion> conversions = new ArrayList<>();
+        public int overallBooked; public int overallTreated; public double overallPct;
+    }
+
+    // ===== Reporting generators (logic only, no printing) =====
+    public WorkloadUtilizationReport generateWorkloadUtilization(LocalDate start, LocalDate end) {
+        refreshConsultationsFromFile();
+        WorkloadUtilizationReport r = new WorkloadUtilizationReport();
+        r.start = start; r.end = end;
+
+        // Per doctor counts
+        Map<String, WorkloadUtilizationReport.DoctorSummary> byDoctor = new HashMap<>();
+        for (int i = 0; i < consultations.size(); i++) {
+            Consultation c = consultations.get(i);
+            if (c == null || c.getDate() == null) continue;
+            LocalDate d = c.getDate().toLocalDate();
+            if (d.isBefore(start) || d.isAfter(end)) continue;
+            WorkloadUtilizationReport.DoctorSummary ds = byDoctor.computeIfAbsent(c.getDoctorId(), k -> {
+                WorkloadUtilizationReport.DoctorSummary x = new WorkloadUtilizationReport.DoctorSummary();
+                Doctor doc = findDoctor(k);
+                x.doctorId = k; x.doctorName = (doc==null? k : doc.getName());
+                return x;
+            });
+            if (c.getStatus() == Consultation.Status.BOOKED) { ds.booked++; r.overallBooked++; }
+            else if (c.getStatus() == Consultation.Status.ONGOING) { ds.ongoing++; r.overallOngoing++; }
+            else if (c.getStatus() == Consultation.Status.TREATED) { ds.treated++; r.overallTreated++; }
+            ds.total++; r.overallTotal++;
+
+            // Hour bucket booked counts
+            int hour = c.getDate().getHour();
+            r.hours[hour].booked++;
+            r.totalBooked++;
+        }
+        // Move to list preserving insertion of map (order by doctorId)
+        for (Map.Entry<String, WorkloadUtilizationReport.DoctorSummary> e : byDoctor.entrySet()) r.perDoctor.add(e.getValue());
+
+        // Capacity by hour using doctor schedules (ignores existing bookings)
+        for (int i = 0; i < doctors.size(); i++) {
+            Doctor doc = doctors.get(i); if (doc==null || doc.getSchedule()==null) continue;
+            LocalDate cur = start;
+            while (!cur.isAfter(end)) {
+                int dayIdx = cur.getDayOfWeek().getValue() - 1;
+                for (int h=0; h<24; h++) if (doc.getSchedule().isAvailable(dayIdx, h)) { r.hours[h].capacity++; r.totalCapacity++; }
+                cur = cur.plusDays(1);
+            }
+        }
+        return r;
+    }
+
+    public FollowUpNoShowReport generateFollowUpAndNoShow(LocalDate start, LocalDate end, int thresholdHours) {
+        refreshConsultationsFromFile();
+        FollowUpNoShowReport r = new FollowUpNoShowReport();
+        r.start = start; r.end = end; r.thresholdHours = thresholdHours;
+
+        // Index base consultations by id for quick lookup
+        Map<String, Consultation> byId = new HashMap<>();
+        for (int i=0;i<consultations.size();i++){ Consultation c=consultations.get(i); if(c!=null && c.getId()!=null) byId.put(c.getId(), c); }
+
+        LocalDateTime now = LocalDateTime.now();
+        Map<String, FollowUpNoShowReport.Conversion> convByDoctor = new HashMap<>();
+
+        for (int i = 0; i < consultations.size(); i++) {
+            Consultation c = consultations.get(i);
+            if (c == null) continue;
+            LocalDateTime cdt = c.getDate();
+            LocalDate d = (cdt==null?null:cdt.toLocalDate());
+            if (d==null || d.isBefore(start) || d.isAfter(end)) continue;
+
+            // Follow-ups in window
+            if (c.getFollowUpOfId() != null && !c.getFollowUpOfId().isEmpty()) {
+                FollowUpNoShowReport.FollowUpEntry fe = new FollowUpNoShowReport.FollowUpEntry();
+                fe.id = c.getId(); fe.dateTime = cdt; fe.patient = getPatientDisplay(c.getPatientId()); fe.doctor = getDoctorDisplay(c.getDoctorId());
+                fe.status = c.getStatus()==null?"":c.getStatus().name(); fe.followOf = c.getFollowUpOfId();
+                Consultation base = byId.get(c.getFollowUpOfId());
+                if (base != null) { fe.baseDate = base.getDate(); if (fe.baseDate!=null && fe.dateTime!=null) fe.daysSinceBase = ChronoUnit.DAYS.between(fe.baseDate, fe.dateTime); }
+                r.followUps.add(fe);
+            }
+
+            // No-show candidates: BOOKED in past older than threshold
+            if (cdt != null && c.getStatus() == Consultation.Status.BOOKED && cdt.isBefore(now.minusHours(thresholdHours))) {
+                FollowUpNoShowReport.NoShowEntry ne = new FollowUpNoShowReport.NoShowEntry();
+                ne.id = c.getId(); ne.dateTime = cdt; ne.patient = getPatientDisplay(c.getPatientId()); ne.doctor = getDoctorDisplay(c.getDoctorId());
+                ne.ageHours = ChronoUnit.HOURS.between(cdt, now);
+                r.noShows.add(ne);
+            }
+
+            // Conversion per doctor in window
+            FollowUpNoShowReport.Conversion cv = convByDoctor.computeIfAbsent(c.getDoctorId(), k -> {
+                FollowUpNoShowReport.Conversion x = new FollowUpNoShowReport.Conversion();
+                Doctor doc = findDoctor(k); x.doctorId = k; x.doctorName = (doc==null? k : doc.getName()); return x;
+            });
+            if (c.getStatus() == Consultation.Status.BOOKED) { cv.booked++; r.overallBooked++; }
+            if (c.getStatus() == Consultation.Status.TREATED) { cv.treated++; r.overallTreated++; }
+        }
+
+        for (FollowUpNoShowReport.Conversion cv : convByDoctor.values()) {
+            cv.pct = cv.booked==0?0.0: (cv.treated*100.0)/cv.booked;
+            r.conversions.add(cv);
+        }
+        r.overallPct = r.overallBooked==0?0.0:(r.overallTreated*100.0)/r.overallBooked;
+        return r;
     }
 }
