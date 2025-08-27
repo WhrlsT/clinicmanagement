@@ -52,7 +52,7 @@
   "id" : "C0006",
   "patientId" : "P0001",
   "doctorId" : "D0001",
-  "date" : [ 2025, 9, 8, 13, 0 ],
+  "date" : [ 2025, 9, 8, 0, 0 ],
   "reason" : "a",
   "notes" : "",
   "status" : "BOOKED",

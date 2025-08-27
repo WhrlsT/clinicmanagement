@@ -21,39 +21,46 @@ public class ClinicMaintenance {
     public void runClinicMaintenance() {
         InputUtil.clearScreen();
         mainUI.printHeader("Welcome to the Clinic Maintenance System");
-        int choice;
-        do {
-            choice = mainUI.getMenuChoice();
+        while (true) {
+            int mainChoice = mainUI.getMainMenuChoice();
             InputUtil.clearScreen();
-            switch (choice) {
-                case 1:
-                    patientUI.runHub();
-                    break;
-                case 2:
-                    doctorUI.run();
-                    break;
-                case 3:
-                    consultUI.run();
-                    break;
-                case 4:
-                    new boundary.TreatmentMaintenanceUI().run();
-                    break;
-                case 5:
-                    new boundary.MedicationMaintenanceUI().run();
-                    break;
-                case 6:
-                    System.out.println("Exiting the Clinic Maintenance System...");
-                    break;
-                default:
-                    System.out.println("Invalid choice. Please try again.");
-                    InputUtil.pauseScreen();
-            }
-            if (choice != 6) {
+            if (mainChoice == 1) {
+                // User Side
+                mainUI.runUserSideMenu();
+                InputUtil.clearScreen();
+                mainUI.printHeader("Welcome to the Clinic Maintenance System");
+            } else if (mainChoice == 2) {
+                // Admin Side menu loop
+                int choice;
+                do {
+                    mainUI.printHeader("Welcome to the Clinic Maintenance System");
+                    choice = mainUI.getMenuChoice();
+                    InputUtil.clearScreen();
+                    switch (choice) {
+                        case 1 -> patientUI.runHub();
+                        case 2 -> doctorUI.run();
+                        case 3 -> consultUI.run();
+                        case 4 -> new boundary.TreatmentMaintenanceUI().run();
+                        case 5 -> new boundary.MedicationMaintenanceUI().run();
+                        case 6 -> System.out.println("Returning to Main Menu...");
+                        default -> { System.out.println("Invalid choice. Please try again."); InputUtil.pauseScreen(); }
+                    }
+                    if (choice != 6) {
+                        InputUtil.clearScreen();
+                        mainUI.printHeader("Welcome to the Clinic Maintenance System");
+                    }
+                } while (choice != 6);
+                // Back to main menu
+                InputUtil.clearScreen();
+                mainUI.printHeader("Welcome to the Clinic Maintenance System");
+                continue;
+            } else {
+                System.out.println("Invalid choice. Please try again.");
+                InputUtil.pauseScreen();
                 InputUtil.clearScreen();
                 mainUI.printHeader("Welcome to the Clinic Maintenance System");
             }
-    } while (choice != 6);
-    return;
+        }
     }
 
     public static void main(String[] args) {

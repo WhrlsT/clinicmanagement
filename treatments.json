@@ -5,7 +5,7 @@
   "name" : "Autism Treat",
   "medicationIds" : [ "M0001" ],
   "diagnosis" : "Autism",
-  "status" : "PRESCRIBED",
+  "status" : "DISPENSED",
   "orderedDate" : [ 2025, 8, 24 ],
   "instructions" : "kys",
   "notes" : "",
@@ -34,4 +34,16 @@
   "instructions" : "Hehe haha",
   "notes" : "123",
   "cost" : 10005.0
+}, {
+  "id" : "T0004",
+  "consultationId" : "C0002",
+  "type" : "MEDICATION",
+  "name" : "",
+  "medicationIds" : [ "M0005", "M0002" ],
+  "diagnosis" : "Autism",
+  "status" : "PRESCRIBED",
+  "orderedDate" : [ 2025, 8, 27 ],
+  "instructions" : "",
+  "notes" : "",
+  "cost" : 40.0
 } ]

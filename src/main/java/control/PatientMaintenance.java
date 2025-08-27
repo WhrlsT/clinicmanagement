@@ -32,9 +32,13 @@ public class PatientMaintenance {
     }
 
     // Queries
-    public ADTInterface<Patient> getAllPatients() { return patientList; }
+    public ADTInterface<Patient> getAllPatients() {
+        refreshFromFile();
+        return patientList;
+    }
 
     public Patient findPatientById(String patientId) {
+        refreshFromFile();
         if (patientId == null) return null;
         if (patientList instanceof CustomADT<?> cadt) {
             @SuppressWarnings("unchecked") CustomADT<Patient> list = (CustomADT<Patient>) cadt;
@@ -48,6 +52,7 @@ public class PatientMaintenance {
     }
 
     public ADTInterface<Patient> findPatientByIdOrName(String query) {
+        refreshFromFile();
         ADTInterface<Patient> results = new CustomADT<>();
         if (query == null) return results;
         String lowerQuery = query.toLowerCase();
@@ -275,4 +280,14 @@ public class PatientMaintenance {
     }
 
     private void persist() { patientDAO.saveToFile(patientList); }
+
+    // Ensure this in-memory list reflects latest file content
+    private void refreshFromFile() {
+        try {
+            ADTInterface<Patient> loaded = patientDAO.retrieveFromFile();
+            // Simple replace contents
+            patientList.clear();
+            for (int i = 0; i < loaded.size(); i++) patientList.add(loaded.get(i));
+        } catch (Exception ignored) {}
+    }
 }

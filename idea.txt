@@ -81,3 +81,24 @@ Key fields/output: treatment.id, consultationId, outcome/status, duration → CS
 Treatment duration & resource use
 What/Why: average treatment time, materials/meds used per treatment to inform costing and scheduling.
 Key fields/output: start/end timestamps, medsUsed, staff involved → per-treatment report.
+
+-----------------------------------------------
+Use System as Patient _____
+-----------------------------------------------
+// Show user details
+Name        : _____
+Age         : _____
+Nationality : _____
+Gender      : _____
+Next Consultation Date: __________
+Phone Contact         : _____
+Email                 : ______ 
+
+1. Book a consultation
+2. View past consultations
+3. Make payment for treatments
+4. Dispense medications (for prescriptions)
+5. Change Details 
+6. Back to main menu
+-----------------------------------------------
+Enter your choice: 
