@@ -29,7 +29,7 @@
   "name" : "Gay Treat",
   "medicationIds" : [ "M0001", "M0003" ],
   "diagnosis" : "he might be gay",
-  "status" : "DISPENSED",
+  "status" : "COMPLETED",
   "orderedDate" : [ 2025, 8, 25 ],
   "instructions" : "Hehe haha",
   "notes" : "123",

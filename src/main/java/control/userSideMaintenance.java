@@ -63,7 +63,12 @@ public class userSideMaintenance {
             ADTInterface<Treatment> ts = patientCtrl.getTreatmentsByConsultation(c.getId());
             for (int j = 0; j < ts.size(); j++) {
                 Treatment t = ts.get(j);
-                if (t != null && t.getStatus() != Treatment.TreatmentStatus.COMPLETED) out.add(t);
+                if (t == null) continue;
+                // Only include treatments that are payable (exclude COMPLETED and DISPENSED)
+                if (t.getStatus() != Treatment.TreatmentStatus.COMPLETED
+                        && t.getStatus() != Treatment.TreatmentStatus.DISPENSED) {
+                    out.add(t);
+                }
             }
         }
         return out;
@@ -74,6 +79,11 @@ public class userSideMaintenance {
     public boolean payForTreatment(String treatmentId) {
         Treatment t = treatmentCtrl.findTreatmentById(treatmentId);
         if (t == null) return false;
+        // Block payment for DISPENSED or already COMPLETED treatments
+        if (t.getStatus() == Treatment.TreatmentStatus.DISPENSED
+                || t.getStatus() == Treatment.TreatmentStatus.COMPLETED) {
+            return false;
+        }
         t.setStatus(Treatment.TreatmentStatus.COMPLETED);
         return treatmentCtrl.updateTreatment(t);
     }

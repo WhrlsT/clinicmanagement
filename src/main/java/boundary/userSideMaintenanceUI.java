@@ -263,9 +263,21 @@ public class userSideMaintenanceUI {
                 t.getCost() == null ? "-" : String.format("%.2f", t.getCost())
             );
         }
-    String id = InputUtil.getInput(sc, "Enter Treatment ID to pay: ");
+        String id = InputUtil.getInput(sc, "Enter Treatment ID to pay: ").trim();
+        if (id.isEmpty()) { InputUtil.pauseScreen(); return; }
+        // UI guard: block paying for DISPENSED
+        Treatment selected = null;
+        for (int i = 0; i < outstanding.size(); i++) {
+            Treatment t = outstanding.get(i);
+            if (t != null && id.equalsIgnoreCase(nz(t.getId()))) { selected = t; break; }
+        }
+        if (selected != null && selected.getStatus() == Treatment.TreatmentStatus.DISPENSED) {
+            System.out.println("Payment is not allowed for DISPENSED treatments.");
+            InputUtil.pauseScreen();
+            return;
+        }
         boolean ok = control.payForTreatment(id);
-        System.out.println(ok ? "Payment successful. Treatment marked completed." : "Payment failed. Check ID.");
+        System.out.println(ok ? "Payment successful. Treatment marked completed." : "Payment failed. Check ID or status.");
     InputUtil.pauseScreen();
     }
 
