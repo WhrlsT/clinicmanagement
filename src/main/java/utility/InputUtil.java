@@ -90,6 +90,15 @@ public class InputUtil {
         }
     }
 
+    // ===== Reusable helpers with '0 to go back' behavior =====
+    public static String getEmptyInputWithBackOption(Scanner scanner, String prompt){
+        while (true){
+            String input = getInput(scanner, prompt);
+            if (input.equals("0")) return null; // back
+            return input;
+        }
+    }
+
     public static String getMFChoiceWithBackOption(Scanner scanner, String prompt, String mMeaning, String fMeaning){
         while (true){
             String v = getInput(scanner, prompt + " (M/F, 0=back): ").trim();

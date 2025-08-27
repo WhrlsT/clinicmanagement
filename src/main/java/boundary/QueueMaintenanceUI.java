@@ -212,9 +212,9 @@ public class QueueMaintenanceUI {
         for (int i = 0; i < queue.size(); i++) {
             PatientQueueEntry entry = queue.get(i);
             
-            // Count IN_PROGRESS entries that could be with this doctor
+            // Count IN_PROGRESS entries assigned to this doctor only
             if (entry.getStatus() == QueueStatus.IN_PROGRESS) {
-                if (entry.getPreferredDoctorId() == null || entry.getPreferredDoctorId().equals(doctor.getId())) {
+                if (doctor.getId().equals(entry.getPreferredDoctorId())) {
                     hasInProgressPatient = true;
                 }
             }
@@ -379,7 +379,7 @@ public class QueueMaintenanceUI {
     // Show available doctors immediately before prompting for preferred doctor
     displayAvailableDoctors(doctors);
 
-    String prefDoc = InputUtil.getInputWithBackOption(sc, "Preferred Doctor ID (blank=any, 0=back): ");
+    String prefDoc = InputUtil.getEmptyInputWithBackOption(sc, "Preferred Doctor ID (blank=any, 0=back): ");
         if (prefDoc == null) return null; // back
         prefDoc = prefDoc.trim();
         if (prefDoc.isEmpty()) prefDoc = null;

@@ -33,4 +33,5 @@ public class PatientQueueEntry {
     public void setStatus(QueueStatus status) { this.status = status; }
     public void setPriority(int priority) { this.priority = priority; }
     public void incrementCallAttempts(){ this.callAttempts++; }
+    public void setPreferredDoctorId(String preferredDoctorId) { this.preferredDoctorId = preferredDoctorId; }
 }

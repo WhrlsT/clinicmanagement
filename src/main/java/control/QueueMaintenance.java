@@ -67,11 +67,54 @@ public class QueueMaintenance {
         int idx = findNextWaitingIndex(doctorId);
         if (idx < 0) return null;
         PatientQueueEntry e = queue.get(idx);
+        // If ANY, assign a concrete on-duty doctor (prefer a free one)
+        if (doctorId == null) {
+            String assigned = pickRandomOnDutyDoctorPreferFree();
+            if (assigned != null) e.setPreferredDoctorId(assigned);
+        } else {
+            // Ensure entry is assigned to the requested doctor
+            e.setPreferredDoctorId(doctorId);
+        }
         e.setStatus(QueueStatus.IN_PROGRESS); // start when called
         e.incrementCallAttempts();
         repositionAfterCalled(idx);
         persist();
         return e;
+    }
+
+    /** Pick a random on-duty doctor, preferring those not currently consulting */
+    private String pickRandomOnDutyDoctorPreferFree() {
+        LocalDate today = LocalDate.now();
+        int currentHour = LocalTime.now().getHour();
+        int dow = today.getDayOfWeek().getValue() - 1;
+
+        // First collect free on-duty doctors
+        adt.CustomADT<String> free = new adt.CustomADT<>();
+        adt.CustomADT<String> allOnDuty = new adt.CustomADT<>();
+        for (int i = 0; i < doctors.size(); i++) {
+            Doctor d = doctors.get(i);
+            boolean onDuty = d.getSchedule() != null && d.getSchedule().isAvailable(dow, currentHour);
+            if (!onDuty) continue;
+            allOnDuty.add(d.getId());
+
+            boolean consulting = false;
+            for (int j = 0; j < queue.size(); j++) {
+                PatientQueueEntry e = queue.get(j);
+                if (e.getStatus() == QueueStatus.IN_PROGRESS && d.getId().equals(e.getPreferredDoctorId())) {
+                    consulting = true; break;
+                }
+            }
+            if (!consulting) free.add(d.getId());
+        }
+        if (!free.isEmpty()) {
+            int r = (int)(Math.random() * free.size());
+            return free.get(r);
+        }
+        if (!allOnDuty.isEmpty()) {
+            int r = (int)(Math.random() * allOnDuty.size());
+            return allOnDuty.get(r);
+        }
+        return null;
     }
 
     // Domain-specific queue helpers (kept out of the generic ADT)
