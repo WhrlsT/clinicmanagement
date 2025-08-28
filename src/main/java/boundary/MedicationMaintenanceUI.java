@@ -30,8 +30,9 @@ public class MedicationMaintenanceUI {
     System.out.println("7. Sort by Quantity " + (sortQuantityAscending ? "(Asc)" : "(Desc)"));
     System.out.println("8. Sort by ID " + (sortIdAscending ? "(Asc)" : "(Desc)"));
     System.out.println("9. Search by Name");
-    System.out.println("10. Show Medicine Report");
-    System.out.println("11. Back");
+    System.out.println("10. Stock Valuation Report");
+    System.out.println("11. Show Medicine Report");
+    System.out.println("12. Back");
         return InputUtil.getIntInput(sc, "Choose: ");
     }
 
@@ -88,12 +89,13 @@ public class MedicationMaintenanceUI {
                     sortIdAscending = !sortIdAscending;
                 }
                 case 9 -> handleSearchByName();
-                case 10 -> handleReport();
-                case 11 -> {return;}
+                case 10 -> handleStockValuation();
+                case 11 -> handleReport();
+                case 12 -> {return;}
                 default -> System.out.println("Invalid");
             }
-            if (c != 11 && c != 4 && c != 5) InputUtil.pauseScreen();
-        } while (c != 10);
+            if (c != 12 && c != 4 && c != 5) InputUtil.pauseScreen();
+        } while (c != 12);
     }
 
     private String buildRows(ADTInterface<Medication> list){
@@ -379,6 +381,42 @@ public class MedicationMaintenanceUI {
         }
         System.out.println("------------------------");
         System.out.printf("Total price for all sold: RM %.2f\n", totalPriceSold);
+    }
+
+    private void handleStockValuation() {
+        // Clear screen (works for most terminals)
+        try {
+            if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+                new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+            } else {
+                System.out.print("\033[H\033[2J");
+                System.out.flush();
+            }
+        } catch (Exception e) {
+            // Ignore if clear fails
+        }
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a");
+        String timeGenerated = now.format(formatter);
+        System.out.println("\n--- Medication Stock Valuation ---");
+        System.out.println("Report generated at: " + timeGenerated);
+
+        CustomADT<control.MedicationMaintenance.StockValuation> valuation = control.getStockValuation();
+        double totalStockValue = 0.0;
+        int totalQty = 0;
+        System.out.printf("%-8s | %-24s | %-8s | %-10s | %-12s%n", "ID", "Name", "Stock", "Unit Price", "Total Value");
+        System.out.println("----------------------------------------------------------------------");
+        for (int i = 0; i < valuation.size(); i++) {
+            control.MedicationMaintenance.StockValuation sv = valuation.get(i);
+            String unit = String.format("%.2f", sv.getUnitPrice());
+            String tot = String.format("%.2f", sv.getTotalValue());
+            System.out.printf("%-8s | %-24s | %-8d | %-10s | %-12s%n",
+                sv.getMedicationId(), nz(sv.getMedicationName()), sv.getQuantity(), unit, tot);
+            totalStockValue += sv.getTotalValue();
+            totalQty += sv.getQuantity();
+        }
+        System.out.println("----------------------------------------------------------------------");
+        System.out.printf("Totals -> Qty: %d | Valuation: RM %.2f%n", totalQty, totalStockValue);
     }
 
     private void handleSearchByName() {
