@@ -8,7 +8,6 @@ import java.util.Scanner;
 import utility.InputUtil;
 import entity.Doctor;
 import adt.ADTInterface;
-import adt.CustomADT;
 import control.DoctorMaintenance;
 import entity.Consultation;
 import entity.SlotStatus;
@@ -17,10 +16,7 @@ public class DoctorMaintenanceUI {
 
     private Scanner scanner = new Scanner(System.in);
     private final DoctorMaintenance control = new DoctorMaintenance();
-    // sort state flags for in-place toggles (true = ascending next)
-    private boolean sortByNameAsc = true;
-    private boolean sortByIdAsc = true;
-    private boolean sortBySpecialtyAsc = true;
+    private final ClinicMaintenanceUI clinicUI = new ClinicMaintenanceUI();
 
     public int getMenuChoice() {
         System.out.println("Please select an option:");
@@ -28,25 +24,21 @@ public class DoctorMaintenanceUI {
         System.out.println("2. Update Doctor");
         System.out.println("3. Delete Doctor");
         System.out.println("4. View Doctor Details");
-        System.out.println("5. Sort Doctors");
-        System.out.println("6. Search by Specialty");
-        System.out.println("7. Search Doctor");
-        System.out.println("8. View Overall Duty Schedule");
-        System.out.println("9. Set Doctor Availability Range");
-        System.out.println("10. View Doctor's Consultations");
-        System.out.println("11. View Duty Dashboard");
-        System.out.println("12. Generate Monthly Consultation Report");
-        System.out.println("13. Exit");
-
+        System.out.println("5. Search Doctor");
+        System.out.println("6. View Overall Duty Schedule");
+        System.out.println("7. Set Doctor Availability Range");
+        System.out.println("8. View Doctor's Consultations");
+        System.out.println("9. View Duty Dashboard");
+        System.out.println("10. Generate Weekly Consultation Report");
+        System.out.println("11. Exit");
         System.out.print("Select an option: ");
         return InputUtil.getIntInput(scanner, "Enter your choice: ");
     }
 
     public void run() {
-    InputUtil.clearScreen();
-    control.refreshFromFile();
-    printHeader("Clinic Doctor Maintenance");
-    printTable(buildRows(control.getAllDoctors()));
+        InputUtil.clearScreen();
+        clinicUI.printHeader("Clinic Doctor Maintenance");
+        displayDoctorsTable(control.getAllDoctors());
         int choice;
         do {
             choice = getMenuChoice();
@@ -55,48 +47,22 @@ public class DoctorMaintenanceUI {
                 case 2 -> { InputUtil.clearScreen(); handleUpdate(); }
                 case 3 -> { InputUtil.clearScreen(); handleDelete(); }
                 case 4 -> { InputUtil.clearScreen(); handleViewDetails(); }
-                case 5 -> {
-                    // Submenu: choose field to sort (in-place toggles)
-                    printHeader("Sort Doctors (toggle)");
-                    System.out.println("1. Name (toggle asc/desc)");
-                    System.out.println("2. ID (toggle asc/desc)");
-                    System.out.println("3. Specialty (toggle asc/desc)");
-                    System.out.println("4. Cancel");
-                    int sc = InputUtil.getIntInput(scanner, "Choose option: ");
-                    switch (sc) {
-                        case 1 -> {
-                            if (sortByNameAsc) control.sortDoctorsByName(); else control.sortDoctorsByNameDesc();
-                            sortByNameAsc = !sortByNameAsc;
-                        }
-                        case 2 -> {
-                            if (sortByIdAsc) control.sortDoctorsById(); else control.sortDoctorsByIdDesc();
-                            sortByIdAsc = !sortByIdAsc;
-                        }
-                        case 3 -> {
-                            if (sortBySpecialtyAsc) control.sortDoctorsBySpecialty(); else control.sortDoctorsBySpecialtyDesc();
-                            sortBySpecialtyAsc = !sortBySpecialtyAsc;
-                        }
-                        default -> { /* cancel/no-op */ }
-                    }
-                    InputUtil.clearScreen(); printHeader("Clinic Doctor Maintenance"); printTable(buildRows(control.getAllDoctors()));
-                }
-                case 6 -> { InputUtil.clearScreen(); handleSearchBySpecialty(); }
-                case 7 -> { InputUtil.clearScreen(); handleSearch(); }
-                case 8 -> { InputUtil.clearScreen(); handleOverallDutySchedule(); }
-                case 9 -> { InputUtil.clearScreen(); handleSetAvailabilityRange(); }
-                case 10 -> { InputUtil.clearScreen(); handleViewConsultations(); }
-                case 11 -> { InputUtil.clearScreen(); showDutyDashboard(control.getAllDoctors()); }
-                case 12 -> { InputUtil.clearScreen(); displayMonthlyConsultationReport(); }
-                case 13 -> {printReturningToMainMenu(); return;}
+                case 5 -> { InputUtil.clearScreen(); handleSearch(); }
+                case 6 -> { InputUtil.clearScreen(); handleOverallDutySchedule(); }
+                case 7 -> { InputUtil.clearScreen(); handleSetAvailabilityRange(); }
+                case 8 -> { InputUtil.clearScreen(); handleViewConsultations(); }
+                case 9 -> { InputUtil.clearScreen(); showDutyDashboard(control.getAllDoctors()); }
+                case 10 -> { InputUtil.clearScreen(); displayMonthlyConsultationReport(); }
+                case 11 -> {printReturningToMainMenu(); return;}
                 default -> printInvalidChoiceMessage();
             }
-            if (choice != 10 && choice != 4) {
+            if (choice != 11 && choice != 4) {
                 InputUtil.pauseScreen();
                 InputUtil.clearScreen();
-                printHeader("Clinic Doctor Maintenance");
+                clinicUI.printHeader("Clinic Doctor Maintenance");
                 displayDoctorsTable(control.getAllDoctors());
             }
-        } while (choice != 10);
+        } while (choice != 11);
     }
 
     public void displayDoctorsTable(String outputStr) {
@@ -131,35 +97,6 @@ public class DoctorMaintenanceUI {
         }
         displayDoctorsTable(sb.toString());
     }
-
-    /** Build a printable rows string from an ADT list of doctors (Medication-style). */
-    private String buildRows(ADTInterface<Doctor> doctors) {
-        StringBuilder sb = new StringBuilder();
-        if (doctors == null || doctors.isEmpty()) return "";
-        for (int i = 0; i < doctors.size(); i++) {
-            Doctor d = doctors.get(i);
-            sb.append(String.format("%-10s|%-20s|%-15s|%-20s|%-20s\n",
-                    d.getId(), d.getName(), d.getSpecialization(), d.getPhoneNumber(), d.getEmail()));
-        }
-        return sb.toString();
-    }
-
-    /** Print a table header and rows built by buildRows. */
-    private void printTable(String rows) {
-        System.out.println("\n----------------------------------------------------------------------------------------------------------------------------------------");
-        System.out.println("Doctor List");
-        System.out.println("----------------------------------------------------------------------------------------------------------------------------------------");
-        System.out.printf("%-10s|%-20s|%-15s|%-20s|%-20s\n", "ID", "Name", "Specialty", "Phone", "Email");
-        System.out.println("----------------------------------------------------------------------------------------------------------------------------------------");
-        if (rows == null || rows.isBlank()) System.out.println("No records found.\n"); else System.out.print(rows);
-    }
-
-   
-    public void printHeader(String headerMsg) {
-        System.out.println("\n-----------------------------------------------");
-        System.out.println(headerMsg);
-        System.out.println("-----------------------------------------------");
-    } 
 
     public Doctor inputDoctorDetails() {
         String name = InputUtil.getInput(scanner, "Enter doctor name: ");
@@ -260,7 +197,7 @@ public class DoctorMaintenanceUI {
         sb.append("Next Shift Changes:\n");
         boolean anyChange=false;
         for (int h=hour+1; h<24; h++){
-            CustomADT<String> changes = new CustomADT<>();
+            java.util.List<String> changes = new java.util.ArrayList<>();
             for (int i=0;i<doctorList.size();i++){
                 Doctor d = doctorList.get(i);
                 boolean prev = isDoctorAvailableAtTime(d, dow, h-1);
@@ -269,13 +206,7 @@ public class DoctorMaintenanceUI {
             }
             if (!changes.isEmpty()){
                 anyChange=true;
-                // Build comma-separated string from CustomADT<String>
-                StringBuilder changeStr = new StringBuilder();
-                for (int ci = 0; ci < changes.size(); ci++) {
-                    if (ci > 0) changeStr.append(", ");
-                    changeStr.append(changes.get(ci));
-                }
-                sb.append(String.format("• %02d:00 - %s%n", h, changeStr.toString()));
+                sb.append(String.format("• %02d:00 - %s%n", h, String.join(", ", changes)));
                 if (sb.length()>2000) break;
             }
         }
@@ -298,6 +229,203 @@ public class DoctorMaintenanceUI {
         }
 
         displayDutyDashboard(sb.toString());
+    }
+
+    // Add these methods to ConsultationMaintenance.java
+
+    public String generateMonthlyConsultationReport(ADTInterface<Doctor> doctorList) {
+        StringBuilder report = new StringBuilder();
+
+        // Calculate date range for current month
+        LocalDate today = LocalDate.now();
+        LocalDate startOfMonth = today.withDayOfMonth(1);
+        LocalDate endOfMonth = today.withDayOfMonth(today.lengthOfMonth());
+
+        report.append("Monthly Consultation Report (")
+            .append(startOfMonth.getMonth()).append(" ")
+            .append(startOfMonth.getYear()).append(")\n");
+        report.append("═".repeat(80)).append("\n\n");
+
+        if (doctorList.isEmpty()) {
+            report.append("No doctors found.\n");
+            return report.toString();
+        }
+
+        int totalConsultationsThisMonth = 0;
+
+        // Generate report for each doctor
+        for (int i = 0; i < doctorList.size(); i++) {
+            Doctor doctor = doctorList.get(i);
+            MonthlyDoctorStats stats = calculateMonthlyStats(doctor, startOfMonth, endOfMonth);
+            totalConsultationsThisMonth += stats.totalConsultations;
+
+            report.append("Dr. ").append(safe(doctor.getName()))
+                .append(" (").append(doctor.getId()).append(")\n");
+            report.append("─".repeat(70)).append("\n");
+
+            report.append(String.format(
+                "Total Consultations: %d    |    Completed: %d    |    Pending: %d\n",
+                stats.totalConsultations, stats.completedConsultations, stats.pendingConsultations
+            ));
+
+            if (stats.totalConsultations > 0) {
+                int completionRate = (int)Math.round(
+                    stats.completedConsultations * 100.0 / stats.totalConsultations
+                );
+                report.append(String.format(
+                    "Completion Rate: %s %d%%\n",
+                    generateProgressBar(completionRate),
+                    completionRate
+                ));
+            } else {
+                report.append("Completion Rate: ░".repeat(1)).append(" 0%\n");
+            }
+
+            // Daily breakdown (always show, even if 0 consultations)
+            report.append("\nDaily Breakdown:\n");
+            for (int day = 0; day < stats.dailyConsultations.length; day++) {
+                LocalDate date = startOfMonth.plusDays(day);
+                int dayConsultations = stats.dailyConsultations[day];
+                String dayBar = generateMiniBar(dayConsultations, stats.maxDayConsultations);
+                report.append(String.format(
+                    "  %s %s : %s (%d consultation%s)\n",
+                    date.getDayOfWeek().toString().substring(0, 3),
+                    date.format(DateTimeFormatter.ofPattern("MM/dd")),
+                    dayBar,
+                    dayConsultations,
+                    dayConsultations == 1 ? "" : "s"
+                ));
+            }
+
+            // Top consultation reasons
+            if (!stats.topReasons.isEmpty()) {
+                report.append("\nTop Consultation Reasons:\n");
+                int count = 0;
+                for (Map.Entry<String, Integer> entry : stats.topReasons.entrySet()) {
+                    if (count >= 3) break; // Show top 3
+                    report.append(String.format(
+                        "  • %s (%d time%s)\n", 
+                        truncateReason(entry.getKey()), 
+                        entry.getValue(),
+                        entry.getValue() == 1 ? "" : "s"
+                    ));
+                    count++;
+                }
+            }
+
+            report.append("\n");
+        }
+
+        // Monthly summary
+        report.append("═".repeat(80)).append("\n");
+        report.append("MONTHLY SUMMARY\n");
+        report.append("═".repeat(80)).append("\n");
+        report.append(String.format("Total Doctors: %d\n", doctorList.size()));
+        report.append(String.format("Total Consultations: %d\n", totalConsultationsThisMonth));
+
+        if (doctorList.size() > 0) {
+            double avgPerDoctor = totalConsultationsThisMonth / (double)doctorList.size();
+            report.append(String.format("Average per Doctor: %.1f\n", avgPerDoctor));
+        }
+
+        return report.toString();
+    }
+
+
+    private MonthlyDoctorStats calculateMonthlyStats(Doctor doctor, LocalDate startOfMonth, LocalDate endOfMonth) {
+        MonthlyDoctorStats stats = new MonthlyDoctorStats();
+        stats.dailyConsultations = new int[endOfMonth.getDayOfMonth()]; // Array for each day of the month
+        stats.topReasons = new LinkedHashMap<>();
+        
+        ADTInterface<Consultation> allConsultations = control.getConsultationsByDoctor(doctor.getId());
+        for (int i = 0; i < allConsultations.size(); i++) {
+            Consultation c = allConsultations.get(i);
+            if (c.getDoctorId().equals(doctor.getId()) && c.getDate() != null) {
+                LocalDate consultDate = c.getDate().toLocalDate();
+                
+                // Check if consultation is within this week
+                if (!consultDate.isBefore(startOfMonth) && !consultDate.isAfter(endOfMonth)) {
+                    stats.totalConsultations++;
+                    
+                    // Count by status
+                    if (c.getStatus() == Consultation.Status.TREATED) {
+                        stats.completedConsultations++;
+                    } else if (c.getStatus() == Consultation.Status.BOOKED || c.getStatus() == Consultation.Status.ONGOING) {
+                        stats.pendingConsultations++;
+                    }
+                    
+                    // Daily breakdown
+                    int dayIndex = consultDate.getDayOfMonth() - 1;
+                    stats.dailyConsultations[dayIndex]++;
+                    
+                    // Track reasons
+                    String reason = safe(c.getReason()).toLowerCase();
+                    if (!reason.isEmpty()) {
+                        stats.topReasons.put(reason, stats.topReasons.getOrDefault(reason, 0) + 1);
+                    }
+                }
+            }
+        }
+        
+        // Find max consultations in a single day for this doctor
+        for (int day = 0; day < stats.dailyConsultations.length; day++) {
+            if (stats.dailyConsultations[day] > stats.maxDayConsultations) {
+                stats.maxDayConsultations = stats.dailyConsultations[day];
+            }
+        }
+        
+        // Sort top reasons by frequency
+        stats.topReasons = stats.topReasons.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .collect(LinkedHashMap::new, 
+                        (m, e) -> m.put(e.getKey(), e.getValue()), 
+                        LinkedHashMap::putAll);
+        
+        return stats;
+    }
+
+    private String generateProgressBar(int percent) {
+        int filled = Math.max(0, Math.min(10, (int)Math.round(percent / 10.0)));
+        StringBuilder bar = new StringBuilder();
+        for (int i = 0; i < filled; i++) bar.append('█');
+        for (int i = filled; i < 10; i++) bar.append('░');
+        return bar.toString();
+    }
+
+    private String generateMiniBar(int value, int maxValue) {
+        if (maxValue == 0) return "░".repeat(5);
+        int filled = Math.max(0, Math.min(5, (int)Math.round(value * 5.0 / maxValue)));
+        StringBuilder bar = new StringBuilder();
+        for (int i = 0; i < filled; i++) bar.append('▓');
+        for (int i = filled; i < 5; i++) bar.append('░');
+        return bar.toString();
+    }
+
+    private String truncateReason(String reason) {
+        if (reason == null || reason.length() <= 30) return safe(reason);
+        return reason.substring(0, 27) + "...";
+    }
+
+    // Helper class for monthly statistics
+    private static class MonthlyDoctorStats {
+        int totalConsultations = 0;
+        int completedConsultations = 0;
+        int pendingConsultations = 0;
+        int[] dailyConsultations;
+        int maxDayConsultations = 0;
+        Map<String, Integer> topReasons = new LinkedHashMap<>();
+    }
+
+    // Add these methods to ConsultationMaintenanceUI.java
+
+    public void displayMonthlyConsultationReport() {
+        InputUtil.clearScreen();
+        ADTInterface<Doctor> doctorList = control.getAllDoctors();
+        System.out.println("Generating Weekly Consultation Report...");
+        String report = generateMonthlyConsultationReport(doctorList);
+        InputUtil.clearScreen();
+        System.out.println(report);
+        InputUtil.pauseScreen();
     }
 
     private boolean isDoctorAvailableAtTime(Doctor doctor, int dayIndex, int hour) {
@@ -489,7 +617,7 @@ public class DoctorMaintenanceUI {
 
     // ===== Handlers (moved from control) =====
     private void handleAdd() {
-        printHeader("Clinic Doctor Maintenance");
+        clinicUI.printHeader("Clinic Doctor Maintenance");
         showAddDoctorIntro();
         String name = InputUtil.getInputWithBackOption(scanner, "Enter doctor name: ");
         if (name == null) return;
@@ -504,9 +632,9 @@ public class DoctorMaintenanceUI {
     }
 
     private void handleUpdate() {
-        printHeader("Clinic Doctor Maintenance");
+        clinicUI.printHeader("Clinic Doctor Maintenance");
         System.out.println("Updating Doctor Details (Enter '0' to go back)");
-    printTable(buildRows(control.getAllDoctors()));
+        displayDoctorsTable(control.getAllDoctors());
         String doctorId = InputUtil.getInput(scanner, "Enter doctor ID to update: ");
         if (doctorId.equals("0")) return;
         Doctor doctor = control.findDoctorById(doctorId);
@@ -547,7 +675,7 @@ public class DoctorMaintenanceUI {
     }
 
     private void handleDelete() {
-        printHeader("Clinic Doctor Maintenance");
+        clinicUI.printHeader("Clinic Doctor Maintenance");
         showDeleteIntro();
         String doctorId = InputUtil.getInput(scanner, "Enter doctor ID to delete: ");
         if (doctorId.equals("0")) return;
@@ -565,8 +693,8 @@ public class DoctorMaintenanceUI {
     }
 
     private void handleViewConsultations() {
-        printHeader("Clinic Doctor Maintenance");
-    printTable(buildRows(control.getAllDoctors()));
+        clinicUI.printHeader("Clinic Doctor Maintenance");
+        displayDoctorsTable(control.getAllDoctors());
         displayConsultationsIntro();
         String doctorId = InputUtil.getInput(scanner, "Enter doctor ID to view consultations: ");
         if (doctorId.equals("0")) return;
@@ -580,27 +708,11 @@ public class DoctorMaintenanceUI {
                 c.getId(), c.getPatientId(), c.getDate().toString(), c.getStatus(), c.getReason()));
         }
         displayConsultations(doctor.getName(), sb.toString());
-        InputUtil.pauseScreen();
-    }
-
-    private void handleSearchBySpecialty() {
-        showSearchIntro();
-        String specialty = InputUtil.getInput(scanner, "Enter specialty to search: ");
-        if (specialty.equals("0")) return;
-        ADTInterface<Doctor> found = control.findDoctorsBySpecialty(specialty);
-        if (found != null && found.size() > 0) {
-            InputUtil.clearScreen();
-            printHeader("Clinic Doctor Maintenance");
-            showSearchResultsHeader(specialty);
-            displayDoctorsTable(found);
-        } else {
-            displayNotFoundMessage(specialty);
-        }
     }
 
     private void handleViewDetails() {
         showViewDoctorDetailsIntro();
-    printTable(buildRows(control.getAllDoctors()));
+        displayDoctorsTable(control.getAllDoctors());
         String doctorId = InputUtil.getInput(scanner, "Enter doctor ID to view details: ");
         if (doctorId.equals("0")) return;
         Doctor doctor = control.findDoctorById(doctorId);
@@ -621,12 +733,12 @@ public class DoctorMaintenanceUI {
         System.out.println("═".repeat(60));
         InputUtil.pauseScreen();
         InputUtil.clearScreen();
-        printHeader("Clinic Doctor Maintenance");
-    printTable(buildRows(control.getAllDoctors()));
+        clinicUI.printHeader("Clinic Doctor Maintenance");
+        displayDoctorsTable(control.getAllDoctors());
     }
 
     private void handleOverallDutySchedule() {
-        printHeader("Clinic Doctor Maintenance");
+        clinicUI.printHeader("Clinic Doctor Maintenance");
         displayOverallDutyHeader();
         String weeklySummary = buildWeeklySummary();
         displayWeeklySummary(weeklySummary);
@@ -712,7 +824,7 @@ public class DoctorMaintenanceUI {
         ADTInterface<Doctor> foundDoctors = control.findDoctorByIdOrName(query);
         if (foundDoctors.size() > 0) {
             InputUtil.clearScreen();
-            printHeader("Clinic Doctor Maintenance");
+            clinicUI.printHeader("Clinic Doctor Maintenance");
             showSearchResultsHeader(query);
             displayDoctorsTable(foundDoctors);
         } else {
@@ -721,7 +833,7 @@ public class DoctorMaintenanceUI {
     }
 
     private void handleSetAvailabilityRange() {
-    printTable(buildRows(control.getAllDoctors()));
+        displayDoctorsTable(control.getAllDoctors());
         System.out.println("Set Doctor Availability Range (Enter '0' to go back)");
         String doctorId = InputUtil.getInput(scanner, "Enter doctor ID: ");
         if (doctorId.equals("0")) return;
@@ -744,198 +856,7 @@ public class DoctorMaintenanceUI {
         displayAvailabilityUpdated();
         InputUtil.pauseScreen();
         InputUtil.clearScreen();
-        printHeader("Clinic Doctor Maintenance");
-        printTable(buildRows(control.getAllDoctors()));
-    }
-
-    public void displayMonthlyConsultationReport() {
-        InputUtil.clearScreen();
-        ADTInterface<Doctor> doctorList = control.getAllDoctors();
-        System.out.println("Generating Weekly Consultation Report...");
-        String report = generateMonthlyConsultationReport(doctorList);
-        InputUtil.clearScreen();
-        System.out.println(report);
-        InputUtil.pauseScreen();
-    }
-
-        public String generateMonthlyConsultationReport(ADTInterface<Doctor> doctorList) {
-        StringBuilder report = new StringBuilder();
-
-        // Calculate date range for current month
-        LocalDate today = LocalDate.now();
-        LocalDate startOfMonth = today.withDayOfMonth(1);
-        LocalDate endOfMonth = today.withDayOfMonth(today.lengthOfMonth());
-
-        report.append("Monthly Consultation Report (")
-            .append(startOfMonth.getMonth()).append(" ")
-            .append(startOfMonth.getYear()).append(")\n");
-        report.append("═".repeat(80)).append("\n\n");
-
-        if (doctorList.isEmpty()) {
-            report.append("No doctors found.\n");
-            return report.toString();
-        }
-
-        int totalConsultationsThisMonth = 0;
-
-        // Generate report for each doctor
-        for (int i = 0; i < doctorList.size(); i++) {
-            Doctor doctor = doctorList.get(i);
-            MonthlyDoctorStats stats = calculateMonthlyStats(doctor, startOfMonth, endOfMonth);
-            totalConsultationsThisMonth += stats.totalConsultations;
-
-            report.append("Dr. ").append(safe(doctor.getName()))
-                .append(" (").append(doctor.getId()).append(")\n");
-            report.append("─".repeat(70)).append("\n");
-
-            report.append(String.format(
-                "Total Consultations: %d    |    Completed: %d    |    Pending: %d\n",
-                stats.totalConsultations, stats.completedConsultations, stats.pendingConsultations
-            ));
-
-            if (stats.totalConsultations > 0) {
-                int completionRate = (int)Math.round(
-                    stats.completedConsultations * 100.0 / stats.totalConsultations
-                );
-                report.append(String.format(
-                    "Completion Rate: %s %d%%\n",
-                    generateProgressBar(completionRate),
-                    completionRate
-                ));
-            } else {
-                report.append("Completion Rate: ░".repeat(1)).append(" 0%\n");
-            }
-
-            // Daily breakdown (always show, even if 0 consultations)
-            report.append("\nDaily Breakdown:\n");
-            for (int day = 0; day < stats.dailyConsultations.length; day++) {
-                LocalDate date = startOfMonth.plusDays(day);
-                int dayConsultations = stats.dailyConsultations[day];
-                String dayBar = generateMiniBar(dayConsultations, stats.maxDayConsultations);
-                report.append(String.format(
-                    "  %s %s : %s (%d consultation%s)\n",
-                    date.getDayOfWeek().toString().substring(0, 3),
-                    date.format(DateTimeFormatter.ofPattern("MM/dd")),
-                    dayBar,
-                    dayConsultations,
-                    dayConsultations == 1 ? "" : "s"
-                ));
-            }
-
-            // Top consultation reasons
-            if (!stats.topReasons.isEmpty()) {
-                report.append("\nTop Consultation Reasons:\n");
-                int count = 0;
-                for (Map.Entry<String, Integer> entry : stats.topReasons.entrySet()) {
-                    if (count >= 3) break; // Show top 3
-                    report.append(String.format(
-                        "  • %s (%d time%s)\n", 
-                        truncateReason(entry.getKey()), 
-                        entry.getValue(),
-                        entry.getValue() == 1 ? "" : "s"
-                    ));
-                    count++;
-                }
-            }
-
-            report.append("\n");
-        }
-
-        // Monthly summary
-        report.append("═".repeat(80)).append("\n");
-        report.append("MONTHLY SUMMARY\n");
-        report.append("═".repeat(80)).append("\n");
-        report.append(String.format("Total Doctors: %d\n", doctorList.size()));
-        report.append(String.format("Total Consultations: %d\n", totalConsultationsThisMonth));
-
-        if (doctorList.size() > 0) {
-            double avgPerDoctor = totalConsultationsThisMonth / (double)doctorList.size();
-            report.append(String.format("Average per Doctor: %.1f\n", avgPerDoctor));
-        }
-
-        return report.toString();
-    }
-
-    private MonthlyDoctorStats calculateMonthlyStats(Doctor doctor, LocalDate startOfMonth, LocalDate endOfMonth) {
-        MonthlyDoctorStats stats = new MonthlyDoctorStats();
-        stats.dailyConsultations = new int[endOfMonth.getDayOfMonth()]; // Array for each day of the month
-        stats.topReasons = new LinkedHashMap<>();
-        
-        ADTInterface<Consultation> allConsultations = control.getConsultationsByDoctor(doctor.getId());
-        for (int i = 0; i < allConsultations.size(); i++) {
-            Consultation c = allConsultations.get(i);
-            if (c.getDoctorId().equals(doctor.getId()) && c.getDate() != null) {
-                LocalDate consultDate = c.getDate().toLocalDate();
-                
-                // Check if consultation is within this week
-                if (!consultDate.isBefore(startOfMonth) && !consultDate.isAfter(endOfMonth)) {
-                    stats.totalConsultations++;
-                    
-                    // Count by status
-                    if (c.getStatus() == Consultation.Status.TREATED) {
-                        stats.completedConsultations++;
-                    } else if (c.getStatus() == Consultation.Status.BOOKED || c.getStatus() == Consultation.Status.ONGOING) {
-                        stats.pendingConsultations++;
-                    }
-                    
-                    // Daily breakdown
-                    int dayIndex = consultDate.getDayOfMonth() - 1;
-                    stats.dailyConsultations[dayIndex]++;
-                    
-                    // Track reasons
-                    String reason = safe(c.getReason()).toLowerCase();
-                    if (!reason.isEmpty()) {
-                        stats.topReasons.put(reason, stats.topReasons.getOrDefault(reason, 0) + 1);
-                    }
-                }
-            }
-        }
-        
-        // Find max consultations in a single day for this doctor
-        for (int day = 0; day < stats.dailyConsultations.length; day++) {
-            if (stats.dailyConsultations[day] > stats.maxDayConsultations) {
-                stats.maxDayConsultations = stats.dailyConsultations[day];
-            }
-        }
-        
-        // Sort top reasons by frequency
-        stats.topReasons = stats.topReasons.entrySet().stream()
-                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                .collect(LinkedHashMap::new, 
-                        (m, e) -> m.put(e.getKey(), e.getValue()), 
-                        LinkedHashMap::putAll);
-        
-        return stats;
-    }
-
-        private String generateProgressBar(int percent) {
-        int filled = Math.max(0, Math.min(10, (int)Math.round(percent / 10.0)));
-        StringBuilder bar = new StringBuilder();
-        for (int i = 0; i < filled; i++) bar.append('█');
-        for (int i = filled; i < 10; i++) bar.append('░');
-        return bar.toString();
-    }
-
-    private String generateMiniBar(int value, int maxValue) {
-        if (maxValue == 0) return "░".repeat(5);
-        int filled = Math.max(0, Math.min(5, (int)Math.round(value * 5.0 / maxValue)));
-        StringBuilder bar = new StringBuilder();
-        for (int i = 0; i < filled; i++) bar.append('▓');
-        for (int i = filled; i < 5; i++) bar.append('░');
-        return bar.toString();
-    }
-
-    private String truncateReason(String reason) {
-        if (reason == null || reason.length() <= 30) return safe(reason);
-        return reason.substring(0, 27) + "...";
-    }
-
-    private static class MonthlyDoctorStats {
-        int totalConsultations = 0;
-        int completedConsultations = 0;
-        int pendingConsultations = 0;
-        int[] dailyConsultations;
-        int maxDayConsultations = 0;
-        Map<String, Integer> topReasons = new LinkedHashMap<>();
+        clinicUI.printHeader("Clinic Doctor Maintenance");
+        displayDoctorsTable(control.getAllDoctors());
     }
 }
