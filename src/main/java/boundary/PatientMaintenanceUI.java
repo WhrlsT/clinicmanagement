@@ -68,6 +68,7 @@ public class PatientMaintenanceUI {
                     printReturningToMainMenu();
                     return;
                 }
+                case 9 -> { InputUtil.clearScreen(); handleSort(); }
                 default -> printInvalidChoiceMessage();
             }
             if (choice != 8 && choice != 4) {
@@ -88,7 +89,8 @@ public class PatientMaintenanceUI {
         System.out.println("5. Search Patient");
         System.out.println("6. View Visit Records");
         System.out.println("7. Patient Demographics Report");
-        System.out.println("8. Exit");
+    System.out.println("8. Exit");
+    System.out.println("9. Sort Patients");
         System.out.print("Select an option: ");
         return InputUtil.getIntInput(scanner, "Enter your choice: ");
     }
@@ -177,9 +179,25 @@ public class PatientMaintenanceUI {
      */
     public void displayPatientsTable(ADTInterface<Patient> patients) {
         StringBuilder sb = new StringBuilder();
-        if (patients != null) {
-            for (int i = 0; i < patients.size(); i++) {
-                Patient p = patients.get(i);
+        ADTInterface<Patient> toShow = patients;
+        // If CustomADT, sort by ID for consistent display
+        if (patients instanceof adt.CustomADT<?>) {
+            @SuppressWarnings("unchecked") adt.CustomADT<Patient> list = (adt.CustomADT<Patient>) patients;
+            list.mergeSort(new adt.CustomADT.ADTComparator<Patient>(){
+                public int compare(Patient a, Patient b) {
+                    if (a == null && b == null) return 0;
+                    if (a == null) return -1;
+                    if (b == null) return 1;
+                    String ia = a.getId() == null ? "" : a.getId();
+                    String ib = b.getId() == null ? "" : b.getId();
+                    return ia.compareToIgnoreCase(ib);
+                }
+            });
+            toShow = list;
+        }
+        if (toShow != null) {
+            for (int i = 0; i < toShow.size(); i++) {
+                Patient p = toShow.get(i);
                 sb.append(String.format("%-10s|%-20s|%-10s|%-15s|%-15s|%-25s|%-15s\n",
                         p.getId(),
                         p.getName(),
@@ -559,12 +577,45 @@ public class PatientMaintenanceUI {
         showSearchIntro();
         String query = InputUtil.getInput(scanner, "Enter patient ID or name to search: ");
         if (query.equals("0")) return;
-        ADTInterface<Patient> results = control.findPatientByIdOrName(query);
-        if (results.isEmpty()) { displayNotFoundMessage(query); return; }
+        // If query looks like an exact patient ID (e.g., starts with P followed by digits), try binary search
+        ADTInterface<Patient> results;
+        Patient exact = null;
+        if (query.matches("(?i)P\\d+")) {
+            exact = control.binarySearchPatientById(query);
+        }
+        if (exact != null) {
+            results = new adt.CustomADT<>();
+            results.add(exact);
+        } else {
+            results = control.findPatientByIdOrName(query);
+        }
+        if (results == null || results.isEmpty()) { displayNotFoundMessage(query); return; }
         InputUtil.clearScreen();
         printHeader("Clinic Patient Maintenance");
         showSearchResultsHeader(query);
         displayPatientsTable(results);
+    }
+
+    /**
+     * Allow user to choose sorting criteria and display sorted patients.
+     */
+    private void handleSort() {
+        printHeader("Clinic Patient Maintenance - Sort Patients");
+        System.out.println("1. Sort by ID");
+        System.out.println("2. Sort by Name");
+        System.out.println("3. Cancel");
+        int choice = InputUtil.getIntInput(scanner, "Choose sort option: ");
+        switch (choice) {
+            case 1 -> {
+                ADTInterface<Patient> sorted = control.getPatientsSortedById();
+                displayPatientsTable(sorted);
+            }
+            case 2 -> {
+                ADTInterface<Patient> sorted = control.getPatientsSortedByName();
+                displayPatientsTable(sorted);
+            }
+            default -> printInvalidChoiceMessage();
+        }
     }
 
     private void handleViewDetails() {

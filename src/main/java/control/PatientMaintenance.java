@@ -279,6 +279,87 @@ public class PatientMaintenance {
         for (int i = 0; i < tempList.size(); i++) { tempList.get(i).setId(String.format("P%04d", i + 1)); patientList.set(i, tempList.get(i)); }
     }
 
+    /**
+     * Return patients sorted by ID using CustomADT.mergeSort when available.
+     */
+    public ADTInterface<Patient> getPatientsSortedById() {
+        refreshFromFile();
+        if (patientList instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Patient> list = (CustomADT<Patient>) cadt;
+            list.mergeSort(new CustomADT.ADTComparator<Patient>(){
+                public int compare(Patient a, Patient b) {
+                    if (a == null && b == null) return 0;
+                    if (a == null) return -1;
+                    if (b == null) return 1;
+                    String ia = a.getId() == null ? "" : a.getId();
+                    String ib = b.getId() == null ? "" : b.getId();
+                    return ia.compareToIgnoreCase(ib);
+                }
+            });
+            return list;
+        }
+        return patientList;
+    }
+
+    /**
+     * Return patients sorted by name using CustomADT.mergeSort when available.
+     */
+    public ADTInterface<Patient> getPatientsSortedByName() {
+        refreshFromFile();
+        if (patientList instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Patient> list = (CustomADT<Patient>) cadt;
+            list.mergeSort(new CustomADT.ADTComparator<Patient>(){
+                public int compare(Patient a, Patient b) {
+                    if (a == null && b == null) return 0;
+                    if (a == null) return -1;
+                    if (b == null) return 1;
+                    String na = a.getName() == null ? "" : a.getName();
+                    String nb = b.getName() == null ? "" : b.getName();
+                    return na.compareToIgnoreCase(nb);
+                }
+            });
+            return list;
+        }
+        return patientList;
+    }
+
+    /**
+     * Find a patient by ID using binary search on a list sorted by ID.
+     * Returns null if not found.
+     */
+    public Patient binarySearchPatientById(String patientId) {
+        refreshFromFile();
+        if (patientId == null) return null;
+        if (patientList instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Patient> list = (CustomADT<Patient>) cadt;
+            // Ensure sorted by ID first
+            list.mergeSort(new CustomADT.ADTComparator<Patient>(){
+                public int compare(Patient a, Patient b) {
+                    if (a == null && b == null) return 0;
+                    if (a == null) return -1;
+                    if (b == null) return 1;
+                    String ia = a.getId() == null ? "" : a.getId();
+                    String ib = b.getId() == null ? "" : b.getId();
+                    return ia.compareToIgnoreCase(ib);
+                }
+            });
+            Patient probe = new Patient(patientId, null, null, null, null, null, null);
+            int idx = list.binarySearch(probe, new CustomADT.ADTComparator<Patient>(){
+                public int compare(Patient a, Patient b) {
+                    if (a == null && b == null) return 0;
+                    if (a == null) return -1;
+                    if (b == null) return 1;
+                    String ia = a.getId() == null ? "" : a.getId();
+                    String ib = b.getId() == null ? "" : b.getId();
+                    return ia.compareToIgnoreCase(ib);
+                }
+            });
+            return idx >= 0 ? list.get(idx) : null;
+        }
+        // fallback to linear search
+        return findPatientById(patientId);
+    }
+
     private void persist() { patientDAO.saveToFile(patientList); }
 
     // Ensure this in-memory list reflects latest file content

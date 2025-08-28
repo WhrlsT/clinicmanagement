@@ -18,6 +18,21 @@ public class MedicationMaintenanceUI {
 
     private boolean sortAscending = true;
     private boolean sortQuantityAscending = true;
+        public int menu() {
+        System.out.println("Medication Management");
+        System.out.println("1. Add Medication");
+        System.out.println("2. Update Medication");
+        System.out.println("3. Delete Medication");
+        System.out.println("4. View Medications");
+        System.out.println("5. Dispense Medications");
+        System.out.println("6. Sort by Name " + (sortAscending ? "(Asc)" : "(Desc)"));
+        System.out.println("7. Sort by Quantity " + (sortQuantityAscending ? "(Asc)" : "(Desc)"));
+        System.out.println("8. Search by Name");
+        System.out.println("9. Show Medicine Report");
+        System.out.println("10. Back");
+        return InputUtil.getIntInput(sc, "Choose: ");
+    }
+
     public void run() {
         int c;
         do {
@@ -189,17 +204,7 @@ public class MedicationMaintenanceUI {
         if (ok) displayDispenseSuccess(id); else System.out.println("Treatment not found or not a medication treatment.");
     }
 
-    // ===== Moved over from MedicationUI =====
-    public int menu() {
-        System.out.println("Medication Management");
-        System.out.println("1. Add Medication");
-        System.out.println("2. Update Medication");
-        System.out.println("3. Delete Medication");
-        System.out.println("4. View Medications");
-        System.out.println("5. Dispense Medications");
-        System.out.println("6. Back");
-        return InputUtil.getIntInput(sc, "Choose: ");
-    }
+
 
     public void printTable(String rows) {
         System.out.println("\n---------------------------------------------------------------");
