@@ -6,6 +6,7 @@ import dao.ConsultationDAO;
 import dao.DoctorDAO;
 import entity.Consultation;
 import entity.Doctor;
+import entity.Patient;
 import entity.SlotStatus;
 
 /**
@@ -121,4 +122,106 @@ public class DoctorMaintenance {
     }
 
     public void persist() { doctorDAO.saveToFile(doctorList); }
+
+    // === Sorting helpers (ascending / descending) ===
+    public void sortDoctorsByName() {
+        if (doctorList instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Doctor> l = (CustomADT<Doctor>) cadt;
+            l.sort(new CustomADT.ADTComparator<Doctor>() {
+                public int compare(Doctor a, Doctor b) {
+                    if (a == null || a.getName() == null) return -1;
+                    if (b == null || b.getName() == null) return 1;
+                    return a.getName().compareToIgnoreCase(b.getName());
+                }
+            });
+        }
+    }
+
+    public void sortDoctorsByNameDesc() {
+        if (doctorList instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Doctor> l = (CustomADT<Doctor>) cadt;
+            l.sort(new CustomADT.ADTComparator<Doctor>() {
+                public int compare(Doctor a, Doctor b) {
+                    if (a == null || a.getName() == null) return 1;
+                    if (b == null || b.getName() == null) return -1;
+                    return b.getName().compareToIgnoreCase(a.getName());
+                }
+            });
+        }
+    }
+
+    public void sortDoctorsById() {
+        if (doctorList instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Doctor> l = (CustomADT<Doctor>) cadt;
+            l.sort(new CustomADT.ADTComparator<Doctor>() {
+                public int compare(Doctor a, Doctor b) {
+                    if (a == null || a.getId() == null) return -1;
+                    if (b == null || b.getId() == null) return 1;
+                    return a.getId().compareToIgnoreCase(b.getId());
+                }
+            });
+        }
+    }
+
+    public void sortDoctorsByIdDesc() {
+        if (doctorList instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Doctor> l = (CustomADT<Doctor>) cadt;
+            l.sort(new CustomADT.ADTComparator<Doctor>() {
+                public int compare(Doctor a, Doctor b) {
+                    if (a == null || a.getId() == null) return 1;
+                    if (b == null || b.getId() == null) return -1;
+                    return b.getId().compareToIgnoreCase(a.getId());
+                }
+            });
+        }
+    }
+
+    public void sortDoctorsBySpecialty() {
+        if (doctorList instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Doctor> l = (CustomADT<Doctor>) cadt;
+            l.sort(new CustomADT.ADTComparator<Doctor>() {
+                public int compare(Doctor a, Doctor b) {
+                    if (a == null || a.getSpecialization() == null) return -1;
+                    if (b == null || b.getSpecialization() == null) return 1;
+                    return a.getSpecialization().compareToIgnoreCase(b.getSpecialization());
+                }
+            });
+        }
+    }
+
+    public void sortDoctorsBySpecialtyDesc() {
+        if (doctorList instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Doctor> l = (CustomADT<Doctor>) cadt;
+            l.sort(new CustomADT.ADTComparator<Doctor>() {
+                public int compare(Doctor a, Doctor b) {
+                    if (a == null || a.getSpecialization() == null) return 1;
+                    if (b == null || b.getSpecialization() == null) return -1;
+                    return b.getSpecialization().compareToIgnoreCase(a.getSpecialization());
+                }
+            });
+        }
+    }
+
+    // === Search helpers ===
+    public ADTInterface<Doctor> findDoctorsBySpecialty(String specialty) {
+        ADTInterface<Doctor> results = new CustomADT<>();
+        if (specialty == null) return results;
+        String lower = specialty.toLowerCase();
+        for (int i = 0; i < doctorList.size(); i++) {
+            Doctor d = doctorList.get(i);
+            if (d != null && d.getSpecialization() != null && d.getSpecialization().toLowerCase().contains(lower)) {
+                results.add(d);
+            }
+        }
+        return results;
+    }
+        // Ensure this in-memory list reflects latest file content
+    public void refreshFromFile() {
+        try {
+            ADTInterface<Doctor> loaded = doctorDAO.retrieveFromFile();
+            // Simple replace contents
+            doctorList.clear();
+            for (int i = 0; i < loaded.size(); i++) doctorList.add(loaded.get(i));
+        } catch (Exception ignored) {}
+    }
 }

@@ -224,6 +224,31 @@ public class MedicationMaintenance {
             });
         }
     }
+    // Sort medications by ID (ascending)
+    public void sortMedicationsById() {
+        if (list instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked")
+            CustomADT<Medication> l = (CustomADT<Medication>) cadt;
+            l.sort((CustomADT.ADTComparator<Medication>) (m1, m2) -> {
+                if (m1 == null || m1.getId() == null) return -1;
+                if (m2 == null || m2.getId() == null) return 1;
+                return m1.getId().compareToIgnoreCase(m2.getId());
+            });
+        }
+    }
+
+    // Sort medications by ID (descending)
+    public void sortMedicationsByIdDesc() {
+        if (list instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked")
+            CustomADT<Medication> l = (CustomADT<Medication>) cadt;
+            l.sort((CustomADT.ADTComparator<Medication>) (m1, m2) -> {
+                if (m1 == null || m1.getId() == null) return 1;
+                if (m2 == null || m2.getId() == null) return -1;
+                return m2.getId().compareToIgnoreCase(m1.getId());
+            });
+        }
+    }
     // Sort medications by name (descending)
     public void sortMedicationsByNameDesc() {
         if (list instanceof CustomADT<?> cadt) {

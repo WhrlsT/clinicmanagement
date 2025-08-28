@@ -27,14 +27,26 @@ public class ConsultationMaintenance {
     }
 
     public ADTInterface<Consultation> getAllConsultations() {
-    refreshConsultationsFromFile();
         return consultations;
     }
 
     // ===== Sorting/search helpers leveraging CustomADT =====
     /** Sort consultations by date/time ascending using stable merge sort; returns a new list. */
     public ADTInterface<Consultation> sortByDateTime() {
-        refreshConsultationsFromFile();
+        // If underlying ADT is CustomADT we can sort in-place and return it
+        if (consultations instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Consultation> list = (CustomADT<Consultation>) cadt;
+            list.mergeSort((java.util.Comparator<Consultation>) (a,b) -> {
+                java.time.LocalDateTime da = a==null?null:a.getDate();
+                java.time.LocalDateTime db = b==null?null:b.getDate();
+                if (da==null && db==null) return 0;
+                if (da==null) return -1;
+                if (db==null) return 1;
+                return da.compareTo(db);
+            });
+            return list;
+        }
+        // Fallback: return a sorted copy
         CustomADT<Consultation> copy = new CustomADT<>();
         for (int i=0;i<consultations.size();i++) copy.add(consultations.get(i));
         copy.mergeSort((java.util.Comparator<Consultation>) (a,b) -> {
@@ -48,9 +60,51 @@ public class ConsultationMaintenance {
         return copy;
     }
 
+    /** Sort by date/time descending (in-place when possible). */
+    public ADTInterface<Consultation> sortByDateTimeDesc() {
+        if (consultations instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Consultation> list = (CustomADT<Consultation>) cadt;
+            list.mergeSort((java.util.Comparator<Consultation>) (a,b) -> {
+                java.time.LocalDateTime da = a==null?null:a.getDate();
+                java.time.LocalDateTime db = b==null?null:b.getDate();
+                if (da==null && db==null) return 0;
+                if (da==null) return 1;
+                if (db==null) return -1;
+                return db.compareTo(da);
+            });
+            return list;
+        }
+        CustomADT<Consultation> copy = new CustomADT<>();
+        for (int i=0;i<consultations.size();i++) copy.add(consultations.get(i));
+        copy.mergeSort((java.util.Comparator<Consultation>) (a,b) -> {
+            java.time.LocalDateTime da = a==null?null:a.getDate();
+            java.time.LocalDateTime db = b==null?null:b.getDate();
+            if (da==null && db==null) return 0;
+            if (da==null) return 1;
+            if (db==null) return -1;
+            return db.compareTo(da);
+        });
+        return copy;
+    }
+
     /** Bubble sort by status then date for demonstration (stable). */
     public ADTInterface<Consultation> bubbleSortByStatusThenDate() {
-        refreshConsultationsFromFile();
+        if (consultations instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Consultation> list = (CustomADT<Consultation>) cadt;
+            list.bubbleSort((java.util.Comparator<Consultation>) (a,b) -> {
+                String sa = a==null||a.getStatus()==null?"":a.getStatus().name();
+                String sb = b==null||b.getStatus()==null?"":b.getStatus().name();
+                int cmp = sa.compareTo(sb);
+                if (cmp!=0) return cmp;
+                java.time.LocalDateTime da = a==null?null:a.getDate();
+                java.time.LocalDateTime db = b==null?null:b.getDate();
+                if (da==null && db==null) return 0;
+                if (da==null) return -1;
+                if (db==null) return 1;
+                return da.compareTo(db);
+            });
+            return list;
+        }
         CustomADT<Consultation> copy = new CustomADT<>();
         for (int i=0;i<consultations.size();i++) copy.add(consultations.get(i));
         copy.bubbleSort((java.util.Comparator<Consultation>) (a,b) -> {
@@ -68,9 +122,56 @@ public class ConsultationMaintenance {
         return copy;
     }
 
+    /** Bubble sort by status then date descending (in-place when possible). */
+    public ADTInterface<Consultation> bubbleSortByStatusThenDateDesc() {
+        if (consultations instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Consultation> list = (CustomADT<Consultation>) cadt;
+            list.bubbleSort((java.util.Comparator<Consultation>) (a,b) -> {
+                String sa = a==null||a.getStatus()==null?"":a.getStatus().name();
+                String sb = b==null||b.getStatus()==null?"":b.getStatus().name();
+                int cmp = sb.compareTo(sa); // reverse
+                if (cmp!=0) return cmp;
+                java.time.LocalDateTime da = a==null?null:a.getDate();
+                java.time.LocalDateTime db = b==null?null:b.getDate();
+                if (da==null && db==null) return 0;
+                if (da==null) return 1;
+                if (db==null) return -1;
+                return db.compareTo(da);
+            });
+            return list;
+        }
+        CustomADT<Consultation> copy = new CustomADT<>();
+        for (int i=0;i<consultations.size();i++) copy.add(consultations.get(i));
+        copy.bubbleSort((java.util.Comparator<Consultation>) (a,b) -> {
+            String sa = a==null||a.getStatus()==null?"":a.getStatus().name();
+            String sb = b==null||b.getStatus()==null?"":b.getStatus().name();
+            int cmp = sb.compareTo(sa); // reverse
+            if (cmp!=0) return cmp;
+            java.time.LocalDateTime da = a==null?null:a.getDate();
+            java.time.LocalDateTime db = b==null?null:b.getDate();
+            if (da==null && db==null) return 0;
+            if (da==null) return 1;
+            if (db==null) return -1;
+            return db.compareTo(da);
+        });
+        return copy;
+    }
+
     /** Selection sort by doctor then patient (not stable). */
     public ADTInterface<Consultation> selectionSortByDoctorThenPatient() {
-        refreshConsultationsFromFile();
+        if (consultations instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Consultation> list = (CustomADT<Consultation>) cadt;
+            list.selectionSort((java.util.Comparator<Consultation>) (a,b) -> {
+                String da = a==null?"":safe(getDoctorDisplay(a.getDoctorId()));
+                String db = b==null?"":safe(getDoctorDisplay(b.getDoctorId()));
+                int cmp = da.compareTo(db);
+                if (cmp!=0) return cmp;
+                String pa = a==null?"":safe(getPatientDisplay(a.getPatientId()));
+                String pb = b==null?"":safe(getPatientDisplay(b.getPatientId()));
+                return pa.compareTo(pb);
+            });
+            return list;
+        }
         CustomADT<Consultation> copy = new CustomADT<>();
         for (int i=0;i<consultations.size();i++) copy.add(consultations.get(i));
         copy.selectionSort((java.util.Comparator<Consultation>) (a,b) -> {
@@ -85,9 +186,53 @@ public class ConsultationMaintenance {
         return copy;
     }
 
+    /** Selection sort by doctor then patient descending (in-place when possible). */
+    public ADTInterface<Consultation> selectionSortByDoctorThenPatientDesc() {
+        if (consultations instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Consultation> list = (CustomADT<Consultation>) cadt;
+            list.selectionSort((java.util.Comparator<Consultation>) (a,b) -> {
+                String da = a==null?"":safe(getDoctorDisplay(a.getDoctorId()));
+                String db = b==null?"":safe(getDoctorDisplay(b.getDoctorId()));
+                int cmp = db.compareTo(da); // reverse
+                if (cmp!=0) return cmp;
+                String pa = a==null?"":safe(getPatientDisplay(a.getPatientId()));
+                String pb = b==null?"":safe(getPatientDisplay(b.getPatientId()));
+                return pb.compareTo(pa);
+            });
+            return list;
+        }
+        CustomADT<Consultation> copy = new CustomADT<>();
+        for (int i=0;i<consultations.size();i++) copy.add(consultations.get(i));
+        copy.selectionSort((java.util.Comparator<Consultation>) (a,b) -> {
+            String da = a==null?"":safe(getDoctorDisplay(a.getDoctorId()));
+            String db = b==null?"":safe(getDoctorDisplay(b.getDoctorId()));
+            int cmp = db.compareTo(da); // reverse
+            if (cmp!=0) return cmp;
+            String pa = a==null?"":safe(getPatientDisplay(a.getPatientId()));
+            String pb = b==null?"":safe(getPatientDisplay(b.getPatientId()));
+            return pb.compareTo(pa);
+        });
+        return copy;
+    }
+
     /** Binary search by ID on a list sorted by ID ascending. Returns index or -insertionPoint-1. */
     public Consultation binarySearchByIdGet(String id) {
-        refreshConsultationsFromFile();
+        if (consultations instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Consultation> list = (CustomADT<Consultation>) cadt;
+            list.mergeSort((java.util.Comparator<Consultation>) (a,b) -> {
+                String ia = a==null?"":safe(a.getId());
+                String ib = b==null?"":safe(b.getId());
+                return ia.compareTo(ib);
+            });
+            Consultation key = new Consultation(); key.setId(id);
+            int idx = list.binarySearch(key, (java.util.Comparator<Consultation>) (a,b) -> {
+                String ia = a==null?"":safe(a.getId());
+                String ib = b==null?"":safe(b.getId());
+                return ia.compareTo(ib);
+            });
+            if (idx >= 0 && idx < list.size()) return list.get(idx);
+            return null;
+        }
         CustomADT<Consultation> copy = new CustomADT<>();
         for (int i=0;i<consultations.size();i++) copy.add(consultations.get(i));
         copy.mergeSort((java.util.Comparator<Consultation>) (a,b) -> {
@@ -114,7 +259,6 @@ public class ConsultationMaintenance {
     }
 
     public Consultation getConsultationById(String id) {
-    refreshConsultationsFromFile();
         for (int i = 0; i < consultations.size(); i++) {
             if (consultations.get(i).getId().equals(id)) {
                 return consultations.get(i);
@@ -124,7 +268,6 @@ public class ConsultationMaintenance {
     }
     
     public ADTInterface<Consultation> getBookedConsultations() {
-    refreshConsultationsFromFile();
         ADTInterface<Consultation> booked = new CustomADT<>();
         for (int i = 0; i < consultations.size(); i++) {
             Consultation c = consultations.get(i);
@@ -136,7 +279,7 @@ public class ConsultationMaintenance {
     }
 
     public Consultation book(String patientId, String doctorId, LocalDateTime date, String reason) {
-    refreshConsultationsFromFile();
+        refreshConsultationsFromFile();
         refreshDoctorsAndPatients();
         Doctor doctor = findDoctor(doctorId);
         if (doctor == null || findPatient(patientId) == null) {
@@ -164,7 +307,6 @@ public class ConsultationMaintenance {
     }
 
     public boolean updateConsultation(Consultation c, String newReason, String newNotes, String newStatus, LocalDateTime newDate, String newDoctorId) {
-    refreshConsultationsFromFile();
         int idx = -1;
         for (int i = 0; i < consultations.size(); i++) {
             if (consultations.get(i).getId().equals(c.getId())) {
@@ -229,7 +371,6 @@ public class ConsultationMaintenance {
     }
 
     public ADTInterface<Consultation> searchConsultations(String q) {
-    refreshConsultationsFromFile();
         ADTInterface<Consultation> results = new CustomADT<>();
         if (q == null || q.isEmpty()) return results;
         String lowerQ = q.toLowerCase();
@@ -256,7 +397,6 @@ public class ConsultationMaintenance {
     private String safe(String s) { return s == null ? "" : s; }
 
     public boolean cancel(String id) {
-    refreshConsultationsFromFile();
         for (int i = 0; i < consultations.size(); i++) {
             Consultation c = consultations.get(i);
             if (c.getId().equals(id)) {
@@ -276,7 +416,6 @@ public class ConsultationMaintenance {
     }
 
     public boolean reschedule(String id, LocalDateTime newDate) {
-    refreshConsultationsFromFile();
         Consultation c = getConsultationById(id);
         if (c == null || c.getStatus() != Consultation.Status.BOOKED) return false;
         
@@ -296,7 +435,6 @@ public class ConsultationMaintenance {
     }
 
     public Consultation addFollowUp(String baseId, LocalDateTime dt, String reason) {
-    refreshConsultationsFromFile();
         Consultation base = getConsultationById(baseId);
         if (base == null) return null;
 
@@ -355,7 +493,7 @@ public class ConsultationMaintenance {
         consultationDAO.save(consultations);
     }
     
-    private void refreshConsultationsFromFile() {
+    public void refreshConsultationsFromFile() {
         ADTInterface<Consultation> fresh = consultationDAO.load();
         consultations.clear();
         for (int i = 0; i < fresh.size(); i++) {
@@ -375,7 +513,6 @@ public class ConsultationMaintenance {
     
 
     public boolean isSlotAvailable(Doctor doctor, LocalDate date, int hour) {
-    refreshConsultationsFromFile();
         utility.GoogleCalendarService gcal = null;
         boolean useCalendar = false;
         try {
@@ -462,7 +599,6 @@ public class ConsultationMaintenance {
 
     // ===== Reporting generators (logic only, no printing) =====
     public WorkloadUtilizationReport generateWorkloadUtilization(LocalDate start, LocalDate end) {
-        refreshConsultationsFromFile();
         WorkloadUtilizationReport r = new WorkloadUtilizationReport();
         r.start = start; r.end = end;
 
@@ -527,7 +663,6 @@ public class ConsultationMaintenance {
     }
 
     public FollowUpNoShowReport generateFollowUpAndNoShow(LocalDate start, LocalDate end, int thresholdHours) {
-        refreshConsultationsFromFile();
         FollowUpNoShowReport r = new FollowUpNoShowReport();
         r.start = start; r.end = end; r.thresholdHours = thresholdHours;
 
@@ -586,7 +721,6 @@ public class ConsultationMaintenance {
 
     // ===== Available slots  =====
     public ADTInterface<SlotDay> getAvailableSlots(Doctor doctor, int days, LocalDate startDate) {
-    refreshConsultationsFromFile();
         ADTInterface<SlotDay> out = new CustomADT<>();
         if (doctor == null) return out;
 

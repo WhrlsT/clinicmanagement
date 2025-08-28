@@ -1,16 +1,4 @@
 [ {
-  "id" : "T0002",
-  "consultationId" : "C0001",
-  "type" : "MEDICATION",
-  "name" : "Autism Treat",
-  "medicationIds" : [ "M0001" ],
-  "diagnosis" : "Autism",
-  "status" : "DISPENSED",
-  "orderedDate" : [ 2025, 8, 24 ],
-  "instructions" : "kys",
-  "notes" : "",
-  "cost" : 500000.0
-}, {
   "id" : "T0001",
   "consultationId" : "C0001",
   "type" : "PROCEDURE",
@@ -22,6 +10,18 @@
   "instructions" : "take a knife, cut urself",
   "notes" : "womp womp",
   "cost" : 90.0
+}, {
+  "id" : "T0002",
+  "consultationId" : "C0001",
+  "type" : "MEDICATION",
+  "name" : "Autism Treat",
+  "medicationIds" : [ "M0001" ],
+  "diagnosis" : "Autism",
+  "status" : "DISPENSED",
+  "orderedDate" : [ 2025, 8, 24 ],
+  "instructions" : "kys",
+  "notes" : "",
+  "cost" : 500000.0
 }, {
   "id" : "T0003",
   "consultationId" : "C0001",

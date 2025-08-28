@@ -18,6 +18,7 @@ public class MedicationMaintenanceUI {
 
     private boolean sortAscending = true;
     private boolean sortQuantityAscending = true;
+    private boolean sortIdAscending = true;
         public int menu() {
         System.out.println("Medication Management");
         System.out.println("1. Add Medication");
@@ -25,11 +26,12 @@ public class MedicationMaintenanceUI {
         System.out.println("3. Delete Medication");
         System.out.println("4. View Medications");
         System.out.println("5. Dispense Medications");
-        System.out.println("6. Sort by Name " + (sortAscending ? "(Asc)" : "(Desc)"));
-        System.out.println("7. Sort by Quantity " + (sortQuantityAscending ? "(Asc)" : "(Desc)"));
-        System.out.println("8. Search by Name");
-        System.out.println("9. Show Medicine Report");
-        System.out.println("10. Back");
+    System.out.println("6. Sort by Name " + (sortAscending ? "(Asc)" : "(Desc)"));
+    System.out.println("7. Sort by Quantity " + (sortQuantityAscending ? "(Asc)" : "(Desc)"));
+    System.out.println("8. Sort by ID " + (sortIdAscending ? "(Asc)" : "(Desc)"));
+    System.out.println("9. Search by Name");
+    System.out.println("10. Show Medicine Report");
+    System.out.println("11. Back");
         return InputUtil.getIntInput(sc, "Choose: ");
     }
 
@@ -75,12 +77,22 @@ public class MedicationMaintenanceUI {
                     }
                     sortQuantityAscending = !sortQuantityAscending;
                 }
-                case 8 -> handleSearchByName();
-                case 9 -> handleReport();
-                case 10 -> {return;}
+                case 8 -> {
+                    if (sortIdAscending) {
+                        control.sortMedicationsById();
+                        System.out.println("Medications sorted by ID (ascending).");
+                    } else {
+                        control.sortMedicationsByIdDesc();
+                        System.out.println("Medications sorted by ID (descending).");
+                    }
+                    sortIdAscending = !sortIdAscending;
+                }
+                case 9 -> handleSearchByName();
+                case 10 -> handleReport();
+                case 11 -> {return;}
                 default -> System.out.println("Invalid");
             }
-            if (c != 10 && c != 4 && c != 5) InputUtil.pauseScreen();
+            if (c != 11 && c != 4 && c != 5) InputUtil.pauseScreen();
         } while (c != 10);
     }
 
@@ -90,7 +102,7 @@ public class MedicationMaintenanceUI {
         for (int i=0;i<list.size();i++){
             Medication m=list.get(i);
             String price = m.getPrice()==null? "" : String.format("%.2f", m.getPrice());
-            sb.append(String.format("%-8s|%-24s|%-10s|%-10s|%-8s|%-8s|%-10s|%-8s\n",
+            sb.append(String.format("%-8s|%-24s|%-10s|%-10s|%-15s|%-20s|%-15s|%-8s\n",
                 nz(m.getId()), nz(m.getName()), price, nz(m.getCode()), nz(m.getDosage()), nz(m.getFrequency()), nz(m.getRoute()), nz(m.getQuantity())));
         }
         return sb.toString();
@@ -207,13 +219,13 @@ public class MedicationMaintenanceUI {
 
 
     public void printTable(String rows) {
-        System.out.println("\n---------------------------------------------------------------");
+        System.out.println("-".repeat(122));
         System.out.println("Medications");
-        System.out.println("---------------------------------------------------------------");
-        System.out.printf("%-8s|%-24s|%-10s|%-10s|%-8s|%-8s|%-10s|%-8s\n","ID","Name","Price","Code","Dose","Freq","Route","Qty");
-        System.out.println("---------------------------------------------------------------");
+        System.out.println("-".repeat(122));
+        System.out.printf("%-8s|%-24s|%-10s|%-10s|%-15s|%-20s|%-15s|%-8s\n","ID","Name","Price","Code","Dose","Freq","Route","Qty");
+        System.out.println("-".repeat(122));
         System.out.print(rows == null || rows.isBlank()?"(none)\n":rows);
-        System.out.println("---------------------------------------------------------------");
+        System.out.println("-".repeat(122));
     }
 
     public void showMedications(adt.ADTInterface<entity.Medication> meds){

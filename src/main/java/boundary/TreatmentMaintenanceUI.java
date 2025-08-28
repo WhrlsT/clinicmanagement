@@ -19,6 +19,7 @@ public class TreatmentMaintenanceUI {
     private final Scanner sc = new Scanner(System.in);
 
     public void run(){
+        control.refreshTreatmentFromFile();
         int c;
         do {
             InputUtil.clearScreen();

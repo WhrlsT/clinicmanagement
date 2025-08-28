@@ -25,6 +25,7 @@ public class PatientMaintenanceUI {
 
     // === Hub & Main run ===
     public void runHub() {
+        control.reloadFromFile();
         int choice;
         do {
             InputUtil.clearScreen();
@@ -50,9 +51,9 @@ public class PatientMaintenanceUI {
     }
 
     public void run() {
-        InputUtil.clearScreen();
-        printHeader("Clinic Patient Maintenance");
-        displayPatientsTable(control.getAllPatients());
+    InputUtil.clearScreen();
+    printHeader("Clinic Patient Maintenance");
+    displayPatientsTable(control.getAllPatients());
         int choice;
         do {
             choice = getMenuChoice();
@@ -179,25 +180,9 @@ public class PatientMaintenanceUI {
      */
     public void displayPatientsTable(ADTInterface<Patient> patients) {
         StringBuilder sb = new StringBuilder();
-        ADTInterface<Patient> toShow = patients;
-        // If CustomADT, sort by ID for consistent display
-        if (patients instanceof adt.CustomADT<?>) {
-            @SuppressWarnings("unchecked") adt.CustomADT<Patient> list = (adt.CustomADT<Patient>) patients;
-            list.mergeSort(new adt.CustomADT.ADTComparator<Patient>(){
-                public int compare(Patient a, Patient b) {
-                    if (a == null && b == null) return 0;
-                    if (a == null) return -1;
-                    if (b == null) return 1;
-                    String ia = a.getId() == null ? "" : a.getId();
-                    String ib = b.getId() == null ? "" : b.getId();
-                    return ia.compareToIgnoreCase(ib);
-                }
-            });
-            toShow = list;
-        }
-        if (toShow != null) {
-            for (int i = 0; i < toShow.size(); i++) {
-                Patient p = toShow.get(i);
+        if (patients != null) {
+            for (int i = 0; i < patients.size(); i++) {
+                Patient p = patients.get(i);
                 sb.append(String.format("%-10s|%-20s|%-10s|%-15s|%-15s|%-25s|%-15s\n",
                         p.getId(),
                         p.getName(),
@@ -601,21 +586,28 @@ public class PatientMaintenanceUI {
      */
     private void handleSort() {
         printHeader("Clinic Patient Maintenance - Sort Patients");
-        System.out.println("1. Sort by ID");
-        System.out.println("2. Sort by Name");
-        System.out.println("3. Cancel");
-        int choice = InputUtil.getIntInput(scanner, "Choose sort option: ");
+        System.out.println("1. ID");
+        System.out.println("2. Name");
+        System.out.println("3. Age");
+        System.out.println("4. Gender");
+        System.out.println("5. Nationality");
+        System.out.println("6. Cancel");
+        int choice = InputUtil.getIntInput(scanner, "Choose field to sort by: ");
+        String field;
         switch (choice) {
-            case 1 -> {
-                ADTInterface<Patient> sorted = control.getPatientsSortedById();
-                displayPatientsTable(sorted);
-            }
-            case 2 -> {
-                ADTInterface<Patient> sorted = control.getPatientsSortedByName();
-                displayPatientsTable(sorted);
-            }
-            default -> printInvalidChoiceMessage();
+            case 1 -> field = "id";
+            case 2 -> field = "name";
+            case 3 -> field = "age";
+            case 4 -> field = "gender";
+            case 5 -> field = "nationality";
+            default -> { printInvalidChoiceMessage(); return; }
         }
+        System.out.println("1. Ascending");
+        System.out.println("2. Descending");
+        int dir = InputUtil.getIntInput(scanner, "Choose sort order: ");
+        boolean asc = dir == 1;
+        ADTInterface<Patient> sorted = control.getPatientsSortedBy(field, asc);
+        displayPatientsTable(sorted);
     }
 
     private void handleViewDetails() {

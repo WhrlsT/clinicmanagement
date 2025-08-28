@@ -13,6 +13,10 @@ public class DoctorMaintenanceUI {
 
     private Scanner scanner = new Scanner(System.in);
     private final DoctorMaintenance control = new DoctorMaintenance();
+    // sort state flags for in-place toggles (true = ascending next)
+    private boolean sortByNameAsc = true;
+    private boolean sortByIdAsc = true;
+    private boolean sortBySpecialtyAsc = true;
 
     public int getMenuChoice() {
         System.out.println("Please select an option:");
@@ -20,20 +24,24 @@ public class DoctorMaintenanceUI {
         System.out.println("2. Update Doctor");
         System.out.println("3. Delete Doctor");
         System.out.println("4. View Doctor Details");
-        System.out.println("5. Search Doctor");
-        System.out.println("6. View Overall Duty Schedule");
-        System.out.println("7. Set Doctor Availability Range");
-        System.out.println("8. View Doctor's Consultations");
-        System.out.println("9. View Duty Dashboard");
-        System.out.println("10. Exit");
+        System.out.println("5. Sort Doctors");
+        System.out.println("6. Search by Specialty");
+        System.out.println("7. Search Doctor");
+        System.out.println("8. View Overall Duty Schedule");
+        System.out.println("9. Set Doctor Availability Range");
+        System.out.println("10. View Doctor's Consultations");
+        System.out.println("11. View Duty Dashboard");
+        System.out.println("12. Exit");
+
         System.out.print("Select an option: ");
         return InputUtil.getIntInput(scanner, "Enter your choice: ");
     }
 
     public void run() {
-        InputUtil.clearScreen();
-        printHeader("Clinic Doctor Maintenance");
-        displayDoctorsTable(control.getAllDoctors());
+    InputUtil.clearScreen();
+    control.refreshFromFile();
+    printHeader("Clinic Doctor Maintenance");
+    printTable(buildRows(control.getAllDoctors()));
         int choice;
         do {
             choice = getMenuChoice();
@@ -42,12 +50,38 @@ public class DoctorMaintenanceUI {
                 case 2 -> { InputUtil.clearScreen(); handleUpdate(); }
                 case 3 -> { InputUtil.clearScreen(); handleDelete(); }
                 case 4 -> { InputUtil.clearScreen(); handleViewDetails(); }
-                case 5 -> { InputUtil.clearScreen(); handleSearch(); }
-                case 6 -> { InputUtil.clearScreen(); handleOverallDutySchedule(); }
-                case 7 -> { InputUtil.clearScreen(); handleSetAvailabilityRange(); }
-                case 8 -> { InputUtil.clearScreen(); handleViewConsultations(); }
-                case 9 -> { InputUtil.clearScreen(); showDutyDashboard(control.getAllDoctors()); }
-                case 10 -> {printReturningToMainMenu(); return;}
+                case 5 -> {
+                    // Submenu: choose field to sort (in-place toggles)
+                    printHeader("Sort Doctors (toggle)");
+                    System.out.println("1. Name (toggle asc/desc)");
+                    System.out.println("2. ID (toggle asc/desc)");
+                    System.out.println("3. Specialty (toggle asc/desc)");
+                    System.out.println("4. Cancel");
+                    int sc = InputUtil.getIntInput(scanner, "Choose option: ");
+                    switch (sc) {
+                        case 1 -> {
+                            if (sortByNameAsc) control.sortDoctorsByName(); else control.sortDoctorsByNameDesc();
+                            sortByNameAsc = !sortByNameAsc;
+                        }
+                        case 2 -> {
+                            if (sortByIdAsc) control.sortDoctorsById(); else control.sortDoctorsByIdDesc();
+                            sortByIdAsc = !sortByIdAsc;
+                        }
+                        case 3 -> {
+                            if (sortBySpecialtyAsc) control.sortDoctorsBySpecialty(); else control.sortDoctorsBySpecialtyDesc();
+                            sortBySpecialtyAsc = !sortBySpecialtyAsc;
+                        }
+                        default -> { /* cancel/no-op */ }
+                    }
+                    InputUtil.clearScreen(); printHeader("Clinic Doctor Maintenance"); printTable(buildRows(control.getAllDoctors()));
+                }
+                case 6 -> { InputUtil.clearScreen(); handleSearchBySpecialty(); }
+                case 7 -> { InputUtil.clearScreen(); handleSearch(); }
+                case 8 -> { InputUtil.clearScreen(); handleOverallDutySchedule(); }
+                case 9 -> { InputUtil.clearScreen(); handleSetAvailabilityRange(); }
+                case 10 -> { InputUtil.clearScreen(); handleViewConsultations(); }
+                case 11 -> { InputUtil.clearScreen(); showDutyDashboard(control.getAllDoctors()); }
+                case 12 -> {printReturningToMainMenu(); return;}
                 default -> printInvalidChoiceMessage();
             }
             if (choice != 10 && choice != 4) {
@@ -90,6 +124,28 @@ public class DoctorMaintenanceUI {
             }
         }
         displayDoctorsTable(sb.toString());
+    }
+
+    /** Build a printable rows string from an ADT list of doctors (Medication-style). */
+    private String buildRows(ADTInterface<Doctor> doctors) {
+        StringBuilder sb = new StringBuilder();
+        if (doctors == null || doctors.isEmpty()) return "";
+        for (int i = 0; i < doctors.size(); i++) {
+            Doctor d = doctors.get(i);
+            sb.append(String.format("%-10s|%-20s|%-15s|%-20s|%-20s\n",
+                    d.getId(), d.getName(), d.getSpecialization(), d.getPhoneNumber(), d.getEmail()));
+        }
+        return sb.toString();
+    }
+
+    /** Print a table header and rows built by buildRows. */
+    private void printTable(String rows) {
+        System.out.println("\n----------------------------------------------------------------------------------------------------------------------------------------");
+        System.out.println("Doctor List");
+        System.out.println("----------------------------------------------------------------------------------------------------------------------------------------");
+        System.out.printf("%-10s|%-20s|%-15s|%-20s|%-20s\n", "ID", "Name", "Specialty", "Phone", "Email");
+        System.out.println("----------------------------------------------------------------------------------------------------------------------------------------");
+        if (rows == null || rows.isBlank()) System.out.println("No records found.\n"); else System.out.print(rows);
     }
 
    
@@ -444,7 +500,7 @@ public class DoctorMaintenanceUI {
     private void handleUpdate() {
         printHeader("Clinic Doctor Maintenance");
         System.out.println("Updating Doctor Details (Enter '0' to go back)");
-        displayDoctorsTable(control.getAllDoctors());
+    printTable(buildRows(control.getAllDoctors()));
         String doctorId = InputUtil.getInput(scanner, "Enter doctor ID to update: ");
         if (doctorId.equals("0")) return;
         Doctor doctor = control.findDoctorById(doctorId);
@@ -504,7 +560,7 @@ public class DoctorMaintenanceUI {
 
     private void handleViewConsultations() {
         printHeader("Clinic Doctor Maintenance");
-        displayDoctorsTable(control.getAllDoctors());
+    printTable(buildRows(control.getAllDoctors()));
         displayConsultationsIntro();
         String doctorId = InputUtil.getInput(scanner, "Enter doctor ID to view consultations: ");
         if (doctorId.equals("0")) return;
@@ -520,9 +576,26 @@ public class DoctorMaintenanceUI {
         displayConsultations(doctor.getName(), sb.toString());
     }
 
+    // Removed modal handleSort in favor of in-place toggle options in the main menu (cases 5,13,14)
+
+    private void handleSearchBySpecialty() {
+        showSearchIntro();
+        String specialty = InputUtil.getInput(scanner, "Enter specialty to search: ");
+        if (specialty.equals("0")) return;
+        ADTInterface<Doctor> found = control.findDoctorsBySpecialty(specialty);
+        if (found != null && found.size() > 0) {
+            InputUtil.clearScreen();
+            printHeader("Clinic Doctor Maintenance");
+            showSearchResultsHeader(specialty);
+            displayDoctorsTable(found);
+        } else {
+            displayNotFoundMessage(specialty);
+        }
+    }
+
     private void handleViewDetails() {
         showViewDoctorDetailsIntro();
-        displayDoctorsTable(control.getAllDoctors());
+    printTable(buildRows(control.getAllDoctors()));
         String doctorId = InputUtil.getInput(scanner, "Enter doctor ID to view details: ");
         if (doctorId.equals("0")) return;
         Doctor doctor = control.findDoctorById(doctorId);
@@ -544,7 +617,7 @@ public class DoctorMaintenanceUI {
         InputUtil.pauseScreen();
         InputUtil.clearScreen();
         printHeader("Clinic Doctor Maintenance");
-        displayDoctorsTable(control.getAllDoctors());
+    printTable(buildRows(control.getAllDoctors()));
     }
 
     private void handleOverallDutySchedule() {
@@ -643,7 +716,7 @@ public class DoctorMaintenanceUI {
     }
 
     private void handleSetAvailabilityRange() {
-        displayDoctorsTable(control.getAllDoctors());
+    printTable(buildRows(control.getAllDoctors()));
         System.out.println("Set Doctor Availability Range (Enter '0' to go back)");
         String doctorId = InputUtil.getInput(scanner, "Enter doctor ID: ");
         if (doctorId.equals("0")) return;
@@ -667,6 +740,6 @@ public class DoctorMaintenanceUI {
         InputUtil.pauseScreen();
         InputUtil.clearScreen();
         printHeader("Clinic Doctor Maintenance");
-        displayDoctorsTable(control.getAllDoctors());
+    printTable(buildRows(control.getAllDoctors()));
     }
 }

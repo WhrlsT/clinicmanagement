@@ -9,6 +9,7 @@ import dao.PatientDAO;
 import dao.TreatmentDAO;
 import entity.Consultation;
 import entity.Medication;
+import entity.Patient;
 import entity.Treatment;
 
 /**
@@ -152,7 +153,6 @@ public class TreatmentMaintenance {
         }
         list.sort(cmp);
         if (!asc) reverse(list);
-        persist();
     }
 
     // Helpers
@@ -169,5 +169,13 @@ public class TreatmentMaintenance {
     }
     private entity.Doctor findDoctorById(ADTInterface<entity.Doctor> list, String id){
         if (id==null) return null; for (int i=0;i<list.size();i++) if (id.equals(list.get(i).getId())) return list.get(i); return null;
+    }
+
+    public void refreshTreatmentFromFile() {
+        ADTInterface<Treatment> fresh = tdao.load();
+        treatments.clear();
+        for (int i = 0; i < fresh.size(); i++) {
+            treatments.add(fresh.get(i));
+        }
     }
 }

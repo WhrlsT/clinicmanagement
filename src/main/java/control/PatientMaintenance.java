@@ -33,8 +33,9 @@ public class PatientMaintenance {
 
     // Queries
     public ADTInterface<Patient> getAllPatients() {
-        refreshFromFile();
-        return patientList;
+    // Do not refresh from file on every call — return the in-memory list so
+    // in-place sorts (mutations) are visible to the UI, matching Medication style.
+    return patientList;
     }
 
     public Patient findPatientById(String patientId) {
@@ -283,7 +284,7 @@ public class PatientMaintenance {
      * Return patients sorted by ID using CustomADT.mergeSort when available.
      */
     public ADTInterface<Patient> getPatientsSortedById() {
-        refreshFromFile();
+        // In-place sort of the internal list by ID when using CustomADT
         if (patientList instanceof CustomADT<?> cadt) {
             @SuppressWarnings("unchecked") CustomADT<Patient> list = (CustomADT<Patient>) cadt;
             list.mergeSort(new CustomADT.ADTComparator<Patient>(){
@@ -298,14 +299,27 @@ public class PatientMaintenance {
             });
             return list;
         }
-        return patientList;
+        // Fallback: return a sorted copy if underlying ADT doesn't support in-place sort
+        CustomADT<Patient> out = new CustomADT<>();
+        for (int i = 0; i < patientList.size(); i++) out.add(patientList.get(i));
+        out.mergeSort(new CustomADT.ADTComparator<Patient>(){
+            public int compare(Patient a, Patient b) {
+                if (a == null && b == null) return 0;
+                if (a == null) return -1;
+                if (b == null) return 1;
+                String ia = a.getId() == null ? "" : a.getId();
+                String ib = b.getId() == null ? "" : b.getId();
+                return ia.compareToIgnoreCase(ib);
+            }
+        });
+        return out;
     }
 
     /**
      * Return patients sorted by name using CustomADT.mergeSort when available.
      */
     public ADTInterface<Patient> getPatientsSortedByName() {
-        refreshFromFile();
+        // In-place sort by name
         if (patientList instanceof CustomADT<?> cadt) {
             @SuppressWarnings("unchecked") CustomADT<Patient> list = (CustomADT<Patient>) cadt;
             list.mergeSort(new CustomADT.ADTComparator<Patient>(){
@@ -320,7 +334,19 @@ public class PatientMaintenance {
             });
             return list;
         }
-        return patientList;
+        CustomADT<Patient> out = new CustomADT<>();
+        for (int i = 0; i < patientList.size(); i++) out.add(patientList.get(i));
+        out.mergeSort(new CustomADT.ADTComparator<Patient>(){
+            public int compare(Patient a, Patient b) {
+                if (a == null && b == null) return 0;
+                if (a == null) return -1;
+                if (b == null) return 1;
+                String na = a.getName() == null ? "" : a.getName();
+                String nb = b.getName() == null ? "" : b.getName();
+                return na.compareToIgnoreCase(nb);
+            }
+        });
+        return out;
     }
 
     /**
@@ -328,11 +354,10 @@ public class PatientMaintenance {
      * Returns null if not found.
      */
     public Patient binarySearchPatientById(String patientId) {
-        refreshFromFile();
         if (patientId == null) return null;
+        // Ensure the internal list is sorted by ID in-place if possible
         if (patientList instanceof CustomADT<?> cadt) {
             @SuppressWarnings("unchecked") CustomADT<Patient> list = (CustomADT<Patient>) cadt;
-            // Ensure sorted by ID first
             list.mergeSort(new CustomADT.ADTComparator<Patient>(){
                 public int compare(Patient a, Patient b) {
                     if (a == null && b == null) return 0;
@@ -356,14 +381,135 @@ public class PatientMaintenance {
             });
             return idx >= 0 ? list.get(idx) : null;
         }
-        // fallback to linear search
-        return findPatientById(patientId);
+        // Fallback to using a temporary sorted copy
+        CustomADT<Patient> out = new CustomADT<>();
+        for (int i = 0; i < patientList.size(); i++) out.add(patientList.get(i));
+        out.mergeSort(new CustomADT.ADTComparator<Patient>(){
+            public int compare(Patient a, Patient b) {
+                if (a == null && b == null) return 0;
+                if (a == null) return -1;
+                if (b == null) return 1;
+                String ia = a.getId() == null ? "" : a.getId();
+                String ib = b.getId() == null ? "" : b.getId();
+                return ia.compareToIgnoreCase(ib);
+            }
+        });
+        Patient probe = new Patient(patientId, null, null, null, null, null, null);
+        int idx = out.binarySearch(probe, new CustomADT.ADTComparator<Patient>(){
+            public int compare(Patient a, Patient b) {
+                if (a == null && b == null) return 0;
+                if (a == null) return -1;
+                if (b == null) return 1;
+                String ia = a.getId() == null ? "" : a.getId();
+                String ib = b.getId() == null ? "" : b.getId();
+                return ia.compareToIgnoreCase(ib);
+            }
+        });
+        return idx >= 0 ? out.get(idx) : null;
+    }
+
+    /**
+     * Generic sorter: field can be "id","name","age","gender","nationality".
+     * Returns a new sorted ADT; does not mutate the internal patientList.
+     */
+    public ADTInterface<Patient> getPatientsSortedBy(String field, boolean ascending) {
+        // In-place generic sort (mutates patientList) when using CustomADT
+        final String ffield = field == null ? "id" : field.toLowerCase();
+        final boolean asc = ascending;
+        if (patientList instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Patient> list = (CustomADT<Patient>) cadt;
+            list.mergeSort(new CustomADT.ADTComparator<Patient>(){
+                public int compare(Patient a, Patient b) {
+                    int res = 0;
+                    switch(ffield) {
+                        case "name": {
+                            String na = a==null||a.getName()==null?"":a.getName();
+                            String nb = b==null||b.getName()==null?"":b.getName();
+                            res = na.compareToIgnoreCase(nb);
+                            break;
+                        }
+                        case "age": {
+                            int ia = 0, ib = 0;
+                            try { ia = Integer.parseInt(a.calculateAge(a.getDateOfBirth())); } catch(Exception ignored) {}
+                            try { ib = Integer.parseInt(b.calculateAge(b.getDateOfBirth())); } catch(Exception ignored) {}
+                            res = Integer.compare(ia, ib);
+                            break;
+                        }
+                        case "gender": {
+                            String ga = a==null||a.getGender()==null?"":a.getGender();
+                            String gb = b==null||b.getGender()==null?"":b.getGender();
+                            res = ga.compareToIgnoreCase(gb);
+                            break;
+                        }
+                        case "nationality": {
+                            String na = a==null||a.getNationality()==null?"":a.getNationality();
+                            String nb = b==null||b.getNationality()==null?"":b.getNationality();
+                            res = na.compareToIgnoreCase(nb);
+                            break;
+                        }
+                        case "id":
+                        default: {
+                            String ia = a==null||a.getId()==null?"":a.getId();
+                            String ib = b==null||b.getId()==null?"":b.getId();
+                            res = ia.compareToIgnoreCase(ib);
+                            break;
+                        }
+                    }
+                    return asc ? res : -res;
+                }
+            });
+            return list;
+        }
+        // Fallback: return a sorted copy
+        CustomADT<Patient> out = new CustomADT<>();
+        for (int i = 0; i < patientList.size(); i++) out.add(patientList.get(i));
+        out.mergeSort(new CustomADT.ADTComparator<Patient>(){
+            public int compare(Patient a, Patient b) {
+                int res = 0;
+                switch(ffield) {
+                    case "name": {
+                        String na = a==null||a.getName()==null?"":a.getName();
+                        String nb = b==null||b.getName()==null?"":b.getName();
+                        res = na.compareToIgnoreCase(nb);
+                        break;
+                    }
+                    case "age": {
+                        int ia = 0, ib = 0;
+                        try { ia = Integer.parseInt(a.calculateAge(a.getDateOfBirth())); } catch(Exception ignored) {}
+                        try { ib = Integer.parseInt(b.calculateAge(b.getDateOfBirth())); } catch(Exception ignored) {}
+                        res = Integer.compare(ia, ib);
+                        break;
+                    }
+                    case "gender": {
+                        String ga = a==null||a.getGender()==null?"":a.getGender();
+                        String gb = b==null||b.getGender()==null?"":b.getGender();
+                        res = ga.compareToIgnoreCase(gb);
+                        break;
+                    }
+                    case "nationality": {
+                        String na = a==null||a.getNationality()==null?"":a.getNationality();
+                        String nb = b==null||b.getNationality()==null?"":b.getNationality();
+                        res = na.compareToIgnoreCase(nb);
+                        break;
+                    }
+                    case "id":
+                    default: {
+                        String ia = a==null||a.getId()==null?"":a.getId();
+                        String ib = b==null||b.getId()==null?"":b.getId();
+                        res = ia.compareToIgnoreCase(ib);
+                        break;
+                    }
+                }
+                return asc ? res : -res;
+            }
+        });
+        return out;
     }
 
     private void persist() { patientDAO.saveToFile(patientList); }
 
     // Ensure this in-memory list reflects latest file content
-    private void refreshFromFile() {
+    public void refreshFromFile() {
         try {
             ADTInterface<Patient> loaded = patientDAO.retrieveFromFile();
             // Simple replace contents
@@ -371,4 +517,11 @@ public class PatientMaintenance {
             for (int i = 0; i < loaded.size(); i++) patientList.add(loaded.get(i));
         } catch (Exception ignored) {}
     }
+
+    /**
+     * Public wrapper so UI can request a one-time reload from file.
+     * This avoids reloading on every getAllPatients() call while allowing
+     * the UI to refresh when entering the patient screen.
+     */
+    public void reloadFromFile() { refreshFromFile(); }
 }

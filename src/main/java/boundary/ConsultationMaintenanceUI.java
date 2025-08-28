@@ -17,8 +17,13 @@ import java.util.Scanner;
 public class ConsultationMaintenanceUI {
     private final Scanner scanner = new Scanner(System.in);
     private final ConsultationMaintenance control = new ConsultationMaintenance();
+    // sort toggles (true = next call will perform ascending)
+    private boolean sortByDateAsc = true;
+    private boolean sortByStatusDateAsc = true;
+    private boolean sortByDoctorPatientAsc = true;
 
     public void run() {
+        control.refreshConsultationsFromFile();
         int choice;
         do {
             InputUtil.clearScreen();
@@ -385,9 +390,9 @@ public class ConsultationMaintenanceUI {
         System.out.println("4. Reschedule Consultation");
         System.out.println("5. Search Consultations");
     System.out.println("6. Add Follow-up Consultation");
-    System.out.println("7. Sort by Date/Time (merge sort)");
-    System.out.println("8. Sort by Status then Date (bubble sort)");
-    System.out.println("9. Sort by Doctor then Patient (selection sort)");
+    System.out.println("7. Sort by Date/Time (merge sort) " + (sortByDateAsc?"(Asc)":"(Desc)"));
+    System.out.println("8. Sort by Status then Date (bubble sort) " + (sortByStatusDateAsc?"(Asc)":"(Desc)"));
+    System.out.println("9. Sort by Doctor then Patient (selection sort) " + (sortByDoctorPatientAsc?"(Asc)":"(Desc)"));
     System.out.println("10. Binary Search by ID");
     System.out.println("11. Report: Workload & Utilization (last 7 days)");
     System.out.println("12. Report: Follow-up & No-show (last 14 days)");
@@ -434,24 +439,30 @@ public class ConsultationMaintenanceUI {
 
     // === Handlers for new sort/search actions ===
     private void handleSortByDate() {
-        displayConsultationsHeader();
-        ADTInterface<Consultation> sorted = control.sortByDateTime();
-        if (sorted.isEmpty()) displayNoConsultations();
-        else displayConsultationsTable(sorted, true);
+    displayConsultationsHeader();
+    ADTInterface<Consultation> sorted;
+    if (sortByDateAsc) sorted = control.sortByDateTime(); else sorted = control.sortByDateTimeDesc();
+    sortByDateAsc = !sortByDateAsc;
+    if (sorted.isEmpty()) displayNoConsultations();
+    else displayConsultationsTable(sorted, true);
     }
 
     private void handleBubbleSortStatusDate() {
-        displayConsultationsHeader();
-        ADTInterface<Consultation> sorted = control.bubbleSortByStatusThenDate();
-        if (sorted.isEmpty()) displayNoConsultations();
-        else displayConsultationsTable(sorted, true);
+    displayConsultationsHeader();
+    ADTInterface<Consultation> sorted;
+    if (sortByStatusDateAsc) sorted = control.bubbleSortByStatusThenDate(); else sorted = control.bubbleSortByStatusThenDateDesc();
+    sortByStatusDateAsc = !sortByStatusDateAsc;
+    if (sorted.isEmpty()) displayNoConsultations();
+    else displayConsultationsTable(sorted, true);
     }
 
     private void handleSelectionSortDoctorPatient() {
-        displayConsultationsHeader();
-        ADTInterface<Consultation> sorted = control.selectionSortByDoctorThenPatient();
-        if (sorted.isEmpty()) displayNoConsultations();
-        else displayConsultationsTable(sorted, true);
+    displayConsultationsHeader();
+    ADTInterface<Consultation> sorted;
+    if (sortByDoctorPatientAsc) sorted = control.selectionSortByDoctorThenPatient(); else sorted = control.selectionSortByDoctorThenPatientDesc();
+    sortByDoctorPatientAsc = !sortByDoctorPatientAsc;
+    if (sorted.isEmpty()) displayNoConsultations();
+    else displayConsultationsTable(sorted, true);
     }
 
     private void handleBinarySearchById() {
