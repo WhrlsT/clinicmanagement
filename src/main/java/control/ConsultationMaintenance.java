@@ -466,7 +466,7 @@ public class ConsultationMaintenance {
         WorkloadUtilizationReport r = new WorkloadUtilizationReport();
         r.start = start; r.end = end;
 
-        // Per doctor counts (no java.util.Map): linear scan in list
+        // Per doctor counts: linear scan in list
         for (int i = 0; i < consultations.size(); i++) {
             Consultation c = consultations.get(i);
             if (c == null || c.getDate() == null) continue;
@@ -531,7 +531,6 @@ public class ConsultationMaintenance {
         FollowUpNoShowReport r = new FollowUpNoShowReport();
         r.start = start; r.end = end; r.thresholdHours = thresholdHours;
 
-        // No java.util.Map; we'll search by ID using existing list when needed
 
         LocalDateTime now = LocalDateTime.now();
         // Track conversions in a list; find by doctorId linearly
@@ -585,7 +584,7 @@ public class ConsultationMaintenance {
         return r;
     }
 
-    // ===== Available slots without java.util.Map =====
+    // ===== Available slots  =====
     public ADTInterface<SlotDay> getAvailableSlots(Doctor doctor, int days, LocalDate startDate) {
     refreshConsultationsFromFile();
         ADTInterface<SlotDay> out = new CustomADT<>();

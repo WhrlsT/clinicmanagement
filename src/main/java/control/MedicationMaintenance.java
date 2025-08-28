@@ -1,5 +1,7 @@
 package control;
 
+import java.util.Comparator;
+
 import adt.ADTInterface;
 import adt.CustomADT;
 import dao.ConsultationDAO;
@@ -161,4 +163,109 @@ public class MedicationMaintenance {
     }
 
     private void persist() { dao.save(list); }
+
+    // Report: how many of each medication has been dispensed (sold)
+    public CustomADT<DispensedCount> getMedicationDispensedCounts() {
+        CustomADT<DispensedCount> dispensedCounts = new CustomADT<>();
+        TreatmentDAO tdao = new TreatmentDAO();
+        ADTInterface<Treatment> treatments = tdao.load();
+        for (int i = 0; i < treatments.size(); i++) {
+            Treatment t = treatments.get(i);
+            if (t != null && t.getType() == Treatment.Type.MEDICATION && t.getStatus() == Treatment.TreatmentStatus.DISPENSED) {
+                String[] meds = t.getMedicationIds();
+                if (meds != null) {
+                    for (String mid : meds) {
+                        if (mid == null || mid.isBlank()) continue;
+                        int idx = dispensedCounts.findIndex(new CustomADT.ADTPredicate<DispensedCount>() {
+                        @Override
+                        public boolean test(DispensedCount dc) {
+                            return dc.getMedicationId().equals(mid);
+                        }
+                        });
+                        if (idx >= 0) {
+                            DispensedCount dc = dispensedCounts.get(idx);
+                            dc.setCount(dc.getCount() + 1);
+                            dispensedCounts.set(idx, dc);
+                        } else {
+                            dispensedCounts.add(new DispensedCount(mid, 1));
+                        }
+                    }
+                }
+            }
+        }
+        return dispensedCounts;
+    }
+
+    // Sort medications by quantity (ascending)
+    public void sortMedicationsByQuantity() {
+        if (list instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked")
+            CustomADT<Medication> l = (CustomADT<Medication>) cadt;
+            l.sort(new Comparator<Medication>() {
+                @Override
+                public int compare(Medication m1, Medication m2) {
+                    Integer q1 = m1 == null || m1.getQuantity() == null ? 0 : m1.getQuantity();
+                    Integer q2 = m2 == null || m2.getQuantity() == null ? 0 : m2.getQuantity();
+                    return q1.compareTo(q2);
+                }
+            });
+        }
+    }
+
+    // Sort medications by quantity (descending)
+    public void sortMedicationsByQuantityDesc() {
+        if (list instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked")
+            CustomADT<Medication> l = (CustomADT<Medication>) cadt;
+            l.sort((CustomADT.ADTComparator<Medication>) (m1, m2) -> {
+                Integer q1 = m1 == null || m1.getQuantity() == null ? 0 : m1.getQuantity();
+                Integer q2 = m2 == null || m2.getQuantity() == null ? 0 : m2.getQuantity();
+                return q2.compareTo(q1);
+            });
+        }
+    }
+    // Sort medications by name (descending)
+    public void sortMedicationsByNameDesc() {
+        if (list instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked")
+            CustomADT<Medication> l = (CustomADT<Medication>) cadt;
+            l.sort((CustomADT.ADTComparator<Medication>) (m1, m2) -> {
+                if (m1 == null || m1.getName() == null) return 1;
+                if (m2 == null || m2.getName() == null) return -1;
+                return m2.getName().compareToIgnoreCase(m1.getName());
+            });
+        }
+    }
+
+    // Sort medications by name (ascending)
+    public void sortMedicationsByName() {
+        if (list instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked")
+            CustomADT<Medication> l = (CustomADT<Medication>) cadt;
+            l.sort(new Comparator<Medication>() {
+                @Override
+                public int compare(Medication m1, Medication m2) {
+                    if (m1 == null || m1.getName() == null) return -1;
+                    if (m2 == null || m2.getName() == null) return 1;
+                    return m1.getName().compareToIgnoreCase(m2.getName());
+                }
+            });
+        }
+    }
+
+    // Helper class for dispensed count
+    public static class DispensedCount {
+        private String medicationId;
+        private int count;
+
+        public DispensedCount(String medicationId, int count) {
+            this.medicationId = medicationId;
+            this.count = count;
+        }
+
+        public String getMedicationId() { return medicationId; }
+        public int getCount() { return count; }
+        public void setCount(int count) { this.count = count; }
+    }
+    
 }

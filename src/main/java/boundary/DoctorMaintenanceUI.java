@@ -4,6 +4,7 @@ import java.util.Scanner;
 import utility.InputUtil;
 import entity.Doctor;
 import adt.ADTInterface;
+import adt.CustomADT;
 import control.DoctorMaintenance;
 import entity.Consultation;
 import entity.SlotStatus;
@@ -197,7 +198,7 @@ public class DoctorMaintenanceUI {
         sb.append("Next Shift Changes:\n");
         boolean anyChange=false;
         for (int h=hour+1; h<24; h++){
-            java.util.List<String> changes = new java.util.ArrayList<>();
+            CustomADT<String> changes = new CustomADT<>();
             for (int i=0;i<doctorList.size();i++){
                 Doctor d = doctorList.get(i);
                 boolean prev = isDoctorAvailableAtTime(d, dow, h-1);
@@ -206,7 +207,13 @@ public class DoctorMaintenanceUI {
             }
             if (!changes.isEmpty()){
                 anyChange=true;
-                sb.append(String.format("• %02d:00 - %s%n", h, String.join(", ", changes)));
+                // Build comma-separated string from CustomADT<String>
+                StringBuilder changeStr = new StringBuilder();
+                for (int ci = 0; ci < changes.size(); ci++) {
+                    if (ci > 0) changeStr.append(", ");
+                    changeStr.append(changes.get(ci));
+                }
+                sb.append(String.format("• %02d:00 - %s%n", h, changeStr.toString()));
                 if (sb.length()>2000) break;
             }
         }

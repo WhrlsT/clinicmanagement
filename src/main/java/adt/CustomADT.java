@@ -197,7 +197,7 @@ public class CustomADT<T> implements ADTInterface<T> {
         } catch (Exception ignored) {}
         return null;
     }
-    
+
     // ===== Generic searching/sorting/iteration exposed by CustomADT =====
     /** Find first index where predicate is true; -1 if none. */
     public int findIndex(ADTPredicate<T> predicate) {

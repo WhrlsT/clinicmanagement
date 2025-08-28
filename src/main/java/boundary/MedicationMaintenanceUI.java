@@ -16,13 +16,15 @@ public class MedicationMaintenanceUI {
     private final MedicationMaintenance control = new MedicationMaintenance();
     private final Scanner sc = new Scanner(System.in);
 
+    private boolean sortAscending = true;
+    private boolean sortQuantityAscending = true;
     public void run() {
         int c;
         do {
             InputUtil.clearScreen();
-           printHeader("Clinic Medication Maintenance");
-        printTable(buildRows(control.getAllMedications()));
-        c = menu();
+            printHeader("Clinic Medication Maintenance");
+            printTable(buildRows((ADTInterface<Medication>) control.getAllMedications()));
+            c = menu();
             switch (c) {
                 case 1 -> handleAdd();
                 case 2 -> handleUpdate();
@@ -30,7 +32,7 @@ public class MedicationMaintenanceUI {
                 case 4 -> { // view
                     InputUtil.clearScreen();
                     printHeader("Clinic Medication Maintenance");
-            printTable(buildRows(control.getAllMedications()));
+                    printTable(buildRows((ADTInterface<Medication>) control.getAllMedications()));
                     InputUtil.pauseScreen();
                 }
                 case 5 -> { // dispense
@@ -38,11 +40,33 @@ public class MedicationMaintenanceUI {
                     handleDispense();
                     InputUtil.pauseScreen();
                 }
-                case 6 -> {return;}
+                case 6 -> {
+                    if (sortAscending) {
+                        control.sortMedicationsByName();
+                        System.out.println("Medications sorted by name (ascending).");
+                    } else {
+                        control.sortMedicationsByNameDesc();
+                        System.out.println("Medications sorted by name (descending).");
+                    }
+                    sortAscending = !sortAscending;
+                }
+                case 7 -> {
+                    if (sortQuantityAscending) {
+                        control.sortMedicationsByQuantity();
+                        System.out.println("Medications sorted by quantity (ascending).");
+                    } else {
+                        control.sortMedicationsByQuantityDesc();
+                        System.out.println("Medications sorted by quantity (descending).");
+                    }
+                    sortQuantityAscending = !sortQuantityAscending;
+                }
+                case 8 -> handleSearchByName();
+                case 9 -> handleReport();
+                case 10 -> {return;}
                 default -> System.out.println("Invalid");
             }
-            if (c != 6 && c != 4 && c != 5) InputUtil.pauseScreen();
-        } while (c != 6);
+            if (c != 10 && c != 4 && c != 5) InputUtil.pauseScreen();
+        } while (c != 10);
     }
 
     private String buildRows(ADTInterface<Medication> list){
@@ -269,4 +293,112 @@ public class MedicationMaintenanceUI {
         System.out.println(headerMsg);
         System.out.println("-----------------------------------------------");
     }
+
+    private void handleReport() {
+        ADTInterface<Medication> meds = control.getAllMedications();
+        int total = meds.size();
+        int totalQty = 0;
+        int lowStock = 0;
+        int lowStockThreshold = 5; // You can adjust this threshold
+        CustomADT<control.MedicationMaintenance.DispensedCount> soldCounts = control.getMedicationDispensedCounts();
+        // Helper to get sold count by medication ID
+        java.util.function.Function<String, Integer> getSoldCount = (id) -> {
+            for (int i = 0; i < soldCounts.size(); i++) {
+                control.MedicationMaintenance.DispensedCount dc = soldCounts.get(i);
+                if (dc.getMedicationId().equals(id)) return dc.getCount();
+            }
+            return 0;
+        };
+        // Clear screen (works for most terminals)
+        try {
+            if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+                new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+            } else {
+                System.out.print("\033[H\033[2J");
+                System.out.flush();
+            }
+        } catch (Exception e) {
+            // Ignore if clear fails
+        }
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a");
+        String timeGenerated = now.format(formatter);
+        System.out.println("\n--- Medication Report ---");
+        System.out.println("Report generated at: " + timeGenerated);
+        for (int i = 0; i < meds.size(); i++) {
+            Medication m = meds.get(i);
+            Integer qty = m.getQuantity();
+            if (qty != null) {
+                totalQty += qty;
+                if (qty <= lowStockThreshold) lowStock++;
+            }
+        }
+        System.out.println("Total medications: " + total);
+        System.out.println("Total quantity in stock: " + totalQty);
+        System.out.println("Medications low in stock (≤ " + lowStockThreshold + "): " + lowStock);
+        System.out.println("\nStock, Quantity Sold, and Price Sold per Medication:");
+        System.out.printf("%-8s | %-24s | %-8s | %-8s | %-10s\n", "ID", "Name", "Stock", "Sold", "Price Sold");
+        System.out.println("---------------------------------------------------------------------");
+        double totalPriceSold = 0.0;
+        for (int i = 0; i < meds.size(); i++) {
+            Medication m = meds.get(i);
+            int sold = getSoldCount.apply(m.getId());
+            Integer stockQty = m.getQuantity();
+            String stock = stockQty == null ? "-" : stockQty.toString();
+            Double price = m.getPrice();
+            double priceSold = (price == null ? 0.0 : price) * sold;
+            totalPriceSold += priceSold;
+            String priceSoldStr = String.format("%.2f", priceSold);
+            // Red color for low stock (<= threshold)
+            boolean isLow = stockQty != null && stockQty <= lowStockThreshold;
+            String RED = "\u001B[31m";
+            String RESET = "\u001B[0m";
+            String line = String.format("%-8s | %-24s | %-8s | %-8d | %-10s", m.getId(), nz(m.getName()), stock, sold, priceSoldStr);
+            if (isLow) {
+                System.out.println(RED + line + RESET);
+            } else {
+                System.out.println(line);
+            }
+        }
+        System.out.println("------------------------");
+        System.out.printf("Total price for all sold: RM %.2f\n", totalPriceSold);
+    }
+
+    private void handleSearchByName() {
+        String query = InputUtil.getInput(sc, "Enter medication name to search: ");
+        if (query == null || query.isBlank()) {
+            System.out.println("No search term entered.");
+            return;
+        }
+        ADTInterface<Medication> results = new CustomADT<>();
+        ADTInterface<Medication> all = control.getAllMedications();
+        for (int i = 0; i < all.size(); i++) {
+            Medication m = all.get(i);
+            if (m.getName() != null && m.getName().toLowerCase().contains(query.toLowerCase())) {
+                results.add(m);
+            }
+        }
+        if (results.size() == 0) {
+            System.out.println("No medications found matching: " + query);
+            return;
+        }
+        System.out.println("Search Results:");
+        printTable(buildRows(results));
+        String id = InputUtil.getInput(sc, "Enter Medication ID to view details ('0' to cancel): ");
+        if (id.equals("0")) return;
+        Medication found = null;
+        for (int i = 0; i < results.size(); i++) {
+            if (results.get(i).getId().equalsIgnoreCase(id)) {
+                found = results.get(i);
+                break;
+            }
+        }
+        if (found != null) {
+            displayMedicationDetails(found);
+        } else {
+            System.out.println("Medication with ID '" + id + "' not found in search results.");
+        }
+    }
+
+
 }
