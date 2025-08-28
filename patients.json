@@ -123,19 +123,11 @@
   "name" : "Jin Wei Tan",
   "gender" : "Female",
   "phoneNumber" : "012123123",
-  "email" : "jinwei@female.com",
-  "dateOfBirth" : "2005-10-10",
-  "nationality" : "f"
-}, {
-  "id" : "P0017",
-  "name" : "Jin Wei Tan",
-  "gender" : "Female",
-  "phoneNumber" : "012123123",
   "email" : "jinwei@gmail.com",
   "dateOfBirth" : "1234-12-12",
   "nationality" : "Foreigner"
 }, {
-  "id" : "P0018",
+  "id" : "P0017",
   "name" : "Yu Jie Goh",
   "gender" : "Female",
   "phoneNumber" : "012123123123",

@@ -574,9 +574,8 @@ public class DoctorMaintenanceUI {
                 c.getId(), c.getPatientId(), c.getDate().toString(), c.getStatus(), c.getReason()));
         }
         displayConsultations(doctor.getName(), sb.toString());
+        InputUtil.pauseScreen();
     }
-
-    // Removed modal handleSort in favor of in-place toggle options in the main menu (cases 5,13,14)
 
     private void handleSearchBySpecialty() {
         showSearchIntro();
