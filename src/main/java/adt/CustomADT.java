@@ -234,7 +234,11 @@ public class CustomADT<T> implements ADTInterface<T> {
     /** In-place stable insertion sort using java.util.Comparator. */
     public void sort(Comparator<? super T> comparator) {
         if (comparator == null) return;
-        sort(new ADTComparator<T>() { public int compare(T a, T b){ return comparator.compare(a,b); } });
+        sort(new ADTComparator<T>() { 
+            public int compare(T a, T b){ 
+                return comparator.compare(a,b); 
+            } 
+        });
     }
 
     /** Default sort using natural ordering if elements implement Comparable. */
