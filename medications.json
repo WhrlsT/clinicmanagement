@@ -7,7 +7,7 @@
   "route" : "mouth",
   "price" : 123.0,
   "durationDays" : 30,
-  "quantity" : 47,
+  "quantity" : 45,
   "instructions" : "HEHE",
   "notes" : "12"
 }, {
@@ -19,7 +19,7 @@
   "route" : "oral",
   "price" : 150.0,
   "durationDays" : 5,
-  "quantity" : 19,
+  "quantity" : 18,
   "instructions" : "Take after food",
   "notes" : ""
 }, {
@@ -31,7 +31,7 @@
   "route" : "oral",
   "price" : 23.0,
   "durationDays" : 7,
-  "quantity" : 21,
+  "quantity" : 19,
   "instructions" : "Do not take on empty stomach",
   "notes" : "Avoid if ulcer"
 }, {
@@ -43,7 +43,7 @@
   "route" : "oral",
   "price" : 60.0,
   "durationDays" : 7,
-  "quantity" : 21,
+  "quantity" : 20,
   "instructions" : "Complete full course",
   "notes" : ""
 }, {
@@ -55,7 +55,7 @@
   "route" : "oral",
   "price" : 80.0,
   "durationDays" : 30,
-  "quantity" : 59,
+  "quantity" : 57,
   "instructions" : "With meals",
   "notes" : "Type 2 DM"
 }, {
