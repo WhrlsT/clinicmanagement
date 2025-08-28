@@ -97,7 +97,6 @@ public class ClinicMaintenanceUI {
 
     public void showInvalidChoice() { System.out.println("Invalid choice."); }
 
-    // === Top-level run loop (moved from control.ClinicMaintenance) ===
     public void run() {
         clearScreen();
         printHeader("Welcome to the Clinic Maintenance System");
@@ -127,7 +126,6 @@ public class ClinicMaintenanceUI {
                     }
                     if (choice != 6) {
                         clearScreen();
-                        printHeader("Welcome to the Clinic Maintenance System");
                     }
                 } while (choice != 6);
                 // Back to main menu

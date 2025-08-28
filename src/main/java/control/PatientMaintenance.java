@@ -169,6 +169,7 @@ public class PatientMaintenance {
         public ADTInterface<String> nationalityCounts;
         public ADTInterface<String> ageGroupCounts;
         public int highFrequencyPatients;
+        public ADTInterface<String> highFrequencyList; // entries formatted as "ID|Name|Visits"
         public String csv;
     }
 
@@ -185,10 +186,12 @@ public class PatientMaintenance {
         ageGroups.add("51-65:0");
         ageGroups.add("66+:0");
 
-        StringBuilder csv = new StringBuilder();
-        csv.append("id,name,dateOfBirth,age,gender,phone,email,nationality,visitCount,lastVisitDate,chronicFlag\n");
+    StringBuilder csv = new StringBuilder();
+    csv.append("id,name,dateOfBirth,age,gender,phone,email,nationality,visitCount,lastVisitDate,chronicFlag\n");
 
-        ADTInterface<Consultation> allConsults = consultationDAO.load();
+    ADTInterface<Consultation> allConsults = consultationDAO.load();
+    int highFreq = 0;
+    ADTInterface<String> highList = new CustomADT<>();
 
         for (int i = 0; i < patientList.size(); i++) {
             Patient p = patientList.get(i);
@@ -219,21 +222,18 @@ public class PatientMaintenance {
                 }
             }
             boolean chronic = visitCount >= 5;
+            if (visitCount >= 5) {
+                highFreq++;
+                highList.add(p.getId()+"|"+escapeCsv(p.getName())+"|"+visitCount);
+            }
             String lastVisitStr = lastVisit==null?"":lastVisit.toString();
             csv.append(String.format("%s,%s,%s,%d,%s,%s,%s,%s,%d,%s,%b\n",
                 p.getId(), escapeCsv(p.getName()), p.getDateOfBirth(), age, safe(p.getGender()), safe(p.getPhoneNumber()), safe(p.getEmail()), safe(p.getNationality()), visitCount, lastVisitStr, chronic));
         }
 
         r.averageAge = r.totalPatients==0?0.0:ageSum / r.totalPatients;
-
-        int highFreq = 0;
-        for (int i = 0; i < patientList.size(); i++) {
-            Patient p = patientList.get(i);
-            int visits = 0;
-            for (int j = 0; j < allConsults.size(); j++) if (p.getId().equals(allConsults.get(j).getPatientId())) visits++;
-            if (visits >= 5) highFreq++;
-        }
         r.highFrequencyPatients = highFreq;
+        r.highFrequencyList = highList;
         r.genderCounts = genderCounts; r.nationalityCounts = nationalityCounts; r.ageGroupCounts = ageGroups; r.csv = csv.toString();
         return r;
     }

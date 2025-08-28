@@ -63,13 +63,13 @@ public class PatientMaintenanceUI {
                 case 3 -> { InputUtil.clearScreen(); handleDelete(); }
                 case 4 -> { InputUtil.clearScreen(); handleViewDetails(); }
                 case 5 -> { InputUtil.clearScreen(); handleSearch(); }
-                case 6 -> { InputUtil.clearScreen(); handleVisitRecords(); }
-                case 7 -> { InputUtil.clearScreen(); handleDemographics(); }
-                case 8 -> { 
+                case 6 -> { InputUtil.clearScreen(); handleSort(); }
+                case 7 -> { InputUtil.clearScreen(); handleVisitRecords(); }
+                case 8 -> { InputUtil.clearScreen(); handleDemographics(); }
+                case 9 -> { 
                     printReturningToMainMenu();
                     return;
                 }
-                case 9 -> { InputUtil.clearScreen(); handleSort(); }
                 default -> printInvalidChoiceMessage();
             }
             if (choice != 8 && choice != 4) {
@@ -78,7 +78,7 @@ public class PatientMaintenanceUI {
                 printHeader("Clinic Patient Maintenance");
                 displayPatientsTable(control.getAllPatients());
             }
-        } while (choice != 7);
+        } while (choice != 9);
     }
 
     public int getMenuChoice() {
@@ -88,10 +88,10 @@ public class PatientMaintenanceUI {
         System.out.println("3. Delete Patient");
         System.out.println("4. View Patient Details");
         System.out.println("5. Search Patient");
-        System.out.println("6. View Visit Records");
-        System.out.println("7. Patient Demographics Report");
-    System.out.println("8. Exit");
-    System.out.println("9. Sort Patients");
+        System.out.println("6. Sort Patients");
+        System.out.println("7. View Visit Records");
+        System.out.println("8. Patient Demographics Report");
+        System.out.println("9. Exit");
         System.out.print("Select an option: ");
         return InputUtil.getIntInput(scanner, "Enter your choice: ");
     }
@@ -110,7 +110,9 @@ public class PatientMaintenanceUI {
         System.out.println("Total patients: " + totalPatients);
         System.out.println("Average age: " + String.format("%.1f", avgAge));
         System.out.println("High-frequency patients (>=5 visits): " + highFreqCount);
+        System.out.println("\n");
         System.out.println("Gender distribution:");
+        
         if (genderCounts != null) {
             for (int i = 0; i < genderCounts.size(); i++) {
                 String kv = genderCounts.get(i);
@@ -120,6 +122,8 @@ public class PatientMaintenanceUI {
                 System.out.println("  " + k + ": " + v);
             }
         }
+        System.out.println("");
+
         System.out.println("Nationality distribution:");
         if (nationalityCounts != null) {
             for (int i = 0; i < nationalityCounts.size(); i++) {
@@ -134,7 +138,9 @@ public class PatientMaintenanceUI {
 
     public void displayAgeGroupTable(adt.ADTInterface<String> ageGroups, int total) {
         System.out.println("\nAge group distribution:");
-        System.out.println("Group | Count | %");
+        System.out.println("------------------------------------------------");
+        System.out.println("Group  | Count | %");
+        System.out.println("------------------------------------------------");
         if (ageGroups != null) {
             for (int i = 0; i < ageGroups.size(); i++) {
                 String kv = ageGroups.get(i);
@@ -146,19 +152,6 @@ public class PatientMaintenanceUI {
             }
         }
     }
-
-    public void displayPerPatientCSV(String csv) {
-        System.out.println("\nPer-patient CSV (first lines):");
-        System.out.println(csv);
-    }
-
-    public boolean promptExportCSV() {
-        String ans = InputUtil.getInput(scanner, "Export CSV to 'patient_demographics.csv'? (y/N): ");
-        return ans.equalsIgnoreCase("y") || ans.equalsIgnoreCase("yes");
-    }
-
-    public void displayExportSaved(String path) { System.out.println("Exported CSV to: " + path); }
-    public void displayExportFailed(String msg) { System.out.println("Failed to save CSV: " + msg); }
 
     public void displayPatientsTable(String outputStr) {
         System.out.println("\n----------------------------------------------------------------------------------------------------------------------");
@@ -667,20 +660,27 @@ public class PatientMaintenanceUI {
         showDemographicsHeader();
         PatientMaintenance.DemographicsReport r = control.generateDemographicsReport();
         displayDemographicsSummary(r.totalPatients, r.averageAge, r.genderCounts, r.nationalityCounts, r.highFrequencyPatients);
-        displayAgeGroupTable(r.ageGroupCounts, r.totalPatients);
-        // show first line + placeholder if large
-        String[] lines = r.csv.split("\n");
-        String preview = lines.length > 0 ? lines[0] + (lines.length > 1 ? "\n... (truncated) ...\n" : "\n") : "";
-        displayPerPatientCSV(preview);
-        if (promptExportCSV()) {
-            try {
-                java.nio.file.Path out = java.nio.file.Paths.get("patient_demographics.csv");
-                java.nio.file.Files.writeString(out, r.csv);
-                displayExportSaved(out.toAbsolutePath().toString());
-            } catch (Exception e) {
-                displayExportFailed(e.getMessage());
+        if (r.highFrequencyList != null && !r.highFrequencyList.isEmpty()) {
+            System.out.println();
+            System.out.println("High-frequency patient list (ID | Name | Visits):");
+            System.out.println("------------------------------------------------");
+            System.out.printf("%-10s | %-20s | %-6s%n", "ID", "Name", "Visits");
+            System.out.println("------------------------------------------------");
+            for (int i = 0; i < r.highFrequencyList.size(); i++) {
+                String line = r.highFrequencyList.get(i);
+                if (line == null) continue;
+                String[] p = line.split("\\|", -1);
+                String id = p.length > 0 ? p[0] : "";
+                String name = p.length > 1 ? p[1] : "";
+                String vs = p.length > 2 ? p[2] : "0";
+                if (name.length() > 20) name = name.substring(0, 19) + "…";
+                int visits = 0; try { visits = Integer.parseInt(vs); } catch (Exception ignored) {}
+                System.out.printf("%-10s | %-20s | %6d%n", id, name, visits);
             }
         }
+        displayAgeGroupTable(r.ageGroupCounts, r.totalPatients);
+        InputUtil.pauseScreen();
+        return;
     }
 
     // === Prompt helpers used in update flow ===
