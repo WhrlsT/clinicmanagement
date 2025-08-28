@@ -61,5 +61,15 @@ public class Treatment {
 	public enum Type { MEDICATION, PROCEDURE, THERAPY, IMAGING, LAB }
 	// DISPENSED is only applicable when type == MEDICATION
 	public enum TreatmentStatus { PRESCRIBED, DISPENSED, COMPLETED }
+
+	// Validation method for error handling
+	public String validate() {
+		if (consultationId == null || consultationId.isBlank()) return "Consultation ID is required.";
+		if (type == null) return "Type is required.";
+		if (name == null || name.isBlank()) return "Name is required.";
+		if (cost != null && cost < 0) return "Cost must be positive.";
+		if (orderedDate != null && orderedDate.isAfter(LocalDate.now())) return "Ordered date cannot be in the future.";
+		return null;
+	}
 }
 
