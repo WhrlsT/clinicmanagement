@@ -24,15 +24,14 @@ public class MedicationMaintenanceUI {
         System.out.println("1. Add Medication");
         System.out.println("2. Update Medication");
         System.out.println("3. Delete Medication");
-        System.out.println("4. View Medications");
-        System.out.println("5. Dispense Medications");
-    System.out.println("6. Sort by Name " + (sortAscending ? "(Asc)" : "(Desc)"));
-    System.out.println("7. Sort by Quantity " + (sortQuantityAscending ? "(Asc)" : "(Desc)"));
-    System.out.println("8. Sort by ID " + (sortIdAscending ? "(Asc)" : "(Desc)"));
-    System.out.println("9. Search by Name");
-    System.out.println("10. Stock Valuation Report");
-    System.out.println("11. Show Medicine Report");
-    System.out.println("12. Back");
+        System.out.println("4. Dispense Medications");
+    System.out.println("5. Sort by Name " + (sortAscending ? "(Asc)" : "(Desc)"));
+    System.out.println("6. Sort by Quantity " + (sortQuantityAscending ? "(Asc)" : "(Desc)"));
+    System.out.println("7. Sort by ID " + (sortIdAscending ? "(Asc)" : "(Desc)"));
+    System.out.println("8. Search by Name");
+    System.out.println("9. Stock Valuation Report");
+    System.out.println("10. Show Medicine Report");
+    System.out.println("11. Back");
         return InputUtil.getIntInput(sc, "Choose: ");
     }
 
@@ -47,18 +46,12 @@ public class MedicationMaintenanceUI {
                 case 1 -> handleAdd();
                 case 2 -> handleUpdate();
                 case 3 -> handleDelete();
-                case 4 -> { // view
-                    InputUtil.clearScreen();
-                    printHeader("Clinic Medication Maintenance");
-                    printTable(buildRows((ADTInterface<Medication>) control.getAllMedications()));
-                    InputUtil.pauseScreen();
-                }
-                case 5 -> { // dispense
+                case 4 -> { // dispense
                     InputUtil.clearScreen();
                     handleDispense();
                     InputUtil.pauseScreen();
                 }
-                case 6 -> {
+                case 5 -> {
                     if (sortAscending) {
                         control.sortMedicationsByName();
                         System.out.println("Medications sorted by name (ascending).");
@@ -68,7 +61,7 @@ public class MedicationMaintenanceUI {
                     }
                     sortAscending = !sortAscending;
                 }
-                case 7 -> {
+                case 6 -> {
                     if (sortQuantityAscending) {
                         control.sortMedicationsByQuantity();
                         System.out.println("Medications sorted by quantity (ascending).");
@@ -78,7 +71,7 @@ public class MedicationMaintenanceUI {
                     }
                     sortQuantityAscending = !sortQuantityAscending;
                 }
-                case 8 -> {
+                case 7 -> {
                     if (sortIdAscending) {
                         control.sortMedicationsById();
                         System.out.println("Medications sorted by ID (ascending).");
@@ -88,14 +81,14 @@ public class MedicationMaintenanceUI {
                     }
                     sortIdAscending = !sortIdAscending;
                 }
-                case 9 -> handleSearchByName();
-                case 10 -> handleStockValuation();
-                case 11 -> handleReport();
-                case 12 -> {return;}
+                case 8 -> handleSearchByName();
+                case 9 -> handleStockValuation();
+                case 10 -> handleReport();
+                case 11 -> {return;}
                 default -> System.out.println("Invalid");
             }
-            if (c != 12 && c != 4 && c != 5) InputUtil.pauseScreen();
-        } while (c != 12);
+            if (c != 11 && c != 4 && c != 5) InputUtil.pauseScreen();
+        } while (c != 11);
     }
 
     private String buildRows(ADTInterface<Medication> list){
