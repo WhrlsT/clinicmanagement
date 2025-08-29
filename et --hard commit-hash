@@ -1,0 +1,46 @@
+[33m5c7cda5[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m added treatment payment complete
+[33mb5f8248[m Treatment Maintenance UI
+[33m7369b72[m wtest commit
+[33md8b837c[m Merge branch 'main' of https://github.com/WhrlsT/clinicmanagement
+[33mf551ba1[m removed view medication
+[33m79aa2d1[m test
+[33md487d53[m My treatment module not yet combine with stuff that r committed within 8 hours of committing
+[33mbe0d0df[m a
+[33m1473376[m till now
+[33m60f16e9[m Doctor maintenance generate monthly report
+[33m247a1a3[m until now
+[33mb6ca64e[m added 1 more report for medication
+[33m99e29c1[m modified abit
+[33m60d932e[m Added sorting on all modules
+[33m987cf5a[m fixed medication menu issues
+[33m9e156ed[m updated : Lk's medication report, searching and sorting
+[33m5a4b4cf[m Added option to enqueue booked consultation (higher priority than normal walkin)
+[33mfc6fb67[m fixed enqueue logics
+[33mbe7fa50[m Fixed logic error where serving ANY doctor's Patient will crash out the system
+[33m12566b7[m fixed consultation and userSide using java.util.collections into using CustomADT
+[33mcde1906[m testing
+[33mb804829[m fixed minor logic problem
+[33mb2bb0bc[m added exit system
+[33m1fe0c70[m fixed infinity loops
+[33m732f865[m user part done?
+[33m1c4dc7a[m user side done!
+[33ma72aa30[m user side update
+[33ma7a44a5[m fixed exit()s
+[33m30432e8[m removed queue management option from home menu
+[33m7c02bc5[m done moving all control's UI to boundary
+[33m3fbd36f[m Still moving UI Code
+[33md1c726f[m Medication UI update code
+[33m32681af[m Moved some UI code to boundary from control
+[33m91005b2[m testtest
+[33m7ec5692[m minor changes, added a reporting feature for patient
+[33md211a40[m testing123
+[33m8a88904[m till now
+[33me820837[m test
+[33m0c5c90b[m till now.
+[33ma022b08[m updated ui
+[33mee1f3b7[m current
+[33m7db3d7b[m Adjusted some input validation and field
+[33m75e8c6b[m deleted files not used
+[33m93444f7[m test
+[33m2aa75a1[m test
+[33m8008f0a[m first commit

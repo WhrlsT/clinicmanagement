@@ -19,58 +19,81 @@ import java.time.LocalDate;
 public class TreatmentMaintenance {
     // Report: Treatments per Doctor
     public String getTreatmentsPerDoctorReport() {
-        java.util.Map<String, Integer> doctorCount = new java.util.HashMap<>();
+        CustomADT<String> doctorList = new CustomADT<>();
+        CustomADT<Integer> doctorCountList = new CustomADT<>();
         for (int i = 0; i < treatments.size(); i++) {
             Treatment t = treatments.get(i);
             Consultation c = findConsultationById(t.getConsultationId());
             if (c != null && c.getDoctorId() != null) {
                 String docId = c.getDoctorId();
-                doctorCount.put(docId, doctorCount.getOrDefault(docId, 0) + 1);
+                int idx = -1;
+                for (int j = 0; j < doctorList.size(); j++) {
+                    if (doctorList.get(j).equals(docId)) { idx = j; break; }
+                }
+                if (idx == -1) { doctorList.add(docId); doctorCountList.add(1); }
+                else doctorCountList.set(idx, doctorCountList.get(idx) + 1);
             }
         }
         StringBuilder sb = new StringBuilder();
         sb.append("Treatments per Doctor:\n");
-        for (var entry : doctorCount.entrySet()) {
-            sb.append("  Doctor ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+        for (int i = 0; i < doctorList.size(); i++) {
+            sb.append("  Doctor ").append(doctorList.get(i)).append(": ").append(doctorCountList.get(i)).append("\n");
         }
         return sb.toString();
     }
 
     // Report: Treatments per Patient
     public String getTreatmentsPerPatientReport() {
-        java.util.Map<String, Integer> patientCount = new java.util.HashMap<>();
+        CustomADT<String> patientList = new CustomADT<>();
+        CustomADT<Integer> patientCountList = new CustomADT<>();
         for (int i = 0; i < treatments.size(); i++) {
             Treatment t = treatments.get(i);
             Consultation c = findConsultationById(t.getConsultationId());
             if (c != null && c.getPatientId() != null) {
                 String patId = c.getPatientId();
-                patientCount.put(patId, patientCount.getOrDefault(patId, 0) + 1);
+                int idx = -1;
+                for (int j = 0; j < patientList.size(); j++) {
+                    if (patientList.get(j).equals(patId)) { idx = j; break; }
+                }
+                if (idx == -1) { patientList.add(patId); patientCountList.add(1); }
+                else patientCountList.set(idx, patientCountList.get(idx) + 1);
             }
         }
         StringBuilder sb = new StringBuilder();
         sb.append("Treatments per Patient:\n");
-        for (var entry : patientCount.entrySet()) {
-            sb.append("  Patient ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+        for (int i = 0; i < patientList.size(); i++) {
+            sb.append("  Patient ").append(patientList.get(i)).append(": ").append(patientCountList.get(i)).append("\n");
         }
         return sb.toString();
     }
 
     // Report: Cost per Type
     public String getCostPerTypeReport() {
-        java.util.Map<Treatment.Type, Double> typeCost = new java.util.HashMap<>();
-        java.util.Map<Treatment.Type, Integer> typeCount = new java.util.HashMap<>();
+        CustomADT<Treatment.Type> typeList = new CustomADT<>();
+        CustomADT<Double> typeCostList = new CustomADT<>();
+        CustomADT<Integer> typeCountList = new CustomADT<>();
         for (int i = 0; i < treatments.size(); i++) {
             Treatment t = treatments.get(i);
             if (t.getType() != null && t.getCost() != null) {
-                typeCost.put(t.getType(), typeCost.getOrDefault(t.getType(), 0.0) + t.getCost());
-                typeCount.put(t.getType(), typeCount.getOrDefault(t.getType(), 0) + 1);
+                int idx = -1;
+                for (int j = 0; j < typeList.size(); j++) {
+                    if (typeList.get(j).equals(t.getType())) { idx = j; break; }
+                }
+                if (idx == -1) {
+                    typeList.add(t.getType());
+                    typeCostList.add(t.getCost());
+                    typeCountList.add(1);
+                } else {
+                    typeCostList.set(idx, typeCostList.get(idx) + t.getCost());
+                    typeCountList.set(idx, typeCountList.get(idx) + 1);
+                }
             }
         }
         StringBuilder sb = new StringBuilder();
         sb.append("Cost per Treatment Type:\n");
-        for (var entry : typeCost.entrySet()) {
-            double avg = entry.getValue() / typeCount.get(entry.getKey());
-            sb.append("  ").append(entry.getKey()).append(": Total=").append(String.format("%.2f", entry.getValue())).append(", Avg=").append(String.format("%.2f", avg)).append("\n");
+        for (int i = 0; i < typeList.size(); i++) {
+            double avg = typeCountList.get(i) == 0 ? 0.0 : typeCostList.get(i) / typeCountList.get(i);
+            sb.append("  ").append(typeList.get(i)).append(": Total=").append(String.format("%.2f", typeCostList.get(i))).append(", Avg=").append(String.format("%.2f", avg)).append("\n");
         }
         return sb.toString();
     }
@@ -146,21 +169,35 @@ public class TreatmentMaintenance {
     public String getSummaryReport(CustomADT<Treatment> list) {
         int total = list.size();
         double totalCost = 0;
-        java.util.Map<Treatment.Type, Integer> typeCount = new java.util.HashMap<>();
-        java.util.Map<Treatment.TreatmentStatus, Integer> statusCount = new java.util.HashMap<>();
+        CustomADT<Treatment.Type> typeList = new CustomADT<>();
+        CustomADT<Integer> typeCountList = new CustomADT<>();
+        CustomADT<Treatment.TreatmentStatus> statusList = new CustomADT<>();
+        CustomADT<Integer> statusCountList = new CustomADT<>();
         for (int i = 0; i < list.size(); i++) {
             Treatment t = list.get(i);
             totalCost += t.getCost() != null ? t.getCost() : 0;
-            typeCount.put(t.getType(), typeCount.getOrDefault(t.getType(), 0) + 1);
-            statusCount.put(t.getStatus(), statusCount.getOrDefault(t.getStatus(), 0) + 1);
+            // Type
+            int typeIdx = -1;
+            for (int j = 0; j < typeList.size(); j++) {
+                if (typeList.get(j).equals(t.getType())) { typeIdx = j; break; }
+            }
+            if (typeIdx == -1) { typeList.add(t.getType()); typeCountList.add(1); }
+            else typeCountList.set(typeIdx, typeCountList.get(typeIdx) + 1);
+            // Status
+            int statusIdx = -1;
+            for (int j = 0; j < statusList.size(); j++) {
+                if (statusList.get(j).equals(t.getStatus())) { statusIdx = j; break; }
+            }
+            if (statusIdx == -1) { statusList.add(t.getStatus()); statusCountList.add(1); }
+            else statusCountList.set(statusIdx, statusCountList.get(statusIdx) + 1);
         }
         StringBuilder sb = new StringBuilder();
         sb.append("Total Treatments: ").append(total).append("\n");
         sb.append("Average Cost: ").append(total == 0 ? 0 : String.format("%.2f", totalCost / total)).append("\n");
         sb.append("Type Breakdown:\n");
-        for (var entry : typeCount.entrySet()) sb.append("  ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+        for (int i = 0; i < typeList.size(); i++) sb.append("  ").append(typeList.get(i)).append(": ").append(typeCountList.get(i)).append("\n");
         sb.append("Status Breakdown:\n");
-        for (var entry : statusCount.entrySet()) sb.append("  ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+        for (int i = 0; i < statusList.size(); i++) sb.append("  ").append(statusList.get(i)).append(": ").append(statusCountList.get(i)).append("\n");
         return sb.toString();
     }
 
@@ -336,11 +373,19 @@ public class TreatmentMaintenance {
         @SuppressWarnings("unchecked") CustomADT<Treatment> list=(CustomADT<Treatment>) cadt;
         CustomADT.ADTComparator<Treatment> cmp;
         switch (field){
-            case 1 -> cmp = (a,b) -> safe(a.getId()).compareToIgnoreCase(safe(b.getId()));
-            case 2 -> cmp = (a,b) -> safe(a.getConsultationId()).compareToIgnoreCase(safe(b.getConsultationId()));
-            case 3 -> cmp = (a,b) -> safe(a.getType()==null?null:a.getType().name()).compareToIgnoreCase(safe(b.getType()==null?null:b.getType().name()));
-            case 4 -> cmp = (a,b) -> safe(a.getStatus()==null?null:a.getStatus().name()).compareToIgnoreCase(safe(b.getStatus()==null?null:b.getStatus().name()));
-            default -> cmp = (a,b) -> safe(a.getId()).compareToIgnoreCase(safe(b.getId()));
+            case 1 -> cmp = (a,b) -> {
+                if (a.getOrderedDate() == null && b.getOrderedDate() == null) return 0;
+                if (a.getOrderedDate() == null) return -1;
+                if (b.getOrderedDate() == null) return 1;
+                return a.getOrderedDate().compareTo(b.getOrderedDate());
+            };
+            case 2 -> cmp = (a,b) -> {
+                if (a.getCost() == null && b.getCost() == null) return 0;
+                if (a.getCost() == null) return -1;
+                if (b.getCost() == null) return 1;
+                return Double.compare(a.getCost(), b.getCost());
+            };
+            default -> cmp = (a,b) -> 0;
         }
         list.sort(cmp);
         if (!asc) reverse(list);

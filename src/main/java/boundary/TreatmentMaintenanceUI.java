@@ -1,7 +1,5 @@
 package boundary;
 
-import java.util.Map;
-import java.util.LinkedHashMap;
 
 import adt.ADTInterface;
 import adt.CustomADT;
@@ -49,9 +47,9 @@ public class TreatmentMaintenanceUI {
         do {
             try {
                 InputUtil.clearScreen();
-            printHeader("Clinic Treatment Maintenance");
-            printTable(rows(control.getAllTreatments()));
-            c = menu();
+                printHeader("Clinic Treatment Maintenance");
+                printTable(rows(filterNonCompleted(control.getAllTreatments())));
+                c = menu();
                 switch(c){
                     case 1 -> handleAdd();
                     case 2 -> handleUpdate();
@@ -59,46 +57,60 @@ public class TreatmentMaintenanceUI {
                     case 4 -> { // view
                         InputUtil.clearScreen();
                         printHeader("Clinic Treatment Maintenance");
-                        printTable(rows(control.getAllTreatments()));
+                        printTable(rows(filterNonCompleted(control.getAllTreatments())));
                         InputUtil.pauseScreen();
                     }
                     case 5 -> handleSort();
                     case 6 -> showReportsMenu();
                     case 7 -> handleCompleteTreatment();
-                    case 8 -> {return;}
+                    case 8 -> showCompletedHistory();
+                    case 9 -> {return;}
                     default -> System.out.println("Invalid");
                 }
                 if (c != 8 && c != 4) InputUtil.pauseScreen();
             } catch (Exception e) {
                 System.out.println("An error occurred: " + e.getMessage());
             }
-        } while (c!=8);
+        } while (c!=9);
     }
     private String rows(ADTInterface<Treatment> list){
         if (list==null || list.size()==0) return "(none)\n";
         StringBuilder sb=new StringBuilder();
-    String border = "+-----------------------------------------------------------------------------------------------------+\n";
-        sb.append(border);
-        sb.append(String.format("| %-8s | %-10s | %-12s | %-28s | %-10s | %-10s | %-12s | %-8s | %-6s |\n",
-            "ID", "ConsultID", "Type", "Name", "Status", "Cost(RM)", "Date", "Severity", "MedCnt"));
+    String border = "+-----------------------------------------------------------------------------------------------------------------------------------------------+\n";
     sb.append(border);
-        for (int i=0;i<list.size();i++){
-            Treatment t = list.get(i);
-            int medCount = t.getMedicationIds()==null?0:t.getMedicationIds().length;
-            String id = (t.getId()==null||t.getId().toString().isBlank()) ? "blank" : t.getId().toString();
-            String consultId = (t.getConsultationId()==null||t.getConsultationId().toString().isBlank()) ? "blank" : t.getConsultationId().toString();
-            String type = (t.getType()==null||t.getType().toString().isBlank()) ? "blank" : t.getType().toString();
-            String name = (t.getName()==null||t.getName().isBlank()) ? "blank" : t.getName();
-            String status = (t.getStatus()==null||t.getStatus().toString().isBlank()) ? "blank" : t.getStatus().toString();
-            String cost = (t.getCost()==null||String.format("%.2f", t.getCost()).isBlank()) ? "blank" : String.format("%.2f", t.getCost());
-            String date = (t.getOrderedDate()==null||t.getOrderedDate().toString().isBlank()) ? "blank" : t.getOrderedDate().toString();
-            String severity = (t.getDiagnosis()==null||t.getDiagnosis().isBlank()) ? "blank" : t.getDiagnosis();
-            String medCnt = (medCount==0) ? "blank" : String.valueOf(medCount);
-            sb.append(String.format("| %-8s | %-10s | %-12s | %-28s | %-10s | %-10s | %-12s | %-8s | %-6s |\n",
-                id, consultId, type, name, status, cost, date, severity, medCnt));
+    sb.append(String.format("| %-8s | %-10s | %-20s | %-12s | %-28s | %-10s | %-10s | %-12s | %-8s | %-6s |\n",
+        "ID", "ConsultID", "Patient Name", "Type", "Name", "Status", "Cost(RM)", "Date", "Severity", "MedCnt"));
+    sb.append(border);
+    // Load all patients for lookup
+    ADTInterface<entity.Patient> patients = new dao.PatientDAO().retrieveFromFile();
+    for (int i=0;i<list.size();i++){
+        Treatment t = list.get(i);
+        int medCount = t.getMedicationIds()==null?0:t.getMedicationIds().length;
+        String id = (t.getId()==null||t.getId().toString().isBlank()) ? "blank" : t.getId().toString();
+        String consultId = (t.getConsultationId()==null||t.getConsultationId().toString().isBlank()) ? "blank" : t.getConsultationId().toString();
+        String type = (t.getType()==null||t.getType().toString().isBlank()) ? "blank" : t.getType().toString();
+        String name = (t.getName()==null||t.getName().isBlank()) ? "blank" : t.getName();
+        String status = (t.getStatus()==null||t.getStatus().toString().isBlank()) ? "blank" : t.getStatus().toString();
+        String cost = (t.getCost()==null||String.format("%.2f", t.getCost()).isBlank()) ? "blank" : String.format("%.2f", t.getCost());
+        String date = (t.getOrderedDate()==null||t.getOrderedDate().toString().isBlank()) ? "blank" : t.getOrderedDate().toString();
+        String severity = (t.getDiagnosis()==null||t.getDiagnosis().isBlank()) ? "blank" : t.getDiagnosis();
+        String medCnt = (medCount==0) ? "blank" : String.valueOf(medCount);
+        // Lookup patient name via consultation
+        String patientName = "";
+        Consultation consult = control.findConsultationById(consultId);
+        if (consult != null) {
+            String patientId = consult.getPatientId();
+            for (int p = 0; p < patients.size(); p++) {
+                entity.Patient pat = patients.get(p);
+                if (pat.getId().equals(patientId)) { patientName = pat.getName(); break; }
+            }
         }
-        sb.append(border);
-        return sb.toString();
+        if (patientName.isBlank()) patientName = "(unknown)";
+        sb.append(String.format("| %-8s | %-10s | %-20s | %-12s | %-28s | %-10s | %-10s | %-12s | %-8s | %-6s |\n",
+            id, consultId, patientName, type, name, status, cost, date, severity, medCnt));
+    }
+    sb.append(border);
+    return sb.toString();
     }
 
     private void handleAdd(){
@@ -119,11 +131,21 @@ public class TreatmentMaintenanceUI {
             cUI.displayConsultationsTable(consultRows, false);
 
             String consultId;
+            String patientName = "";
             while (true) {
                 consultId = InputUtil.getInput(sc, "Consultation ID (ONGOING only, '0' to cancel): ").trim();
                 if (consultId.equals("0")) return;
                 Consultation chosen = control.findConsultationById(consultId);
-                if (chosen != null && chosen.getStatus() == Consultation.Status.ONGOING) break;
+                if (chosen != null && chosen.getStatus() == Consultation.Status.ONGOING) {
+                    // Lookup patient name
+                    ADTInterface<entity.Patient> patients = new dao.PatientDAO().retrieveFromFile();
+                    for (int p = 0; p < patients.size(); p++) {
+                        entity.Patient pat = patients.get(p);
+                        if (pat.getId().equals(chosen.getPatientId())) { patientName = pat.getName(); break; }
+                    }
+                    System.out.println("Selected Patient: " + patientName);
+                    break;
+                }
                 System.out.println("Invalid. Please enter an ONGOING consultation ID from the list.");
             }
 
@@ -387,16 +409,46 @@ public class TreatmentMaintenanceUI {
             printHeader("Clinic Treatment Maintenance");
             showDeleteHeader();
             showDeleteIntro();
-            // Show available treatments to delete
+            System.out.println("Delete Options:");
+            System.out.println("1. Delete Ongoing Treatment");
+            System.out.println("2. Delete Completed Treatment");
+            int opt = InputUtil.getIntInput(sc, "Choose option (1-2, 0 to cancel): ");
+            if (opt == 0) return;
+            if (opt != 1 && opt != 2) { System.out.println("Invalid option."); return; }
+
             CustomADT<Treatment> treatments = toCustomADT(control.getAllTreatments());
-            if (treatments.size() == 0) {
-                System.out.println("No treatments available to delete.");
-                return;
+            CustomADT<Treatment> filtered = new CustomADT<>();
+            if (opt == 1) {
+                // Ongoing: include everything except COMPLETED and DISPENSED
+                for (int i = 0; i < treatments.size(); i++) {
+                    Treatment t = treatments.get(i);
+                    String status = nz(t.getStatus()).toUpperCase();
+                    if (!status.equals("COMPLETED") && !status.equals("DISPENSED")) {
+                        filtered.add(t);
+                    }
+                }
+                if (filtered.size() == 0) {
+                    System.out.println("No ongoing treatments available to delete.");
+                    return;
+                }
+            } else {
+                // Completed: include both COMPLETED and DISPENSED
+                for (int i = 0; i < treatments.size(); i++) {
+                    Treatment t = treatments.get(i);
+                    String status = nz(t.getStatus()).toUpperCase();
+                    if (status.equals("COMPLETED") || status.equals("DISPENSED")) {
+                        filtered.add(t);
+                    }
+                }
+                if (filtered.size() == 0) {
+                    System.out.println("No completed or dispensed treatments available to delete.");
+                    return;
+                }
             }
             System.out.printf("%-8s|%-12s|%-28s|%-10s|%-8s|%-8s\n", "ID", "Type", "Name", "Status", "Severity", "Date");
             System.out.println("-".repeat(80));
-            for (int i = 0; i < treatments.size(); i++) {
-                Treatment t = treatments.get(i);
+            for (int i = 0; i < filtered.size(); i++) {
+                Treatment t = filtered.get(i);
                 System.out.printf("%-8s|%-12s|%-28s|%-10s|%-8s|%-8s\n", t.getId(), nz(t.getType()), nz(t.getName()), nz(t.getStatus()), nz(t.getDiagnosis()), nz(t.getOrderedDate()));
             }
             System.out.println("-".repeat(80));
@@ -418,21 +470,24 @@ public class TreatmentMaintenanceUI {
         try {
             InputUtil.clearScreen();
             printHeader("Clinic Treatment Maintenance - Sort");
-            int opt = searchMenu();
-            if (opt==4) return;
-            String q = promptSearchQuery().toLowerCase();
-            CustomADT<Treatment> results;
-            switch (opt){
-                case 1 -> results = control.searchById(q);
-                case 2 -> results = control.searchByPatient(q);
-                case 3 -> results = control.searchByDoctor(q);
-                default -> results = new CustomADT<>();
-            }
+            System.out.println("Sort by:");
+            System.out.println("1. Date (orderedDate)");
+            System.out.println("2. Cost (RM)");
+            int field = InputUtil.getIntInput(sc, "Choose field (1=Date, 2=Cost, 0=Cancel): ");
+            if (field == 0) return;
+            if (field != 1 && field != 2) { System.out.println("Invalid field."); return; }
+            System.out.println("Order:");
+            System.out.println("1. Ascending (earliest/lowest first)");
+            System.out.println("2. Descending (latest/highest first)");
+            int order = InputUtil.getIntInput(sc, "Choose order (1=Ascending, 2=Descending, 0=Cancel): ");
+            if (order == 0) return;
+            boolean asc = (order == 1);
+            control.sortTreatments(field, asc);
             InputUtil.clearScreen();
-            printHeader("Sort Results");
-            printTable(rows(results));
+            printHeader("Sorted Treatments");
+            printTable(rows(control.getAllTreatments()));
         } catch (Exception e) {
-            System.out.println("An error occurred during sort/search: " + e.getMessage());
+            System.out.println("An error occurred during sorting: " + e.getMessage());
         }
     }
 
@@ -488,9 +543,40 @@ public class TreatmentMaintenanceUI {
         System.out.println("5. Sort Treatments");
         System.out.println("6. Treatment Reports");
         System.out.println("7. Complete Treatment (Payment Complete)");
-        System.out.println("8. Back");
+            System.out.println("8. Completed Treatment History");
+            System.out.println("9. Exit");
         return InputUtil.getIntInput(sc, "Choose: ");
     }
+
+        // Helper to filter out completed treatments
+        private CustomADT<Treatment> filterNonCompleted(ADTInterface<Treatment> list) {
+            CustomADT<Treatment> result = new CustomADT<>();
+            for (int i = 0; i < list.size(); i++) {
+                Treatment t = list.get(i);
+                String status = t.getStatus() == null ? "" : t.getStatus().toString().toUpperCase();
+                if (!status.equals("COMPLETED") && !status.equals("DISPENSED")) {
+                    result.add(t);
+                }
+            }
+            return result;
+        }
+
+        // Completed Treatment History page
+        private void showCompletedHistory() {
+            InputUtil.clearScreen();
+            printHeader("Completed Treatment History");
+            CustomADT<Treatment> completed = new CustomADT<>();
+            ADTInterface<Treatment> all = control.getAllTreatments();
+            for (int i = 0; i < all.size(); i++) {
+                Treatment t = all.get(i);
+                String status = t.getStatus() == null ? "" : t.getStatus().toString().toUpperCase();
+                if (status.equals("COMPLETED") || status.equals("DISPENSED")) {
+                    completed.add(t);
+                }
+            }
+            printTable(rows(completed));
+            InputUtil.pauseScreen();
+        }
 
     public void printTable(String rows) {
     System.out.println();
@@ -624,95 +710,80 @@ public class TreatmentMaintenanceUI {
             System.out.println("═".repeat(80));
             System.out.println("TREATMENT REPORTS MENU");
             System.out.println("═".repeat(80));
-            System.out.println("Report generated at: " + java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a")));
+            String timeGenerated = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a"));
+            System.out.println("Report generated at: " + timeGenerated);
             System.out.println();
-            System.out.println("1. Most Used Treatment Types");
-            System.out.println("2. Monthly Treatment Trends");
-            System.out.println("3. Revenue by Treatment Type");
-            System.out.println("4. Underutilized Treatments");
-            System.out.println("5. Back");
+
+            CustomADT<Treatment> treatments = toCustomADT(control.getAllTreatments());
+
+            System.out.println("1. Most Used Treatment Types (with Graph)");
+            System.out.println("2. Revenue by Treatment Type (with Graph)");
+            System.out.println("3. Back");
             int reportChoice = InputUtil.getIntInput(sc, "Choose: ");
             if (reportChoice == 1) {
-                CustomADT<Treatment> treatments = toCustomADT(control.getAllTreatments());
-                Map<String, Integer> typeCounts = new LinkedHashMap<>();
+                // Most Used Treatment Types with ASCII bar graph
+                CustomADT<String> typeList = new CustomADT<>();
+                CustomADT<Integer> typeCountList = new CustomADT<>();
+                int maxCount = 0;
                 for (int i = 0; i < treatments.size(); i++) {
                     Treatment t = treatments.get(i);
                     String type = t.getType() == null ? "Unknown" : t.getType().toString();
-                    typeCounts.put(type, typeCounts.getOrDefault(type, 0) + 1);
+                    int idx = -1;
+                    for (int j = 0; j < typeList.size(); j++) {
+                        if (typeList.get(j).equals(type)) { idx = j; break; }
+                    }
+                    if (idx == -1) { typeList.add(type); typeCountList.add(1); }
+                    else typeCountList.set(idx, typeCountList.get(idx) + 1);
                 }
-                System.out.println("/---------------------------------------------\\");
-                System.out.printf("| %-25s | %-10s |\n", "Type", "Count");
-                System.out.println("|---------------------------------------------|");
-                for (String type : typeCounts.keySet()) {
-                    System.out.printf("| %-25s | %-10d |\n", type, typeCounts.get(type));
+                for (int i = 0; i < typeCountList.size(); i++) {
+                    if (typeCountList.get(i) > maxCount) maxCount = typeCountList.get(i);
                 }
-                System.out.println("\\---------------------------------------------/");
+                System.out.println("\nMost Used Treatment Types:");
+                System.out.println("---------------------------------------------------");
+                for (int i = 0; i < typeList.size(); i++) {
+                    int count = typeCountList.get(i);
+                    int barLen = maxCount == 0 ? 0 : (int) ((count * 40.0) / maxCount);
+                    String bar = "█".repeat(barLen);
+                    System.out.printf("%-20s | %3d | %s\n", typeList.get(i), count, bar);
+                }
+                System.out.println("---------------------------------------------------");
                 InputUtil.pauseScreen();
             } else if (reportChoice == 2) {
-                CustomADT<Treatment> treatments = toCustomADT(control.getAllTreatments());
-                Map<String, Map<String, Integer>> trends = new LinkedHashMap<>();
-                for (int i = 0; i < treatments.size(); i++) {
-                    Treatment t = treatments.get(i);
-                    String type = t.getType() == null ? "Unknown" : t.getType().toString();
-                    String period = t.getOrderedDate() == null ? "N/A" : t.getOrderedDate().getYear() + "-" + String.format("%02d", t.getOrderedDate().getMonthValue());
-                    trends.putIfAbsent(type, new LinkedHashMap<>());
-                    Map<String, Integer> periodMap = trends.get(type);
-                    periodMap.put(period, periodMap.getOrDefault(period, 0) + 1);
-                }
-                System.out.println("/-------------------------------------------------------------\\");
-                System.out.printf("| %-25s | %-10s | %-10s |\n", "Type", "Month", "Count");
-                System.out.println("|-------------------------------------------------------------|");
-                for (String type : trends.keySet()) {
-                    Map<String, Integer> periodMap = trends.get(type);
-                    java.util.List<String> sortedPeriods = new java.util.ArrayList<>(periodMap.keySet());
-                    sortedPeriods.sort((a, b) -> a.compareTo(b));
-                    for (String period : sortedPeriods) {
-                        System.out.printf("| %-25s | %-10s | %-10d |\n", type, period, periodMap.get(period));
-                    }
-                }
-                System.out.println("\\-------------------------------------------------------------/");
-                InputUtil.pauseScreen();
-            } else if (reportChoice == 3) {
-                CustomADT<Treatment> treatments = toCustomADT(control.getAllTreatments());
-                Map<String, Double> typeRevenue = new LinkedHashMap<>();
+                // Revenue by Treatment Type with ASCII bar graph
+                CustomADT<String> revTypeList = new CustomADT<>();
+                CustomADT<Double> revTypeTotals = new CustomADT<>();
+                double maxRev = 0.0;
                 for (int i = 0; i < treatments.size(); i++) {
                     Treatment t = treatments.get(i);
                     String type = t.getType() == null ? "Unknown" : t.getType().toString();
                     double cost = t.getCost() == null ? 0.0 : t.getCost();
-                    typeRevenue.put(type, typeRevenue.getOrDefault(type, 0.0) + cost);
+                    int idx = -1;
+                    for (int j = 0; j < revTypeList.size(); j++) {
+                        if (revTypeList.get(j).equals(type)) { idx = j; break; }
+                    }
+                    if (idx == -1) { revTypeList.add(type); revTypeTotals.add(cost); }
+                    else revTypeTotals.set(idx, revTypeTotals.get(idx) + cost);
                 }
-                System.out.println("/---------------------------------------------\\");
-                System.out.printf("| %-25s | %-15s |\n", "Type", "Total Revenue (RM)");
-                System.out.println("|---------------------------------------------|");
-                for (String type : typeRevenue.keySet()) {
-                    System.out.printf("| %-25s | %-15.2f |\n", type, typeRevenue.get(type));
+                for (int i = 0; i < revTypeTotals.size(); i++) {
+                    if (revTypeTotals.get(i) > maxRev) maxRev = revTypeTotals.get(i);
                 }
-                System.out.println("\\---------------------------------------------/");
+                System.out.println("\nRevenue by Treatment Type:");
+                System.out.println("---------------------------------------------------");
+                for (int i = 0; i < revTypeList.size(); i++) {
+                    double rev = revTypeTotals.get(i);
+                    int barLen = maxRev == 0.0 ? 0 : (int) ((rev * 40.0) / maxRev);
+                    String bar = "█".repeat(barLen);
+                    System.out.printf("%-20s | RM %8.2f | %s\n", revTypeList.get(i), rev, bar);
+                }
+                System.out.println("---------------------------------------------------");
                 InputUtil.pauseScreen();
-            } else if (reportChoice == 4) {
-                CustomADT<Treatment> treatments = toCustomADT(control.getAllTreatments());
-                Map<String, Integer> nameCounts = new LinkedHashMap<>();
-                for (int i = 0; i < treatments.size(); i++) {
-                    Treatment t = treatments.get(i);
-                    String name = t.getName() == null ? (t.getType() == null ? "Unknown" : t.getType().toString()) : t.getName();
-                    nameCounts.put(name, nameCounts.getOrDefault(name, 0) + 1);
-                }
-                System.out.println("/---------------------------------------------\\");
-                System.out.printf("| %-28s | %-10s |\n", "Treatment Name", "Count");
-                System.out.println("|---------------------------------------------|");
-                // Show bottom 5
-                nameCounts.entrySet().stream().sorted(java.util.Map.Entry.comparingByValue()).limit(5).forEach(e -> {
-                    System.out.printf("| %-28s | %-10d |\n", e.getKey(), e.getValue());
-                });
-                System.out.println("\\---------------------------------------------/");
-                InputUtil.pauseScreen();
-            } else if (reportChoice == 5) {
+            } else if (reportChoice == 3) {
                 return;
             } else {
                 System.out.println("Invalid");
                 InputUtil.pauseScreen();
             }
-            }
         }
     }
+}
 
