@@ -196,6 +196,45 @@ public class MedicationMaintenance {
         return dispensedCounts;
     }
 
+    // --- Stock valuation helper ---
+    public static class StockValuation {
+        private final String medicationId;
+        private final String medicationName;
+        private final int quantity;
+        private final double unitPrice;
+        private final double totalValue;
+
+        public StockValuation(String medicationId, String medicationName, int quantity, double unitPrice) {
+            this.medicationId = medicationId;
+            this.medicationName = medicationName;
+            this.quantity = quantity;
+            this.unitPrice = unitPrice;
+            this.totalValue = (unitPrice <= 0.0 || quantity <= 0) ? 0.0 : unitPrice * quantity;
+        }
+
+        public String getMedicationId() { return medicationId; }
+        public String getMedicationName() { return medicationName; }
+        public int getQuantity() { return quantity; }
+        public double getUnitPrice() { return unitPrice; }
+        public double getTotalValue() { return totalValue; }
+    }
+
+    /**
+     * Build a per-medication stock valuation list using current unit price and quantity.
+     */
+    public CustomADT<StockValuation> getStockValuation() {
+        CustomADT<StockValuation> out = new CustomADT<>();
+        ADTInterface<Medication> meds = getAllMedications();
+        for (int i = 0; i < meds.size(); i++) {
+            Medication m = meds.get(i);
+            if (m == null) continue;
+            int q = m.getQuantity() == null ? 0 : m.getQuantity();
+            double p = m.getPrice() == null ? 0.0 : m.getPrice();
+            out.add(new StockValuation(m.getId(), m.getName(), q, p));
+        }
+        return out;
+    }
+
     // Sort medications by quantity (ascending)
     public void sortMedicationsByQuantity() {
         if (list instanceof CustomADT<?> cadt) {

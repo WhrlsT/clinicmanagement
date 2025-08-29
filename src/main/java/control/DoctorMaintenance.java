@@ -1,3 +1,8 @@
+/**
+ *
+ * @author Low Wai Hang
+ */
+
 package control;
 
 import adt.ADTInterface;
@@ -6,7 +11,6 @@ import dao.ConsultationDAO;
 import dao.DoctorDAO;
 import entity.Consultation;
 import entity.Doctor;
-import entity.Patient;
 import entity.SlotStatus;
 
 /**

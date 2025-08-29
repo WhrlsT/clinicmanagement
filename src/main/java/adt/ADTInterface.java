@@ -23,12 +23,12 @@ public interface ADTInterface<T> {
     boolean isEmpty();                  // Is list empty?
     void clear();                       // Remove all elements
 
-    // ===== QUEUE-SPECIFIC OPERATIONS =====
-    // Priority-based operations (remain generic)
+    // Queue Implementation
+    // Priority-based operations 
     void enqueue(T entry);                       // Add entry with priority handling
     void bubbleUp(int index);                    // Bubble up by priority
     
-    // ID-based operations (remain generic)
+    // ID-based operations
     T findEntry(String id);                      // Find entry by ID
     int indexOf(String id);                      // Find index by ID
 

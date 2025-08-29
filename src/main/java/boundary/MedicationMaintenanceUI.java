@@ -24,12 +24,12 @@ public class MedicationMaintenanceUI {
         System.out.println("1. Add Medication");
         System.out.println("2. Update Medication");
         System.out.println("3. Delete Medication");
-        System.out.println("4. View Medications");
-        System.out.println("5. Dispense Medications");
-    System.out.println("6. Sort by Name " + (sortAscending ? "(Asc)" : "(Desc)"));
-    System.out.println("7. Sort by Quantity " + (sortQuantityAscending ? "(Asc)" : "(Desc)"));
-    System.out.println("8. Sort by ID " + (sortIdAscending ? "(Asc)" : "(Desc)"));
-    System.out.println("9. Search by Name");
+        System.out.println("4. Dispense Medications");
+    System.out.println("5. Sort by Name " + (sortAscending ? "(Asc)" : "(Desc)"));
+    System.out.println("6. Sort by Quantity " + (sortQuantityAscending ? "(Asc)" : "(Desc)"));
+    System.out.println("7. Sort by ID " + (sortIdAscending ? "(Asc)" : "(Desc)"));
+    System.out.println("8. Search by Name");
+    System.out.println("9. Stock Valuation Report");
     System.out.println("10. Show Medicine Report");
     System.out.println("11. Back");
         return InputUtil.getIntInput(sc, "Choose: ");
@@ -46,18 +46,12 @@ public class MedicationMaintenanceUI {
                 case 1 -> handleAdd();
                 case 2 -> handleUpdate();
                 case 3 -> handleDelete();
-                case 4 -> { // view
-                    InputUtil.clearScreen();
-                    printHeader("Clinic Medication Maintenance");
-                    printTable(buildRows((ADTInterface<Medication>) control.getAllMedications()));
-                    InputUtil.pauseScreen();
-                }
-                case 5 -> { // dispense
+                case 4 -> { // dispense
                     InputUtil.clearScreen();
                     handleDispense();
                     InputUtil.pauseScreen();
                 }
-                case 6 -> {
+                case 5 -> {
                     if (sortAscending) {
                         control.sortMedicationsByName();
                         System.out.println("Medications sorted by name (ascending).");
@@ -67,7 +61,7 @@ public class MedicationMaintenanceUI {
                     }
                     sortAscending = !sortAscending;
                 }
-                case 7 -> {
+                case 6 -> {
                     if (sortQuantityAscending) {
                         control.sortMedicationsByQuantity();
                         System.out.println("Medications sorted by quantity (ascending).");
@@ -77,7 +71,7 @@ public class MedicationMaintenanceUI {
                     }
                     sortQuantityAscending = !sortQuantityAscending;
                 }
-                case 8 -> {
+                case 7 -> {
                     if (sortIdAscending) {
                         control.sortMedicationsById();
                         System.out.println("Medications sorted by ID (ascending).");
@@ -87,13 +81,14 @@ public class MedicationMaintenanceUI {
                     }
                     sortIdAscending = !sortIdAscending;
                 }
-                case 9 -> handleSearchByName();
+                case 8 -> handleSearchByName();
+                case 9 -> handleStockValuation();
                 case 10 -> handleReport();
                 case 11 -> {return;}
                 default -> System.out.println("Invalid");
             }
             if (c != 11 && c != 4 && c != 5) InputUtil.pauseScreen();
-        } while (c != 10);
+        } while (c != 11);
     }
 
     private String buildRows(ADTInterface<Medication> list){
@@ -379,6 +374,42 @@ public class MedicationMaintenanceUI {
         }
         System.out.println("------------------------");
         System.out.printf("Total price for all sold: RM %.2f\n", totalPriceSold);
+    }
+
+    private void handleStockValuation() {
+        // Clear screen (works for most terminals)
+        try {
+            if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+                new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+            } else {
+                System.out.print("\033[H\033[2J");
+                System.out.flush();
+            }
+        } catch (Exception e) {
+            // Ignore if clear fails
+        }
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a");
+        String timeGenerated = now.format(formatter);
+        System.out.println("\n--- Medication Stock Valuation ---");
+        System.out.println("Report generated at: " + timeGenerated);
+
+        CustomADT<control.MedicationMaintenance.StockValuation> valuation = control.getStockValuation();
+        double totalStockValue = 0.0;
+        int totalQty = 0;
+        System.out.printf("%-8s | %-24s | %-8s | %-10s | %-12s%n", "ID", "Name", "Stock", "Unit Price", "Total Value");
+        System.out.println("----------------------------------------------------------------------");
+        for (int i = 0; i < valuation.size(); i++) {
+            control.MedicationMaintenance.StockValuation sv = valuation.get(i);
+            String unit = String.format("%.2f", sv.getUnitPrice());
+            String tot = String.format("%.2f", sv.getTotalValue());
+            System.out.printf("%-8s | %-24s | %-8d | %-10s | %-12s%n",
+                sv.getMedicationId(), nz(sv.getMedicationName()), sv.getQuantity(), unit, tot);
+            totalStockValue += sv.getTotalValue();
+            totalQty += sv.getQuantity();
+        }
+        System.out.println("----------------------------------------------------------------------");
+        System.out.printf("Totals -> Qty: %d | Valuation: RM %.2f%n", totalQty, totalStockValue);
     }
 
     private void handleSearchByName() {

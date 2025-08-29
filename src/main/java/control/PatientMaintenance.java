@@ -1,3 +1,8 @@
+/**
+ *
+ * @author Tan Dek Jie
+ */
+
 package control;
 
 import adt.ADTInterface;
@@ -57,13 +62,60 @@ public class PatientMaintenance {
         ADTInterface<Patient> results = new CustomADT<>();
         if (query == null) return results;
         String lowerQuery = query.toLowerCase();
-        for (int i = 0; i < patientList.size(); i++) {
-            Patient patient = patientList.get(i);
-            if ((patient.getId() != null && patient.getId().equalsIgnoreCase(query)) ||
-                (patient.getName() != null && patient.getName().toLowerCase().contains(lowerQuery))) {
-                results.add(patient);
+
+        // Try binary search for exact ID match
+        if (patientList instanceof CustomADT<?> cadt) {
+            @SuppressWarnings("unchecked") CustomADT<Patient> list = (CustomADT<Patient>) cadt;
+            // Sort by ID for binary search
+            list.mergeSort(new CustomADT.ADTComparator<Patient>() {
+                public int compare(Patient a, Patient b) {
+                    String ia = a == null || a.getId() == null ? "" : a.getId();
+                    String ib = b == null || b.getId() == null ? "" : b.getId();
+                    return ia.compareToIgnoreCase(ib);
+                }
+            });
+            Patient probe = new Patient(query, null, null, null, null, null, null);
+            int idx = list.binarySearch(probe, new CustomADT.ADTComparator<Patient>() {
+                public int compare(Patient a, Patient b) {
+                    String ia = a == null || a.getId() == null ? "" : a.getId();
+                    String ib = b == null || b.getId() == null ? "" : b.getId();
+                    return ia.compareToIgnoreCase(ib);
+                }
+            });
+            if (idx >= 0) {
+                results.add(list.get(idx));
+                return results;
             }
+            // If not found by ID, try binary search for exact name match
+            list.mergeSort(new CustomADT.ADTComparator<Patient>() {
+                public int compare(Patient a, Patient b) {
+                    String na = a == null || a.getName() == null ? "" : a.getName();
+                    String nb = b == null || b.getName() == null ? "" : b.getName();
+                    return na.compareToIgnoreCase(nb);
+                }
+            });
+            Patient nameProbe = new Patient(null, query, null, null, null, null, null);
+            int nameIdx = list.binarySearch(nameProbe, new CustomADT.ADTComparator<Patient>() {
+                public int compare(Patient a, Patient b) {
+                    String na = a == null || a.getName() == null ? "" : a.getName();
+                    String nb = b == null || b.getName() == null ? "" : b.getName();
+                    return na.compareToIgnoreCase(nb);
+                }
+            });
+            if (nameIdx >= 0) {
+                results.add(list.get(nameIdx));
+                return results;
+            }
+            // Fallback: linear search for partial name matches
+            for (int i = 0; i < list.size(); i++) {
+                Patient patient = list.get(i);
+                if (patient.getName() != null && patient.getName().toLowerCase().contains(lowerQuery)) {
+                    results.add(patient);
+                }
+            }
+            return results;
         }
+ 
         return results;
     }
 
@@ -169,6 +221,7 @@ public class PatientMaintenance {
         public ADTInterface<String> nationalityCounts;
         public ADTInterface<String> ageGroupCounts;
         public int highFrequencyPatients;
+        public ADTInterface<String> highFrequencyList; // entries formatted as "ID|Name|Visits"
         public String csv;
     }
 
@@ -185,10 +238,12 @@ public class PatientMaintenance {
         ageGroups.add("51-65:0");
         ageGroups.add("66+:0");
 
-        StringBuilder csv = new StringBuilder();
-        csv.append("id,name,dateOfBirth,age,gender,phone,email,nationality,visitCount,lastVisitDate,chronicFlag\n");
+    StringBuilder csv = new StringBuilder();
+    csv.append("id,name,dateOfBirth,age,gender,phone,email,nationality,visitCount,lastVisitDate,chronicFlag\n");
 
-        ADTInterface<Consultation> allConsults = consultationDAO.load();
+    ADTInterface<Consultation> allConsults = consultationDAO.load();
+    int highFreq = 0;
+    ADTInterface<String> highList = new CustomADT<>();
 
         for (int i = 0; i < patientList.size(); i++) {
             Patient p = patientList.get(i);
@@ -219,21 +274,18 @@ public class PatientMaintenance {
                 }
             }
             boolean chronic = visitCount >= 5;
+            if (visitCount >= 5) {
+                highFreq++;
+                highList.add(p.getId()+"|"+escapeCsv(p.getName())+"|"+visitCount);
+            }
             String lastVisitStr = lastVisit==null?"":lastVisit.toString();
             csv.append(String.format("%s,%s,%s,%d,%s,%s,%s,%s,%d,%s,%b\n",
                 p.getId(), escapeCsv(p.getName()), p.getDateOfBirth(), age, safe(p.getGender()), safe(p.getPhoneNumber()), safe(p.getEmail()), safe(p.getNationality()), visitCount, lastVisitStr, chronic));
         }
 
         r.averageAge = r.totalPatients==0?0.0:ageSum / r.totalPatients;
-
-        int highFreq = 0;
-        for (int i = 0; i < patientList.size(); i++) {
-            Patient p = patientList.get(i);
-            int visits = 0;
-            for (int j = 0; j < allConsults.size(); j++) if (p.getId().equals(allConsults.get(j).getPatientId())) visits++;
-            if (visits >= 5) highFreq++;
-        }
         r.highFrequencyPatients = highFreq;
+        r.highFrequencyList = highList;
         r.genderCounts = genderCounts; r.nationalityCounts = nationalityCounts; r.ageGroupCounts = ageGroups; r.csv = csv.toString();
         return r;
     }
