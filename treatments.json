@@ -82,4 +82,28 @@
   "instructions" : "1",
   "notes" : "1",
   "cost" : 123.0
+}, {
+  "id" : "T0008",
+  "consultationId" : "C0024",
+  "type" : "PROCEDURE",
+  "name" : "Minor Surgery",
+  "medicationIds" : null,
+  "diagnosis" : "Moderate",
+  "status" : "PRESCRIBED",
+  "orderedDate" : [ 2025, 8, 29 ],
+  "instructions" : "",
+  "notes" : "",
+  "cost" : 1500.0
+}, {
+  "id" : "T0009",
+  "consultationId" : "C0010",
+  "type" : "MEDICATION",
+  "name" : "",
+  "medicationIds" : [ "M0005", "M0002", "M0008", "M0011" ],
+  "diagnosis" : "Severe",
+  "status" : "DISPENSED",
+  "orderedDate" : [ 2025, 8, 29 ],
+  "instructions" : "",
+  "notes" : "",
+  "cost" : 580.0
 } ]

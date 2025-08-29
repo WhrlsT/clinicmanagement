@@ -369,4 +369,26 @@ public class TreatmentMaintenance {
             treatments.add(fresh.get(i));
         }
     }
+
+    /**
+     * Marks a treatment as COMPLETED.
+     * @param treatmentId The ID of the treatment to complete.
+     * @return true if the treatment was successfully updated, false otherwise.
+     */
+    public boolean completeTreatment(String treatmentId) {
+        if (treatmentId == null || treatmentId.isBlank()) {
+            return false;
+        }
+        Treatment treatment = findTreatmentById(treatmentId);
+        if (treatment == null) {
+            return false; // Treatment not found
+        }
+        // Only treatments with status ORDERED can be completed
+        if (treatment.getStatus() != Treatment.TreatmentStatus.PRESCRIBED) {
+            return false; // Already completed or in a different state
+        }
+
+        treatment.setStatus(Treatment.TreatmentStatus.COMPLETED);
+        return updateTreatment(treatment); // Persist the update
+    }
 }

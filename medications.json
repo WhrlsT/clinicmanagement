@@ -19,7 +19,7 @@
   "route" : "oral",
   "price" : 150.0,
   "durationDays" : 5,
-  "quantity" : 17,
+  "quantity" : 16,
   "instructions" : "Take after food",
   "notes" : ""
 }, {
@@ -55,7 +55,7 @@
   "route" : "oral",
   "price" : 80.0,
   "durationDays" : 30,
-  "quantity" : 57,
+  "quantity" : 56,
   "instructions" : "With meals",
   "notes" : "Type 2 DM"
 }, {
@@ -91,7 +91,7 @@
   "route" : "oral",
   "price" : 150.0,
   "durationDays" : 14,
-  "quantity" : 14,
+  "quantity" : 13,
   "instructions" : "Before breakfast",
   "notes" : ""
 }, {
@@ -115,7 +115,7 @@
   "route" : "mouth",
   "price" : 150.0,
   "durationDays" : 24,
-  "quantity" : 500,
+  "quantity" : 499,
   "instructions" : "",
   "notes" : ""
 }, {

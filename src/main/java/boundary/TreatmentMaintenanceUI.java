@@ -64,14 +64,15 @@ public class TreatmentMaintenanceUI {
                     }
                     case 5 -> handleSort();
                     case 6 -> showReportsMenu();
-                    case 7 -> {return;}
+                    case 7 -> handleCompleteTreatment();
+                    case 8 -> {return;}
                     default -> System.out.println("Invalid");
                 }
-                if (c != 7 && c != 4) InputUtil.pauseScreen();
+                if (c != 8 && c != 4) InputUtil.pauseScreen();
             } catch (Exception e) {
                 System.out.println("An error occurred: " + e.getMessage());
             }
-        } while (c!=7);
+        } while (c!=8);
     }
     private String rows(ADTInterface<Treatment> list){
         if (list==null || list.size()==0) return "(none)\n";
@@ -435,6 +436,31 @@ public class TreatmentMaintenanceUI {
         }
     }
 
+    private void handleCompleteTreatment() {
+        InputUtil.clearScreen();
+        printHeader("Complete Treatment");
+        System.out.println("Select a treatment with status 'ORDERED' to mark as 'COMPLETED'.");
+
+        ADTInterface<Treatment> treatments = control.filterByStatus(Treatment.TreatmentStatus.PRESCRIBED);
+        if (treatments.isEmpty()) {
+            System.out.println("\nNo treatments are currently in the 'ORDERED' status.");
+            return;
+        }
+
+        printTable(rows(treatments));
+
+        String id = InputUtil.getInput(sc, "Enter Treatment ID to complete ('0' to cancel): ");
+        if (id.equals("0")) {
+            return;
+        }
+
+        if (control.completeTreatment(id)) {
+            System.out.println("\nTreatment " + id + " has been marked as COMPLETED.");
+        } else {
+            System.out.println("\nFailed to complete treatment. Ensure the ID is correct and the status is 'ORDERED'.");
+        }
+    }
+
     private String buildConsultationRowsForUI(ADTInterface<Consultation> list){
         if (list == null || list.size() == 0) return "(none)\n";
         StringBuilder sb = new StringBuilder();
@@ -461,7 +487,8 @@ public class TreatmentMaintenanceUI {
         System.out.println("4. View Treatments");
         System.out.println("5. Sort Treatments");
         System.out.println("6. Treatment Reports");
-        System.out.println("7. Back");
+        System.out.println("7. Complete Treatment (Payment Complete)");
+        System.out.println("8. Back");
         return InputUtil.getIntInput(sc, "Choose: ");
     }
 
