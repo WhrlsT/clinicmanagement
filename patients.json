@@ -1,11 +1,11 @@
 [ {
   "id" : "P0001",
   "name" : "Shawn",
-  "gender" : "Male",
-  "phoneNumber" : "0121231234",
+  "gender" : "Female",
+  "phoneNumber" : "123123123",
   "email" : "shawn@gmail.com",
   "dateOfBirth" : "2005-06-09",
-  "nationality" : "Foreigner"
+  "nationality" : "Malaysian"
 }, {
   "id" : "P0002",
   "name" : "Kelvin",

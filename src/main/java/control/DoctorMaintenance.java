@@ -1,3 +1,8 @@
+/**
+ *
+ * @author Low Wai Hang
+ */
+
 package control;
 
 import adt.ADTInterface;

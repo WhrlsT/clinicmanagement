@@ -7,7 +7,7 @@
   "route" : "mouth",
   "price" : 123.0,
   "durationDays" : 30,
-  "quantity" : 45,
+  "quantity" : 44,
   "instructions" : "HEHE",
   "notes" : "12"
 }, {
@@ -19,7 +19,7 @@
   "route" : "oral",
   "price" : 150.0,
   "durationDays" : 5,
-  "quantity" : 18,
+  "quantity" : 17,
   "instructions" : "Take after food",
   "notes" : ""
 }, {
@@ -31,7 +31,7 @@
   "route" : "oral",
   "price" : 23.0,
   "durationDays" : 7,
-  "quantity" : 19,
+  "quantity" : 18,
   "instructions" : "Do not take on empty stomach",
   "notes" : "Avoid if ulcer"
 }, {
@@ -107,18 +107,6 @@
   "instructions" : "Shake well before use",
   "notes" : "Rescue inhaler"
 }, {
-  "id" : "M0010",
-  "name" : "0",
-  "code" : "",
-  "dosage" : "",
-  "frequency" : "",
-  "route" : "",
-  "price" : 24.0,
-  "durationDays" : null,
-  "quantity" : null,
-  "instructions" : "",
-  "notes" : ""
-}, {
   "id" : "M0011",
   "name" : "test",
   "code" : "0",
@@ -130,4 +118,16 @@
   "quantity" : 500,
   "instructions" : "",
   "notes" : ""
+}, {
+  "id" : "M0012",
+  "name" : "Paracetamol",
+  "code" : "PAR",
+  "dosage" : "500mg",
+  "frequency" : "2x per day",
+  "route" : "oral",
+  "price" : 25.0,
+  "durationDays" : 5,
+  "quantity" : 20,
+  "instructions" : "15",
+  "notes" : "20"
 } ]

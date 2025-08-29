@@ -58,4 +58,28 @@
   "instructions" : "",
   "notes" : "",
   "cost" : 566.0
+}, {
+  "id" : "T0006",
+  "consultationId" : "C0003",
+  "type" : "MEDICATION",
+  "name" : "",
+  "medicationIds" : [ "M0001", "M0002", "M0003" ],
+  "diagnosis" : "Flu",
+  "status" : "DISPENSED",
+  "orderedDate" : [ 2025, 8, 29 ],
+  "instructions" : "",
+  "notes" : "",
+  "cost" : 346.0
+}, {
+  "id" : "T0007",
+  "consultationId" : "C0009",
+  "type" : "MEDICATION",
+  "name" : "1",
+  "medicationIds" : [ "M0001" ],
+  "diagnosis" : "1",
+  "status" : "PRESCRIBED",
+  "orderedDate" : [ 2025, 8, 29 ],
+  "instructions" : "1",
+  "notes" : "1",
+  "cost" : 123.0
 } ]

@@ -1,3 +1,8 @@
+/**
+ *
+ * @author Tan Dek Jie
+ */
+
 package control;
 
 import adt.ADTInterface;
